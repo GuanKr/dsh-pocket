@@ -673,8 +673,10 @@ function PocketSettingsTab({ rpcCall, t }) {
       'wan'),
 
     // ── 偏好：手机端右边栏 / 捏合缩放（同属「手机访问」页，给出可见分组标题）──
+    // Section 签名是 (title, right, children, key)——只吃一个 children 槽，两行必须包成数组；
+    // 之前第二行 row 落进 key 参数被静默丢弃（data-dshp-section 变 [object Object]）
     Section(h('span', null, t('prefsTitle')), null,
-      row(
+      [row(
         t('mobileRightbar'),
         Switch(status?.mobileRightbarEnabled !== false, () => setMobileRightbar(status?.mobileRightbarEnabled === false)),
         h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobileRightbarHint')),
@@ -683,7 +685,7 @@ function PocketSettingsTab({ rpcCall, t }) {
         t('mobilePinchZoom'),
         Switch(status?.mobilePinchZoomEnabled === true, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled !== true)),
         h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobilePinchZoomHint')),
-      ),
+      )],
       'prefs'),
 
     error ? h('div', { style: { color: 'var(--dsw-alias-state-error-primary,#dc2626)', fontSize: 12, marginTop: 12 } }, `❌ ${errText(error)}`) : null,
