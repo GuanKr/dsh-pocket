@@ -14,7 +14,7 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { apply as upstreamApply } from './upstream/index.tsx'
 import { startFileGuard } from './fileGuard.ts'
 import { resolveLayout, persistLayoutFromUrl } from './layout-mode.mjs'
-import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT } from '../api.js'
+import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT } from '../api.js'
 // H4：fileGuard 的用户可见文案迁入词典（client/pocket-locales.js，NS='pocket'）。
 // 这里只导入命名空间 id；词典本体由 client/index.jsx 统一注册（bind 是惰性取词，
 // 注册顺序在 mobileApply 之后也不影响）。
@@ -34,6 +34,16 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
      滚动内容是更内层的 scroll container，由最内层规则接管，不受影响。 */
   body[data-dsh-pocket-layout="mobile"] [data-mobile-nav="frame"] [class*="scrollBody"] {
     touch-action: pan-y pinch-zoom !important;
+  }
+
+  /* ---------- 两指捏合缩放开关（2026-10-14）：设置页关闭后全拦 ----------
+     设置层写 body[data-dsh-pocket-pinch-zoom="off"]；此处去掉 pinch-zoom 令牌
+     （Android 侧 touch-action 即生效），iOS 侧由下方 H3 手势锁双向全拦兜底。
+     注意：关掉后若浏览器自行放大视口（#45 场景）将无法捏合还原，只能重开
+     页面——提示文案已写在设置页开关下方。 */
+  body[data-dsh-pocket-pinch-zoom="off"],
+  body[data-dsh-pocket-pinch-zoom="off"] [data-mobile-nav="frame"] [class*="scrollBody"] {
+    touch-action: pan-y !important;
   }
 
   /* ---------- 宿主没有 aionui explorer 列时隐藏「文件浏览」入口（issue #48） ----------
@@ -429,6 +439,37 @@ export function mobileApply(ctx: ClientContext): void {
     }
   }, 'dsh-mobile-nav: optional right sidebar')
 
+  // 两指捏合缩放开关（2026-10-14）：设置页持久化在宿主侧，手机壳层自己拉
+  // status 落 body 属性（不依赖设置页被打开过），并监听设置页广播的事件实时
+  // 翻转。属性本身即手势锁与 POCKET_EXTRA_CSS 的执行信号。
+  ctx.effect(() => {
+    let active = true
+    const applyEnabled = (enabled: boolean): void => {
+      document.body?.setAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE, enabled ? 'on' : 'off')
+    }
+    const onChange = (event: Event): void => {
+      applyEnabled((event as CustomEvent<{ enabled?: boolean }>).detail?.enabled === true)
+    }
+    const load = async (): Promise<void> => {
+      try {
+        const result = await ctx.connection.rpc.call(POCKET_RPC_CHANNEL, POCKET_ENDPOINTS.status, {}) as {
+          ok?: boolean
+          value?: { mobilePinchZoomEnabled?: boolean }
+        }
+        if (active) applyEnabled(result?.ok === true ? result.value?.mobilePinchZoomEnabled !== false : true)
+      } catch {
+        if (active) applyEnabled(true)
+      }
+    }
+    window.addEventListener(MOBILE_PINCH_ZOOM_EVENT, onChange)
+    void load()
+    return () => {
+      active = false
+      window.removeEventListener(MOBILE_PINCH_ZOOM_EVENT, onChange)
+      document.body?.removeAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE)
+    }
+  }, 'dsh-pocket: pinch-zoom setting')
+
   // 缩放控制（2026-09-14 用户要求：禁双击放大与捏合缩放），手段分工：
   //  - 双击放大：上游根样式 html,body{touch-action:pan-y pinch-zoom!important}
   //    已覆盖（其媒体与 MOBILE_QUERY 同口径），pocket 再注入非 important 的
@@ -460,6 +501,13 @@ export function mobileApply(ctx: ClientContext): void {
       startScale = window.visualViewport?.scale ?? 0
     }
     const onChange = (event: Event): void => {
+      // 设置页关闭捏合（body[data-dsh-pocket-pinch-zoom="off"]）→ 双向全拦：
+      // 放大缩小都 preventDefault，页面锁死 1x。手势事件低频，直接读属性即可，
+      // 无需向设置层订阅。开关默认开，属性缺失时走下方条件拦截老语义。
+      if (document.body?.getAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE) === 'off') {
+        event.preventDefault()
+        return
+      }
       const scale = (event as Event & { scale: number }).scale
       // startScale<=0（vv 缺失）或 scale 为非数（异常事件，NaN 比较为 false）都
       // 落入 preventDefault——fail closed，等价旧的全拦行为。

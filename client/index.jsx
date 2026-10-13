@@ -15,7 +15,7 @@
 
 import { createElement as h, useEffect, useRef, useState } from 'react';
 
-import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, redactStatus, compareVersions } from './api.js';
+import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, redactStatus, compareVersions } from './api.js';
 import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as POCKET_NS, zh as POCKET_ZH, en as POCKET_EN } from './pocket-locales.js';
 
@@ -64,6 +64,12 @@ function applyMobileRightbarSetting(enabled) {
   const on = enabled !== false;
   document.body?.setAttribute(MOBILE_RIGHTBAR_ATTRIBUTE, on ? 'on' : 'off');
   window.dispatchEvent(new CustomEvent(MOBILE_RIGHTBAR_EVENT, { detail: { enabled: on } }));
+}
+
+function applyMobilePinchZoomSetting(enabled) {
+  const on = enabled !== false;
+  document.body?.setAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE, on ? 'on' : 'off');
+  window.dispatchEvent(new CustomEvent(MOBILE_PINCH_ZOOM_EVENT, { detail: { enabled: on } }));
 }
 
 // 剪贴板：优先 Clipboard API（需安全上下文），LAN http 场景回退 execCommand
@@ -117,6 +123,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       const s = await call(POCKET_ENDPOINTS.status, {});
       setStatus(s);
       applyMobileRightbarSetting(s.mobileRightbarEnabled);
+      applyMobilePinchZoomSetting(s.mobilePinchZoomEnabled);
       setTunnelState(s.tunnelState ?? null);
       if (s.desktop) setIsDesktop(true);
       if (s.restartNotice) {
@@ -277,6 +284,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       const next = await call(POCKET_ENDPOINTS.pocketReset, { confirm: true });
       setStatus(next);
       applyMobileRightbarSetting(next.mobileRightbarEnabled);
+      applyMobilePinchZoomSetting(next.mobilePinchZoomEnabled);
       setTunnelCfg(null);
       setCustomPin(null);
       setAdvOpen(false);
@@ -312,6 +320,17 @@ function PocketSettingsTab({ rpcCall, t }) {
       const enabled = r.mobileRightbarEnabled === true;
       setStatus((s) => ({ ...s, mobileRightbarEnabled: enabled }));
       applyMobileRightbarSetting(enabled);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const setMobilePinchZoom = async (on) => {
+    try {
+      const r = await call(POCKET_ENDPOINTS.mobilePinchZoomSetEnabled, { on });
+      const enabled = r.mobilePinchZoomEnabled === true;
+      setStatus((s) => ({ ...s, mobilePinchZoomEnabled: enabled }));
+      applyMobilePinchZoomSetting(enabled);
     } catch (err) {
       setError(err.message);
     }
@@ -659,6 +678,11 @@ function PocketSettingsTab({ rpcCall, t }) {
         t('mobileRightbar'),
         Switch(status?.mobileRightbarEnabled !== false, () => setMobileRightbar(status?.mobileRightbarEnabled === false)),
         h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobileRightbarHint')),
+      ),
+      row(
+        t('mobilePinchZoom'),
+        Switch(status?.mobilePinchZoomEnabled !== false, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled === false)),
+        h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobilePinchZoomHint')),
       ),
       'prefs'),
 
