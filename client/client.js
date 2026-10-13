@@ -5560,6 +5560,16 @@ Your DSH sessions, models and plugin config are untouched. This cannot be undone
      body[data-dsh-pocket-layout] 就是门（desktop 布局在写入之后才早退，选择器
      天然不命中；?dsh-layout=mobile 强制移动的宽桌面也依赖这些规则，宽度媒体
      反而会漏掉它）。 */
+  /* ---------- iOS 双击智能缩放治理（2026-10-14 真机反馈：双击/轻点页面自己放大） ----------
+     根规则 html,body{touch-action:pan-y pinch-zoom} 的交集止于第一个滚动容器
+     （上游 layout.css 注释自述），消息/会话/文件等纵向滚动区内部的双击缩放
+     一直没被覆盖。对 frame 内的纵向滚动容器补同值：不带 pan-x，左缘抽屉
+     手势照旧不被浏览器抢走；pinch-zoom 保留 #45 捏合逃生口；代码块等横向
+     滚动内容是更内层的 scroll container，由最内层规则接管，不受影响。 */
+  body[data-dsh-pocket-layout="mobile"] [data-mobile-nav="frame"] [class*="scrollBody"] {
+    touch-action: pan-y pinch-zoom !important;
+  }
+
   /* ---------- 宿主没有 aionui explorer 列时隐藏「文件浏览」入口（issue #48） ----------
      官方 DeepSeek Harness 不带 dsh-web-ui；explorer 列存在与否由下方探测 effect
      标到 frame 上（data-mobile-nav-explorer）。没有列时这两个入口点了没反应。 */
