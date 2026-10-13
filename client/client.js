@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
     // the bundle must bind React itself - otherwise every mobile component
     // crashes at render time with "ReferenceError: React is not defined".
     var React = require("react");
-var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDescriptor;var $o=Object.getOwnPropertyNames;var Xo=Object.getPrototypeOf,Zo=Object.prototype.hasOwnProperty;var Yo=(e,t)=>{for(var a in t)Be(e,a,{get:t[a],enumerable:!0})},Yt=(e,t,a,o)=>{if(t&&typeof t=="object"||typeof t=="function")for(let n of $o(t))!Zo.call(e,n)&&n!==a&&Be(e,n,{get:()=>t[n],enumerable:!(o=Uo(t,n))||o.enumerable});return e};var Qo=(e,t,a)=>(a=e!=null?Vo(Xo(e)):{},Yt(t||!e||!e.__esModule?Be(a,"default",{value:e,enumerable:!0}):a,e)),Jo=e=>Yt(Be({},"__esModule",{value:!0}),e);var Tr={};Yo(Tr,{apply:()=>kr,inject:()=>vr,name:()=>wr,redactStatus:()=>Qt});module.exports=Jo(Tr);var l=require("react");var Ae="/dsh-pocket",Re="data-dsh-pocket-mobile-rightbar",Pe="dsh-pocket:mobile-rightbar",B=Object.freeze({status:"pocket.status",tunnelStart:"tunnel.start",tunnelStop:"tunnel.stop",tunnelSetConfig:"tunnel.setConfig",version:"pocket.version",update:"pocket.update",restart:"pocket.restart",lanTokenRefresh:"token.lanRefresh",lanAuthSetEnabled:"lanAuth.setEnabled",lanSetOverride:"lan.setOverride",lanSetEnabled:"lan.setEnabled",mobileRightbarSetEnabled:"mobile.rightbar.setEnabled",pinSetCustom:"pin.setCustom",pocketReset:"pocket.reset",fileRead:"pocket.fileRead"});function dt(e,t){let a=String(e).replace(/^[vV]/,"").split("."),o=String(t).replace(/^[vV]/,"").split(".");for(let c=0;c<3;c++){let i=parseInt(a[c],10)||0,s=parseInt(o[c],10)||0;if(i!==s)return i-s}let n=String(e).replace(/^[vV]/,"").match(/-.*$/)?.[0]??"",r=String(t).replace(/^[vV]/,"").match(/-.*$/)?.[0]??"";if(!n&&!r)return 0;if(!n)return 1;if(!r)return-1;let d=n.slice(1).split("."),f=r.slice(1).split("."),p=Math.max(d.length,f.length);for(let c=0;c<p;c++){let i=d[c]??"",s=f[c]??"";if(i===s)continue;let h=/^\d+$/.test(i),g=/^\d+$/.test(s);return h&&g?Number(i)-Number(s):h?1:g||i<s?-1:1}return 0}function Qt(e){return{proxyRunning:e?.proxyRunning===!0,proxyPort:e?.proxyPort??null,lanUrl:e?.lanUrl??null,lanQr:e?.lanQr??null,lanCandidates:Array.isArray(e?.lanCandidates)?e.lanCandidates:[],lanIpOverride:e?.lanIpOverride??"",tunnelRunning:e?.tunnelRunning===!0,tunnelUrl:e?.tunnelUrl??null,tunnelQr:e?.tunnelQr??null,tunnelState:e?.tunnelState??{phase:"idle"},tunnelConfig:e?.tunnelConfig??{mode:"quick",hostname:"",tokenSet:!1},dshPort:e?.dshPort??null}}var et=require("react");var en=Qo(require("@deepseek-ai/dsh-client-ui-primitives"),1),tn=()=>null,je=e=>{let t=en;for(let a of e){let o=t[a];if(o!==void 0)return o}return tn},Jt=je(["IconPaperclipOutlineRegular","IconPaperclipOutline16"]),ea=je(["IconDownloadOutlineRegular","IconDownloadOutline16"]),ta=je(["IconPanelLeftOutlineRegular","IconPanelLeftOutline16"]),aa=je(["IconFolderOpenOutlineRegular","IconFolderOpenOutline16"]);var Q=new Map,an=500;function on(e){return typeof e=="object"&&e!==null&&"isConnected"in e&&e.isConnected===!1}function oa(){if(!(Q.size<=an))for(let[e]of Q)on(e)&&Q.delete(e)}var ct=!1;function pt(){ct=!0}function ht(){ct=!1}function Me(){return ct}function Ge(e){return typeof e=="object"&&e!==null&&"parentElement"in e&&e.parentElement!==void 0}function na(e,t,a){let o=performance.now()+t;if(oa(),!Ge(e)){Q.set(e,o);return}let n=e;for(;n!==null&&(Q.set(n,o),n!==a);)n=Ge(n.parentElement)?n.parentElement:null;oa()}function Oe(e){let t=performance.now(),a=e.target;if(!Ge(a)){for(let[n,r]of Q)r<=t&&Q.delete(n);return!1}let o=a;for(;o!==null;){let n=Q.get(o);if(n!==void 0)if(n<=t)Q.delete(o);else return!0;o=Ge(o.parentElement)?o.parentElement:null}return!1}var nn=["node","session","summary","result"],rn=["sessionId","id"],sn=["__reactFiber$","__reactInternalInstance$"];function ln(e){if(typeof e!="object"||e===null)return null;let t=e.id;return typeof t=="string"?t:null}function dn(e,t){if(e==null)return null;for(let a of nn){let o=ln(e[a]);if(o!==null&&t(o))return o}for(let a of rn){let o=e[a];if(typeof o=="string"&&t(o))return o}return null}function ra(e,t,a=60){let o=e;for(let n=0;n<a&&o!==null&&o!==void 0;n+=1){let r=dn(o.memoizedProps,t);if(r!==null)return r;o=o.return}return null}function ia(e){if(e==null||typeof e!="object")return null;let t=e;for(let a of sn)for(let o of Object.keys(t)){if(!o.startsWith(a))continue;let n=t[o];if(typeof n=="object"&&n!==null)return n}return null}function sa(e,t,a){return Math.abs(t.x-e.x)<=a&&Math.abs(t.y-e.y)<=a}function la(e){let t=e.onError??((u,w,y)=>{console.error(`[dsh-web-mobile] reconciler task ${u}${y==="dispose"?" dispose":""} failed`,w)}),a=new Set,o=null,n=new Set,r=!1,d=null,f=u=>{try{u.ensure()}catch(w){t(u.name,w,"ensure")}},p=u=>{try{u.dispose()}catch(w){t(u.name,w,"dispose")}},c=()=>{if(d!==null&&(d(),d=null),o===null){n.clear(),r=!1;return}if(r)for(let u of o)f(u);else if(n.size>0)for(let u of o){let w=u.scopes;(w===void 0||w.some(y=>n.has(y)))&&f(u)}n.clear(),r=!1},i=()=>{d===null&&(d=e.requestFrame(()=>{d=null,c()}))};return{get size(){return a.size},register:u=>(a.add(u),o!==null&&(o.add(u),f(u)),()=>{a.delete(u),o!==null&&(o.delete(u),p(u))}),activate:()=>{o===null&&(o=new Set(a),r=!0,c())},deactivate:()=>{if(d!==null&&(d(),d=null),n.clear(),r=!1,o!==null){let u=o;o=null;for(let w of u)p(w)}},note:u=>{for(let w of u)n.add(w);i()},flush:c}}function le(e){if(typeof e!="object"||e===null)return;let t=e;if(typeof t.current=="string")return t.current;for(let a in t.byId){let o=t.byId[a];if(o===void 0)continue;let n=o.retainedBy?.mainView;if(typeof n=="number"&&n>0&&typeof o.id=="string")return o.id}}function da(e){return typeof e?.clear=="function"}function ca(e){return typeof e?.open=="function"}function pa(e){D(e,"dsh-web-mobile: aionui explorer close marker",()=>{let t=a=>{let o=a.target;o===null||!o.closest(".aionui-collapse-chevron")||I()?.removeAttribute("data-aionui-explorer-open")};return document.addEventListener("click",t,!0),()=>document.removeEventListener("click",t,!0)}),D(e,"dsh-web-mobile: preview sheet open marker",()=>{let t=()=>{I()?.removeAttribute("data-aionui-preview-open"),I()?.removeAttribute("data-mobile-preview-full")},a="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",o="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",n=null,r=!1,d=navigator.platform,f=navigator.userAgent,p=navigator.appVersion,c=()=>{n!==null&&(window.clearTimeout(n),n=null),r&&(r=!1,Object.defineProperty(navigator,"platform",{value:d,configurable:!0}),Object.defineProperty(navigator,"userAgent",{value:f,configurable:!0}),Object.defineProperty(navigator,"appVersion",{value:p,configurable:!0}))},i=()=>{r||(d=navigator.platform,f=navigator.userAgent,p=navigator.appVersion,Object.defineProperty(navigator,"platform",{value:"Win32",configurable:!0}),Object.defineProperty(navigator,"userAgent",{value:a,configurable:!0}),Object.defineProperty(navigator,"appVersion",{value:o,configurable:!0}),r=!0),n!==null&&window.clearTimeout(n),n=window.setTimeout(c,1e3)},s=g=>{let u=g.target;if(u===null)return;let w=u.closest('[data-aionui-explorer-col] [class*="_treeRow"]');w!==null&&w.querySelector('[class*="_treeArrow"]:not([class*="_treeArrowEmpty"])')===null&&(i(),I()?.setAttribute("data-aionui-preview-open",""))},h=g=>{let u=g.target;u!==null&&u.closest('[data-aionui-preview-col] [class*="_panelCollapse"]')!==null&&t()};return document.addEventListener("click",s,!0),document.addEventListener("click",h,!0),()=>{c(),document.removeEventListener("click",s,!0),document.removeEventListener("click",h,!0)}})}function ha(){return{name:"preview-close-sync",scopes:["style"],ensure:()=>{let e=document.querySelector("[data-aionui-preview-col]");e!==null&&e.style.visibility==="hidden"&&(I()?.removeAttribute("data-aionui-preview-open"),I()?.removeAttribute("data-mobile-preview-full"))},dispose:()=>{}}}function ma(){let e=["[data-aionui-explorer-col]","[data-aionui-preview-col]"],t=new Map,a=o=>{o.animate([{opacity:0,transform:"translateY(28px)"},{opacity:1,transform:"none"}],{duration:280,easing:"cubic-bezier(.16, 1, .3, 1)",fill:"backwards"})};return{name:"sheet-rise-replay",scopes:["style","class","data-aionui-explorer-open","data-aionui-preview-open","data-mobile-preview-full"],ensure:()=>{for(let o of e){let n=document.querySelector(o);if(n===null)continue;let r=getComputedStyle(n).visibility==="visible",d=t.get(o)??!1;r&&!d&&a(n),t.set(o,r)}},dispose:()=>{t.clear()}}}function cn(e){return e===null||!e.isConnected||e.closest("[data-phase]")===null?!1:e.closest('[class*="_composerStack"]')!==null}function ua(){let e=(p,c)=>{getComputedStyle(p).position==="static"&&p.setAttribute("data-mobile-nav",c)},t=p=>{for(let c=p.parentElement;c!==null;c=c.parentElement)if(getComputedStyle(c).position!=="static")return c;return null},a=(p,c)=>{let i=t(p);if(i===null)return;let s=c.getBoundingClientRect(),h=i.getBoundingClientRect(),g=s.left-h.left-i.clientLeft,u=s.top-h.top-i.clientTop,w=p;w.style.left!==`${g}px`&&(w.style.left=`${g}px`),w.style.top!==`${u}px`&&(w.style.top=`${u}px`)},o=p=>{let c=p.closest('[class*="_composerStack"]');if(c===null)return;let i=p.querySelector(':scope > [data-mobile-nav="stats-tps-reserve"]');for(let s of c.querySelectorAll("div")){let h=(s.textContent??"").trim();if(!/^TPS\s+\d/.test(h)||s.children.length>0||s.getAttribute("data-mobile-nav")==="stats-tps")continue;i===null&&(i=document.createElement("span"),i.setAttribute("data-mobile-nav","stats-tps-reserve"),i.setAttribute("aria-hidden","true"),p.appendChild(i));let g=s.textContent??"";i.textContent!==g&&(i.textContent=g),s.setAttribute("data-mobile-nav","stats-tps");let u=s.parentElement;if(u===null)continue;e(u,"stats-tps-row"),a(s,i);let w=i.getBoundingClientRect().width,y=s;y.style.maxWidth!==`${w}px`&&(y.style.maxWidth=`${w}px`);return}},n=p=>{let c=p.parentElement,i=c===null?null:c.parentElement;if(i===null)return;let s=[...i.children].find(w=>!w.contains(p)&&/\d\s*%/.test(w.textContent??""));if(s===void 0)return;let h=document.querySelector('[data-composer-card] [class*="_row"] [class*="_trailing"]');if(h===null)return;let g=h.querySelector(':scope > [data-mobile-nav="stats-ring-reserve"]'),u=h.querySelector(':scope > [class*="_primary"]');g===null?(g=document.createElement("span"),g.setAttribute("data-mobile-nav","stats-ring-reserve"),h.insertBefore(g,u)):(u===null?h.lastElementChild!==g:g.nextElementSibling!==u)&&h.insertBefore(g,u),s.getAttribute("data-mobile-nav")!=="stats-ring"&&s.setAttribute("data-mobile-nav","stats-ring"),e(i,"stats-ring-dock"),a(s,g)},r=null,d=()=>{let p=document.querySelector('[data-mobile-nav="stats"]');p!==null&&(o(p),n(p))};return{name:"stats-line",scopes:["*"],ensure:()=>{r===null&&(r=d,window.addEventListener("resize",d),window.visualViewport?.addEventListener("resize",d));let p=document.querySelector('[data-mobile-nav="stats"]');if(p!==null&&cn(p)){o(p),n(p);return}p?.removeAttribute("data-mobile-nav");let c=document.querySelector('[class*="_composerStack"]');if(c!==null)for(let i of c.querySelectorAll('[class*="_root"]')){if(i.matches('[data-testid="todo-panel"]'))continue;let s=i.querySelectorAll("button");if(s.length>0&&![...s].every(g=>g.getAttribute("aria-haspopup")!==null))continue;let h=i.textContent??"";if(/(turns|steps|\bLLM\b|轮|步)/.test(h)&&i.querySelector("textarea, [data-composer-input]")===null){i.setAttribute("data-mobile-nav","stats"),o(i),n(i);return}}},dispose:()=>{r!==null&&(window.removeEventListener("resize",r),window.visualViewport?.removeEventListener("resize",r),r=null);for(let p of document.querySelectorAll('[data-mobile-nav="stats-ring"], [data-mobile-nav="stats-tps"]')){let c=p;c.style.left="",c.style.top="",c.style.maxWidth=""}for(let p of["stats","stats-ring","stats-ring-dock","stats-tps","stats-tps-row"])for(let c of document.querySelectorAll(`[data-mobile-nav="${p}"]`))c.removeAttribute("data-mobile-nav");for(let p of document.querySelectorAll('[data-mobile-nav="stats-ring-reserve"], [data-mobile-nav="stats-tps-reserve"]'))p.remove()}}}function fa(e){let t=null,a=n=>{let r=I()?.hasAttribute("data-mobile-preview-full")??!1,d=e(r?"previewExitFullscreen":"previewFullscreen");n.getAttribute("aria-label")!==d&&(n.setAttribute("aria-label",d),n.title=d)},o=()=>{I()?.toggleAttribute("data-mobile-preview-full"),t!==null&&a(t)};return{name:"preview-fullscreen-toggle",scopes:["data-aionui-preview-open","data-mobile-preview-full"],ensure:()=>{let n=document.querySelector("[data-aionui-preview-col]");n!==null&&(t===null&&(t=document.createElement("button"),t.type="button",t.dataset.mobileNav="preview-full-toggle",t.innerHTML=['<svg class="dsh-web-mobile-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">','<path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',"</svg>",'<svg class="dsh-web-mobile-full-out" viewBox="0 0 16 16" fill="none" aria-hidden="true">','<path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',"</svg>"].join(""),t.addEventListener("click",o)),a(t),t.parentElement!==n&&n.appendChild(t))},dispose:()=>{t?.remove(),t=null}}}function ba(){mt?.()}var mt=null,pn=200,hn='<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="18" height="18"><path d="M9.8 3.4 5.2 8l4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',mn='<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="18" height="18"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.67272 0.522841C10.8339 0.522841 11.76 0.522714 12.4963 0.602493C13.2453 0.683657 13.8789 0.854248 14.4264 1.25197C14.7504 1.48739 15.0355 1.77247 15.2709 2.0965C15.6686 2.64394 15.8392 3.27758 15.9204 4.02655C16.0002 4.7629 16 5.68895 16 6.85014V9.14986C16 10.3111 16.0002 11.2371 15.9204 11.9735C15.8392 12.7224 15.6686 13.3561 15.2709 13.9035C15.0355 14.2275 14.7504 14.5126 14.4264 14.748C13.8789 15.1458 13.2453 15.3163 12.4963 15.3975C11.76 15.4773 10.8339 15.4772 9.67272 15.4772H6.3273C5.16611 15.4772 4.24006 15.4773 3.50371 15.3975C2.75474 15.3163 2.1211 15.1458 1.57366 14.748C1.24963 14.5126 0.964549 14.2275 0.729131 13.9035C0.331407 13.3561 0.160817 12.7224 0.0796529 11.9735C-0.000126137 11.2371 1.25338e-09 10.3111 1.25338e-09 9.14986V6.85014C1.25329e-09 5.68895 -0.000126137 4.7629 0.0796529 4.02655C0.160817 3.27758 0.331407 2.64394 0.729131 2.0965C0.964549 1.77247 1.24963 1.48739 1.57366 1.25197C2.1211 0.854248 2.75474 0.683657 3.50371 0.602493C4.24006 0.522714 5.16611 0.522841 6.3273 0.522841H9.67272ZM5.54303 1.88715V14.1118C5.78636 14.1128 6.04709 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14986V6.85014C14.6398 5.65896 14.6393 4.81967 14.5693 4.1736C14.5007 3.54048 14.3723 3.17318 14.1711 2.89609C14.0195 2.68747 13.8354 2.50337 13.6268 2.35179C13.3497 2.1506 12.9824 2.02212 12.3493 1.95353C11.7032 1.88358 10.8639 1.88307 9.67272 1.88307H6.3273C6.04709 1.88307 5.78636 1.8862 5.54303 1.88715ZM4.1828 1.91166C3.99125 1.9216 3.8148 1.93577 3.65076 1.95353C3.01764 2.02212 2.65034 2.1506 2.37325 2.35179C2.16463 2.50337 1.98052 2.68747 1.82895 2.89609C1.62776 3.17318 1.49928 3.54048 1.43069 4.1736C1.36074 4.81967 1.36023 5.65896 1.36023 6.85014V9.14986C1.36023 10.341 1.36074 11.1803 1.43069 11.8264C1.49928 12.4595 1.62776 12.8268 1.82895 13.1039C1.98052 13.3125 2.16463 13.4966 2.37325 13.6482C2.65034 13.8494 3.01764 13.9779 3.65076 14.0465C4.29683 14.1164 5.13612 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14986V6.85014C14.6398 5.65896 14.6393 4.81967 14.5693 4.1736C14.5007 3.54048 14.3723 3.17318 14.1711 2.89609C14.0195 2.68747 13.8354 2.50337 13.6268 2.35179C13.3497 2.1506 12.9824 2.02212 12.3493 1.95353C11.7032 1.88358 10.8639 1.88307 9.67272 1.88307H6.3273C5.13612 1.88307 4.29683 1.88358 3.65076 1.95353C3.47672 1.97129 3.30027 1.98546 3.10872 1.9954L4.1828 1.91166Z" fill="currentColor"/></svg>';function ga(e,t,a){let o=null,n=null,r=null,d=!1,f=()=>{let s=I();return s===null?!1:!s.hasAttribute("data-sidebar-collapsed")},p=()=>document.querySelector('[data-phase="active"]')===null,c=s=>{if(a!==null&&a.panelOpen()){s.preventDefault(),s.stopPropagation(),a.exit();return}t()},i=()=>{if(n===null)return;let s=a!==null&&a.panelOpen(),h=s?"exit-panel":"open-drawer";if(n.dataset.mobileNavFabMode===h)return;n.dataset.mobileNavFabMode=h;let g=e(s?"backToConversation":"open");n.setAttribute("aria-label",g),n.title=g,n.innerHTML=s?hn:mn};return{name:"overlay-backdrop-fab",scopes:["*","data-sidebar-collapsed","data-phase"],ensure:()=>{mt=()=>{o!==null&&(d=!0,o.style.pointerEvents="none",o.style.opacity="0")};let s=I();if(s===null){r!==null&&(window.clearTimeout(r),r=null),o?.remove(),o=null,n?.remove(),n=null;return}f()?o===null?(o=document.createElement("div"),o.dataset.mobileNav="backdrop",o.setAttribute("role","button"),o.setAttribute("aria-label",e("backdrop")),s.appendChild(o),d=!1):d&&r!==null&&(window.clearTimeout(r),r=null,d=!1,o.style.removeProperty("pointer-events"),o.style.removeProperty("opacity")):o!==null&&(o.style.pointerEvents="none",o.style.opacity="0",d=!0,r===null&&(r=window.setTimeout(()=>{r=null,o?.remove(),o=null},pn+60))),p()&&!f()&&n===null?(n=document.createElement("button"),n.type="button",n.dataset.mobileNav="fab",n.setAttribute("aria-label",e("open")),n.title=e("open"),n.addEventListener("click",c),s.appendChild(n)):(!p()||f())&&n!==null&&(n.remove(),n=null),i()},dispose:()=>{r!==null&&(window.clearTimeout(r),r=null),mt=null,o?.remove(),o=null,n?.remove(),n=null}}}function wa(){let e=null,t=null;return{name:"file-viewer-open-marker",scopes:["*"],ensure:()=>{let a=I();if(a===null)return;let o=document.querySelector(".dsfv-panel")!==null;o===e&&a===t||(e=o,t=a,o?a.setAttribute("data-file-viewer-open",""):a.removeAttribute("data-file-viewer-open"))},dispose:()=>{e=null,t=null,I()?.removeAttribute("data-file-viewer-open")}}}var un=.45;function ut(e,t=un){return Math.round(e*t)}var ft=8,fn=.16,va=.13,bt=60,bn=.45,gn=.45,ce=350,wn=300,vn=8,ue=110,xa=280,ya=101,xn=.45,yn=.16,kn=.45,ae=0,Ee=!1,oe=[],He=0,vt=0,fe=!1,pe=0,ze=null,V=null,be=!1,Ca=0,he=!1,J=!1,Ne=!1,me="drawer",xt=!1,La=()=>!1;function Tn(e,t,a){let o=a?-t.dx:t.dx;if(Math.abs(o)<=e.lockPx||Math.abs(o)<=Math.abs(t.dy))return"none";if(e.drawerOpen){if(Math.abs(o)/e.viewportWidthPx>=e.closeDistanceRatio)return"close";let d=a?-t.velX:t.velX;return d>0!=o>0?"none":Math.abs(d)>=e.closeVelocity?"close":"none"}return o<=0?"none":o/e.viewportWidthPx>=e.openDistanceRatio||(a?-t.velX:t.velX)>=e.openVelocity?"open":"none"}function En(e,t,a){let o=a?-t.dx:t.dx;if(Math.abs(o)<=e.lockPx||Math.abs(o)<=Math.abs(t.dy))return"none";let n=a?-t.velX:t.velX;if(o<0)return e.panelOpen||e.drawerOpen?"none":-o/e.viewportWidthPx>=e.distanceRatio?"files":n>0!=o>0?"none":-n>=e.velocity?"files":"none";if(e.drawerOpen){let r=e.drawerCloseDistanceRatio??e.distanceRatio;return o/e.viewportWidthPx>=r?"close":n<=0?"none":n>=e.velocity?"close":"none"}return e.panelOpen?o/e.viewportWidthPx>=e.distanceRatio?"files":n>0!=o>0?"none":n>=e.velocity?"files":"none":"none"}function _n(e,t,a){let o=a-t,n=e.filter(p=>p.t>=o);if(n.length<2)return 0;let r=n[n.length-2],d=n[n.length-1],f=d.t-r.t;return f<=0?0:(d.x-r.x)/f}function Sn(e,t,a,o){let n=a?t-e:e;return n>=0&&n<=o.startZonePx}function ka(e,t,a,o){let n=a?e:t-e;return n>=0&&n<=o}function Cn(e,t){return e||!t?"drawer":"files"}function Ln(e,t,a,o){let n=e<=0?-1:1,r=Math.abs(e),d=a?-t:t;return o?d>=0?null:n*Math.min(r,-d)+0:d<=0?null:n*(r-Math.min(r,d))+0}function Aa(e,t){let a=t?-e:e;return a<=0?null:t?`translateX(max(0px, calc(${ya}% - ${a}px)))`:`translateX(min(0px, calc(-${ya}% + ${a}px)))`}function An(e){let t=e;for(;t!==null;){if((t.overflowX==="auto"||t.overflowX==="scroll")&&t.scrollWidth>t.clientWidth+1)return t;t=t.parent}return null}function _e(){let e=I();return e!==null&&e.firstElementChild instanceof HTMLElement?e.firstElementChild:null}function yt(){let e=I();return e!==null&&!e.hasAttribute("data-sidebar-collapsed")}function Rn(){let e=document.querySelector("[data-sidebar-right-panel]");if(e===null)return!1;let t=getComputedStyle(e);return t.visibility==="hidden"||t.display==="none"?!1:e.getBoundingClientRect().left<window.innerWidth}function Pn(e){let t=null,a=e;for(;a!==null;)t={parent:t,scrollWidth:a.scrollWidth,clientWidth:a.clientWidth,overflowX:getComputedStyle(a).overflowX},a=a.parentElement;return t}function Xe(){return document.querySelector('[aria-modal="true"]')!==null}function kt(){return document.documentElement.hasAttribute("data-dsh-taskboard-active")||document.documentElement.hasAttribute("data-dsh-ssh-active")||document.querySelector("[data-conversation-composer-overlay]")!==null}function Ra(){if(typeof window>"u")return!1;let e=window.getSelection();if(e!==null&&!e.isCollapsed)return!0;if(typeof document>"u")return!1;let t=document.activeElement;if(t===null)return!1;let a=t.tagName;if(a!=="TEXTAREA"&&a!=="INPUT")return!1;try{let{selectionStart:o,selectionEnd:n}=t;return typeof o=="number"&&typeof n=="number"&&o!==n}catch{return!1}}function Pa(){return performance.now()<pe}function Ma(e){return document.documentElement.hasAttribute("data-mobile-nav-dragging")||document.body.hasAttribute("data-mobile-nav-dragging")?!0:e.target instanceof Element&&e.target.closest("[data-mobile-nav-dragging]")!==null}var Ta=200;function Mn(e){if(e.closest('[data-mobile-nav="frame"]')!==null)return null;let t=e;for(;t!==null;){if(t instanceof HTMLElement){let a=getComputedStyle(t);if((a.position==="fixed"||a.position==="absolute")&&t.offsetWidth<=Ta&&t.offsetHeight<=Ta)return t}t=t.parentElement}return null}function Oa(e){return e.target instanceof Element&&Mn(e.target)!==null}function Ea(){V=null,be=!1,J=!1,Ne=!1,he=$e();let e=_e();if(e===null||!fe)return;V=e;let t=e.getBoundingClientRect().width*ue/100;Ca=he?t:-t}var gt=!1;function Tt(){if(!gt)return;gt=!1,V?.style.removeProperty("content-visibility");let e=_e();e!==null&&e!==V&&e.style.removeProperty("content-visibility")}function On(e){if(J||Ne)return;let t=_e();if(t===null||Xe()||kt()){Ne=!0;return}V=t,be=!0,t.style.setProperty("transition","none","important");let a=Aa(1e-4,he);t.style.setProperty("transform",a??`translateX(-${ue}%)`,"important"),t.style.willChange="transform",t.style.setProperty("content-visibility","hidden","important"),gt=!0,J=!0,e.layout.toggleSidebar(),requestAnimationFrame(()=>{requestAnimationFrame(Tt)})}function _a(e,t){if(!Ee||me!=="drawer")return;if(!fe){let o=he?-t:t;if(!J&&(o<vn||(On(e),!J)))return;let n=Aa(t,he);if(n===null){V?.style.setProperty("transform",`translateX(-${ue}%)`,"important");return}V?.style.setProperty("transform",n,"important");return}if(V===null)return;let a=Ln(Ca,t,he,fe);if(a===null){be=!0,V.style.setProperty("transition","none","important"),V.style.setProperty("transform","translateX(0px)","important");return}be=!0,V.style.setProperty("transition","none","important"),V.style.setProperty("transform",`translateX(${a}px)`,"important")}function Ve(){let e=V;!be||e===null||(be=!1,e.style.removeProperty("transition"),e.style.removeProperty("transform"),e.style.removeProperty("will-change"))}var Ue=null;function wt(){let e=Ue;if(e===null)return;Ue=null,window.clearTimeout(e.timer),e.el.style.removeProperty("transition"),e.el.style.removeProperty("transform"),e.el.style.removeProperty("will-change");let t=I();t!==null&&!t.hasAttribute("data-sidebar-collapsed")&&e.ctx.layout.toggleSidebar()}function Ia(e,t,a){wt(),t.style.setProperty("transition",`transform ${xa}ms ease-in-out`,"important"),t.getBoundingClientRect(),t.style.setProperty("transform",a,"important"),ba(),pe=performance.now()+ce,Ue={el:t,ctx:e,timer:window.setTimeout(wt,xa+40)}}function Ke(e){let t=V;if(V=null,be=!1,t===null){Ve(),e.layout.toggleSidebar(),pe=performance.now()+ce;return}let a=he?`translateX(${ue}%)`:`translateX(-${ue}%)`;Ia(e,t,a)}function za(e){if(!yt()||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return!1;let t=_e();if(t===null)return!1;let a=$e()?`translateX(${ue}%)`:`translateX(-${ue}%)`;return Ia(e,t,a),!0}function de(e,t=!1){if(Ue!==null){t&&wt();return}let a=J;if(J=!1,Ne=!1,Tt(),a&&e!==null&&V!==null&&!t){Te(),Ke(e);return}Ve(),Te(),a&&e!==null&&(e.layout.toggleSidebar(),pe=performance.now()+ce)}function In(e,t,a){if(Pa()||Xe()||kt()||Ra()||Ma(e)||Oa(e)||!(e.target instanceof Element)||An(Pn(e.target))!==null||e.target.closest('[class*="_composerSeat"], [data-composer-card], [class*="_dock"]')!==null)return!1;let o=yt(),n=ut(a,xn);if(o){let r=I();if(r===null)return!1;let d=r.getBoundingClientRect();if(e.clientX<d.left||e.clientX>d.right||e.clientY<d.top||e.clientY>d.bottom||e.target.closest('[class*="sessionRow"] button')!==null)return!1;let f=_e(),p=f===null?null:f.getBoundingClientRect(),c=p!==null&&e.clientX>=p.left&&e.clientX<=p.right;me=Cn(c,ka(e.clientX,a,t,n))}else if(Sn(e.clientX,a,t,{startZonePx:ut(a)}))me="drawer";else if(ka(e.clientX,a,t,n))me="files";else return!1;return ae=e.pointerId,Ee=!1,He=e.clientX,vt=e.clientY,oe=[{t:e.timeStamp,x:e.clientX}],!0}function zn(e){let t=e.clientX-He,a=e.clientY-vt;return Math.max(Math.abs(t),Math.abs(a))<ft?!1:Ma(e)||Oa(e)||Math.abs(t)<=Math.abs(a)?(Te(),!1):(Ee=!0,fe=yt(),me==="files"?(xt=Rn(),fe&&Ea(),pt(),!0):(pt(),Ea(),!0))}function Sa(e){oe.push({t:e.timeStamp,x:e.clientX});let t=e.timeStamp-bt,a=0;for(;a<oe.length-1&&oe[a].t<t;)a+=1;a>0&&(oe=oe.slice(a))}function Hn(e,t,a,o){let n=Ee,r=J;J=!1,Ne=!1;let d=me==="files",f=xt,p=_n(oe,bt,t.timeStamp),c=t.clientX-He,i=t.clientY-vt;if(Te(),!n){r&&Ke(e);return}let h=Xe()||!r&&Pa()?"none":d?En({distanceRatio:yn,velocity:kn,lockPx:ft,viewportWidthPx:o,panelOpen:f,drawerOpen:fe,drawerCloseDistanceRatio:va},{dx:c,dy:i,velX:p},a):Tn({openDistanceRatio:fn,closeDistanceRatio:va,velocityWindowMs:bt,openVelocity:bn,closeVelocity:gn,lockPx:ft,cooldownMs:ce,startZonePx:ut(o),viewportWidthPx:o,drawerOpen:fe},{dx:c,dy:i,velX:p},a);if(Tt(),r){h==="open"?(Ve(),pe=performance.now()+ce):Ke(e),t.target instanceof Element&&Ie(t.target);return}if(t.target instanceof Element){if(h==="close"){Ie(t.target),Ke(e);return}Ve(),h==="open"&&(Ie(t.target),e.layout.toggleSidebar(),pe=performance.now()+ce),h==="files"&&(La(),Ie(t.target),pe=performance.now()+ce),d&&h==="none"&&Ie(t.target)}}function Ie(e){let t=_e(),a=t!==null&&t.contains(e)?t:I()??null;na(e,wn,a),ze=e}function Te(){ae=0,Ee=!1,oe=[],me="drawer",xt=!1,ht()}function $e(){let e=I();return e!==null&&getComputedStyle(e).direction==="rtl"}function Ha(e,t){D(e,"dsh-web-mobile: sidebar swipe gestures",()=>{La=t;let a=()=>window.innerWidth||document.documentElement.clientWidth||0,o=s=>{if(ze=null,ht(),!(s.pointerType!=="touch"&&s.pointerType!=="pen")){if(ae!==0&&ae!==s.pointerId){de(e);return}In(s,$e(),a())}},n=s=>{if(s.pointerId===ae){if(Xe()||kt()){de(e);return}if(Ee)Sa(s),_a(e,s.clientX-He);else{if(Ra()){Te();return}zn(s)&&(Sa(s),_a(e,s.clientX-He))}}},r=s=>{s.pointerId===ae&&Hn(e,s,$e(),a())},d=s=>{s.pointerId===ae&&de(e)},f=s=>{if(ze===null||!(s.target instanceof Element))return;let h=s.target.closest('[data-mobile-nav="backdrop"], [data-mobile-nav="fab"]');h!==null&&!h.contains(ze)||Oe(s)&&(s.stopPropagation(),s.preventDefault(),ze=null)},p=()=>{document.hidden&&de(e)},c=s=>{if(ae!==0){if(s.touches.length>1){de(e);return}s.preventDefault()}};document.addEventListener("pointerdown",o,!0),document.addEventListener("pointermove",n,!0),document.addEventListener("pointerup",r,!0),document.addEventListener("pointercancel",d,!0),document.addEventListener("click",f,!0),document.addEventListener("touchmove",c,{capture:!0,passive:!1});let i=()=>de(e);return document.addEventListener("visibilitychange",p),window.addEventListener("blur",i),()=>{document.removeEventListener("pointerdown",o,!0),document.removeEventListener("pointermove",n,!0),document.removeEventListener("pointerup",r,!0),document.removeEventListener("pointercancel",d,!0),document.removeEventListener("click",f,!0),document.removeEventListener("touchmove",c,{capture:!0}),document.removeEventListener("visibilitychange",p),window.removeEventListener("blur",i),de(e,!0)}})}var Nn="mobileNav",ge="(max-width: 1023px) and (pointer: coarse)",Wa="(min-width: 1024px)",qa="(pointer: coarse)",Dn=500,Na=10,Fn=1200,Wn=800,qn=12,Ze=null;function D(e,t,a,o=ge){e.effect(()=>{let n=window.matchMedia(o),r,d=()=>{r?.(),r=n.matches?a(n):void 0};return d(),n.addEventListener("change",d),()=>{n.removeEventListener("change",d),r?.()}},t)}function Ba(){return document.querySelector("[data-shell-overlay]")?.parentElement??null}function I(){return document.querySelector('[data-mobile-nav="frame"]')??Ba()}var Bn='[data-dsh-responsive-part="sidebar-toggle"]:not([data-mobile-nav])',ja='[data-mobile-nav="dismiss-shadow"]';function jn(){if(typeof document>"u")return;let e=document.querySelector(ja),t=document.querySelector(Bn),a=t?.closest('[data-pane="sidebar"]')??null;if(t===null||a===null){e?.remove();return}if(e!==null&&e.parentElement===a&&a.firstElementChild===e)return;let o=e??document.createElement("span");e===null&&(o.setAttribute("data-mobile-nav","dismiss-shadow"),o.setAttribute("data-dsh-responsive-part","sidebar-toggle"),o.setAttribute("aria-hidden","true"),o.style.setProperty("display","none","important")),a.insertBefore(o,a.firstElementChild)}function Ga(){if(Et)return()=>{};Et=!0;let e=null,t=ne({name:"frame-marker",scopes:["*"],ensure:()=>{(e===null||!e.isConnected)&&(e=Ba()),e!==null&&!e.hasAttribute("data-mobile-nav")&&e.setAttribute("data-mobile-nav","frame"),jn()},dispose:()=>{e!==null&&(e.removeAttribute("data-mobile-nav"),e.removeAttribute("data-mobile-preview-full"),e.removeAttribute("data-aionui-explorer-open"),e.removeAttribute("data-aionui-preview-open")),typeof document<"u"&&document.querySelector(ja)?.remove(),e=null}});return()=>{t(),Et=!1}}var Et=!1,_t=!1,St=!1,Ye=la({requestFrame:e=>{let t=0;return t=requestAnimationFrame(()=>{t=0,e()}),()=>{t!==0&&cancelAnimationFrame(t)}}});function Ka(e){return St?()=>{}:(St=!0,D(e,"dsh-web-mobile: DOM reconciler",()=>{let t=new MutationObserver(a=>{let o=new Set;for(let n of a){if(n.type==="attributes"){o.add(n.attributeName!==null?n.attributeName:"*");continue}let r=[...n.addedNodes,...n.removedNodes];if(r.length>0&&r.every(d=>d.nodeType===Node.TEXT_NODE)){n.target instanceof Element&&n.target.closest('[class*="_composerStack"]')!==null&&o.add("*");continue}o.add("*")}o.size>0&&Ye.note(o)});return t.observe(document.documentElement,{childList:!0,subtree:!0,attributes:!0,attributeFilter:["style","class","data-phase","data-sidebar-collapsed","data-aionui-explorer-open","data-aionui-preview-open","data-mobile-preview-full"]}),Ye.activate(),()=>{t.disconnect(),Ye.deactivate()}}),()=>{St=!1})}function ne(e){return Ye.register(e)}function At(e,t){if(t!==null)try{if(t("(font: -apple-system-body) and (-webkit-touch-callout: none)"))return!0}catch{}let a=e.userAgent;return/iP(hone|ad|od)/.test(a)?!0:/Macintosh/.test(a)&&e.maxTouchPoints>1}var Da="data-mobile-nav-ios",Ct="width=device-width, initial-scale=1, viewport-fit=cover",Fa="--dsh-web-mobile-vh",Lt=()=>document.querySelector('meta[name="viewport"]');function Va(e){D(e,"dsh-web-mobile: status bar theme + viewport + zoom guard",()=>{let t=document.createElement("meta");t.name="theme-color";let a=()=>getComputedStyle(document.body).backgroundColor,o=document.documentElement,n=null,r=null,d=!1,f=()=>{let y=Lt();y!==null&&(n===null&&(n=y.content),!(d||y.content===Ct)&&(d=!0,y.content=Ct,d=!1))},p=new MutationObserver(f),c=()=>{let y=Lt();y!==r&&(r!==null&&p.disconnect(),r=y,y!==null&&p.observe(y,{attributes:!0,attributeFilter:["content"]}))},i=new MutationObserver(()=>{c(),f()});i.observe(document.head,{childList:!0}),c(),f();let s=new MutationObserver(()=>{t.content=a()});s.observe(document.body,{attributes:!0,attributeFilter:["data-ds-dark-theme"]});let h=typeof CSS<"u"&&typeof CSS.supports=="function"?y=>CSS.supports(y):null;At(navigator,h)&&o.setAttribute(Da,""),t.content=a(),t.parentElement===null&&document.head.appendChild(t);let g=0,u=0,w=()=>{let y=window.innerHeight,x=window.innerWidth;(g===0||y>g||x!==u)&&(g=y,u=x,o.style.setProperty(Fa,`${y}px`))};return w(),window.addEventListener("resize",w),()=>{window.removeEventListener("resize",w),o.style.removeProperty(Fa),p.disconnect(),i.disconnect(),s.disconnect();let y=Lt();y!==null&&n!==null&&y.content===Ct&&(y.content=n),t.remove(),o.removeAttribute(Da)}})}var Gn='button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry], [class*="newSession"], [class*="sessionRow"], [class*="searchResultRow"], [class*="searchResultWorkspace"], [class*="panelRow"]';function Qe(e){za(e)||e.layout.toggleSidebar()}function Ua(e){D(e,"dsh-web-mobile: drawer close (Escape + navigate)",()=>{let t=()=>{Qe(e)},a=()=>{let k=I();return k!==null&&!k.hasAttribute("data-sidebar-collapsed")},o=k=>{k.key==="Escape"&&document.querySelector('[aria-modal="true"]')===null&&a()&&t()},n=()=>document.querySelector('[data-mobile-nav="frame"] > :first-child'),r=k=>{if(document.querySelector('[aria-modal="true"]')!==null||!a()||!(k instanceof Element))return!1;let A=n();return A===null||!A.contains(k)||k.closest('[class*="sessionRow"] button')!==null?!1:k.closest(Gn)!==null},d=k=>!(k instanceof Element&&k.closest("[data-dsha-session-select]")!==null)&&r(k),f=0,p="",c=null,i=null,s=null,h=null,g=null,u=!1,w=0,y=0,x=null,b=()=>{s!==null&&window.clearTimeout(s),s=null,h=null,g=null,u=!1},O=k=>{if(document.querySelector('[role="menu"]')!==null)return;let A=k.querySelector('[class*="_rowActions"] button');A!==null&&(w=performance.now()+Fn,A.click())},E=new WeakSet,v=k=>{let A=k.querySelector('[class*="_title"]');if(A===null)return!1;let X=new MouseEvent("dblclick",{bubbles:!0,cancelable:!0,view:window});return E.add(X),A.dispatchEvent(X),!0},S=k=>{if(E.has(k))return;let A=k.target;A instanceof Element&&A.closest('[class*="sessionRow"] [class*="_title"]')!==null&&(k.preventDefault(),k.stopPropagation())},_=()=>n()?.querySelector('[role="treeitem"][aria-selected="true"]')?.querySelector('[class*="_title"]')?.textContent?.trim()??null,C=()=>{c?.disconnect(),c=null,i!==null&&window.clearTimeout(i),i=null,p=""},M=()=>{C(),p=_()??"";let k=n();k!==null&&(c=new MutationObserver(()=>{if(!a()){C();return}let A=_();A!==null&&A!==p&&(C(),t())}),c.observe(k,{childList:!0,subtree:!0,attributes:!0,attributeFilter:["aria-selected"]}),i=window.setTimeout(C,2e3))},R=k=>e.sessions.list.getSnapshot().byId[k]!==void 0,z=(k,A)=>{if(Ze===null||!sa(Ze,{x:A.clientX,y:A.clientY},qn))return null;let X=ra(ia(k),R);return X===null||le(e.sessions.list.getSnapshot())===X?null:X},N=null,U=!1,F=()=>{U=!0,N?.(),N=null},G=k=>{F(),U=!1;let A=()=>{U||(F(),a()&&t())};N=e.sessions.list.subscribe(()=>{le(e.sessions.list.getSnapshot())===k&&window.setTimeout(A,0)})},ee=k=>{if(Ze=k.pointerType==="touch"||k.pointerType==="pen"?{x:k.clientX,y:k.clientY}:null,b(),k.pointerType!=="touch"&&k.pointerType!=="pen"||Me())return;let A=k.target;if(!r(A)||!(A instanceof Element))return;let X=A.closest('[class*="_sessionRow"]');X===null||A.closest('[class*="_rowActions"]')!==null||(h={x:k.clientX,y:k.clientY},g=X,s=window.setTimeout(()=>{s=null,g!==null&&(u=!0,v(g)||O(g))},Dn))},H=k=>{if(h!==null){if(Me()){b();return}(Math.abs(k.clientX-h.x)>Na||Math.abs(k.clientY-h.y)>Na)&&b()}},W=k=>{if(performance.now()>w)return;let A=k.target;A instanceof Element&&(A.closest('[class*="_rowActions"]')===null&&A.closest('[class*="_sessionRow"]')===null||k.stopPropagation())},K=k=>{let A=k.target;if(x!==null&&performance.now()<=y&&A instanceof Element&&(A===x||x.contains(A))){y=0,x=null,k.preventDefault(),k.stopPropagation();return}if(!(Me()||Oe(k))){if(A instanceof Element&&A.closest('[data-mobile-nav="backdrop"]')!==null){a()&&t();return}performance.now()-f<500||d(A)&&t()}},$=k=>{if(Me()||Oe(k)||k.pointerType!=="touch"&&k.pointerType!=="pen")return;let A=u,X=g;if(b(),A&&X!==null){y=performance.now()+Wn,x=X;return}let Se=k.target;if(!(Se instanceof Element)||!d(Se))return;let Ce=Se.closest('[role="treeitem"]');if(Ce!==null){if(f=performance.now(),Ce.getAttribute("aria-selected")==="true")t();else{let Y=z(Ce,k);Y===null?(F(),M()):(C(),ca(e.sessions)?(G(Y),e.sessions.open(Y)):(F(),M()))}return}},q=()=>{a()&&t()};return document.addEventListener("dsha-session-open",q),document.addEventListener("dblclick",S,!0),document.addEventListener("keydown",o,!0),document.addEventListener("click",K,!0),document.addEventListener("pointerdown",ee,!0),document.addEventListener("pointermove",H,!0),document.addEventListener("pointerleave",W,!0),document.addEventListener("pointerup",$,!0),()=>{C(),F(),Ze=null,b(),document.removeEventListener("dsha-session-open",q),document.removeEventListener("dblclick",S,!0),document.removeEventListener("keydown",o,!0),document.removeEventListener("click",K,!0),document.removeEventListener("pointerdown",ee,!0),document.removeEventListener("pointermove",H,!0),document.removeEventListener("pointerleave",W,!0),document.removeEventListener("pointerup",$,!0)}})}function $a(e,t){if(_t)return()=>{};_t=!0;let a=e.locale.bind(Nn),o=[ne(fa(a)),ne(ha()),ne(ma()),ne(ua()),ne(ga(a,()=>Qe(e),t)),ne(t.task),ne(wa())];return()=>{for(let n of o)n();_t=!1}}var Kn="[data-sidebar-right-expand]",Vn="[data-sidebar-right-toggle]";function Je(e=document,t=I()){let a=e.querySelector(Vn),o=e.querySelector(Kn),n=typeof o?.click=="function"?o:a;return typeof n?.click=="function"?(n.click(),!0):(t===null||(t.removeAttribute("data-aionui-preview-open"),t.setAttribute("data-aionui-explorer-open","")),!1)}function Xa({toggleSidebar:e,t}){let[a,o]=(0,et.useState)(!1);(0,et.useEffect)(()=>{let r=()=>{let c=I();return c!==null&&!c.hasAttribute("data-sidebar-collapsed")};o(r());let d=0,f=()=>{d===0&&(d=requestAnimationFrame(()=>{d=0,o(r())}))},p=new MutationObserver(c=>{for(let i of c){if(i.type==="attributes"){if(i.attributeName==="data-sidebar-collapsed"){f();return}continue}let s=[...i.addedNodes,...i.removedNodes];if(s.length===0||!s.every(h=>h.nodeType===Node.TEXT_NODE)){f();return}}});return p.observe(document.documentElement,{subtree:!0,childList:!0,attributes:!0,attributeFilter:["data-sidebar-collapsed"]}),()=>{d!==0&&cancelAnimationFrame(d),p.disconnect()}},[]);let n=()=>{Je()};return React.createElement(React.Fragment,null,React.createElement("button",{type:"button","data-mobile-nav":"toggle","aria-label":t(a?"close":"open"),"aria-expanded":a,title:t(a?"close":"open"),onClick:()=>e()},React.createElement(ta,{size:16})),React.createElement("button",{type:"button","data-mobile-nav":"files","aria-label":t("files"),title:t("files"),onClick:n},React.createElement(aa,{size:16})))}function Za({useSessions:e,downloadSessionLog:t,t:a}){let o=e(n=>le(n));return React.createElement("div",{"data-mobile-nav":"drawer-actions"},React.createElement("button",{type:"button","data-mobile-nav":"session-log","aria-label":a("sessionLog"),title:a("sessionLog"),disabled:o===void 0,onClick:()=>{o!==void 0&&t(o)}},React.createElement(ea,{size:14}),React.createElement("span",null,a("sessionLog"))))}function Ya({useInput:e,useSession:t,t:a}){let o=e(f=>f.phase!=="plain"),n=t(f=>f.subagent!==null),r=o||n,d=f=>{if(r)return;let p=f.currentTarget.closest("[data-composer-card]"),c=p===null?null:p.querySelector("input[type=file]");c!==null&&c.click()};return React.createElement("button",{type:"button","data-mobile-nav":"file-upload","aria-label":a("fileUpload"),title:a("fileUpload"),disabled:r,onClick:d},React.createElement(Jt,{size:16}))}var Qa=`
+var _i=Object.create;var ot=Object.defineProperty;var Si=Object.getOwnPropertyDescriptor;var Ci=Object.getOwnPropertyNames;var Ai=Object.getPrototypeOf,Li=Object.prototype.hasOwnProperty;var Ri=(e,t)=>{for(var a in t)ot(e,a,{get:t[a],enumerable:!0})},Ha=(e,t,a,o)=>{if(t&&typeof t=="object"||typeof t=="function")for(let n of Ci(t))!Li.call(e,n)&&n!==a&&ot(e,n,{get:()=>t[n],enumerable:!(o=Si(t,n))||o.enumerable});return e};var Na=(e,t,a)=>(a=e!=null?_i(Ai(e)):{},Ha(t||!e||!e.__esModule?ot(a,"default",{value:e,enumerable:!0}):a,e)),Mi=e=>Ha(ot({},"__esModule",{value:!0}),e);var il={};Ri(il,{apply:()=>nl,inject:()=>tl,name:()=>el,redactStatus:()=>za});module.exports=Mi(il);var u=require("react");var je="/dsh-pocket",Ve="data-dsh-pocket-mobile-rightbar",Ke="dsh-pocket:mobile-rightbar",j=Object.freeze({status:"pocket.status",tunnelStart:"tunnel.start",tunnelStop:"tunnel.stop",tunnelSetConfig:"tunnel.setConfig",version:"pocket.version",update:"pocket.update",restart:"pocket.restart",lanTokenRefresh:"token.lanRefresh",lanAuthSetEnabled:"lanAuth.setEnabled",lanSetOverride:"lan.setOverride",lanSetEnabled:"lan.setEnabled",mobileRightbarSetEnabled:"mobile.rightbar.setEnabled",pinSetCustom:"pin.setCustom",pocketReset:"pocket.reset",fileRead:"pocket.fileRead"});function zt(e,t){let a=String(e).replace(/^[vV]/,"").split("."),o=String(t).replace(/^[vV]/,"").split(".");for(let h=0;h<3;h++){let l=parseInt(a[h],10)||0,c=parseInt(o[h],10)||0;if(l!==c)return l-c}let n=String(e).replace(/^[vV]/,"").match(/-.*$/)?.[0]??"",i=String(t).replace(/^[vV]/,"").match(/-.*$/)?.[0]??"";if(!n&&!i)return 0;if(!n)return 1;if(!i)return-1;let r=n.slice(1).split("."),s=i.slice(1).split("."),p=Math.max(r.length,s.length);for(let h=0;h<p;h++){let l=r[h]??"",c=s[h]??"";if(l===c)continue;let d=/^\d+$/.test(l),x=/^\d+$/.test(c);return d&&x?Number(l)-Number(c):d?1:x||l<c?-1:1}return 0}function za(e){return{proxyRunning:e?.proxyRunning===!0,proxyPort:e?.proxyPort??null,lanUrl:e?.lanUrl??null,lanQr:e?.lanQr??null,lanCandidates:Array.isArray(e?.lanCandidates)?e.lanCandidates:[],lanIpOverride:e?.lanIpOverride??"",tunnelRunning:e?.tunnelRunning===!0,tunnelUrl:e?.tunnelUrl??null,tunnelQr:e?.tunnelQr??null,tunnelState:e?.tunnelState??{phase:"idle"},tunnelConfig:e?.tunnelConfig??{mode:"quick",hostname:"",tokenSet:!1},dshPort:e?.dshPort??null}}var rt=require("react");var Pi=Na(require("@deepseek-ai/dsh-client-ui-primitives"),1),Oi=()=>null,nt=e=>{let t=Pi;for(let a of e){let o=t[a];if(o!==void 0)return o}return Oi},Da=nt(["IconPaperclipOutlineRegular","IconPaperclipOutline16"]),Ba=nt(["IconDownloadOutlineRegular","IconDownloadOutline16"]),Wa=nt(["IconPanelLeftOutlineRegular","IconPanelLeftOutline16"]),qa=nt(["IconFolderOpenOutlineRegular","IconFolderOpenOutline16"]);function Dt(){return document.querySelector("[data-shell-overlay]")?.parentElement??null}var ja=null;function N(){let e=ja;if(e!==null&&e.isConnected&&e.getAttribute("data-mobile-nav")==="frame")return e;let a=document.querySelector('[data-mobile-nav="frame"]')??Dt();return ja=a,a}var Ii="[data-sidebar-right-expand]",Fi="[data-sidebar-right-toggle]";function it(e=document,t=N()){let a=e.querySelector(Fi),o=e.querySelector(Ii),n=typeof o?.click=="function"?o:a;return typeof n?.click=="function"?(n.click(),!0):(t===null||(t.removeAttribute("data-aionui-preview-open"),t.setAttribute("data-aionui-explorer-open","")),!1)}function Va({toggleSidebar:e,t}){let[a,o]=(0,rt.useState)(!1);(0,rt.useEffect)(()=>{let i=()=>{let h=N();return h!==null&&!h.hasAttribute("data-sidebar-collapsed")};o(i());let r=0,s=()=>{r===0&&(r=requestAnimationFrame(()=>{r=0,o(i())}))},p=new MutationObserver(h=>{for(let l of h){if(l.type==="attributes"){if(l.attributeName==="data-sidebar-collapsed"){s();return}continue}let c=[...l.addedNodes,...l.removedNodes];if(c.length===0||!c.every(d=>d.nodeType===Node.TEXT_NODE)){s();return}}});return p.observe(document.documentElement,{subtree:!0,childList:!0,attributes:!0,attributeFilter:["data-sidebar-collapsed"]}),()=>{r!==0&&cancelAnimationFrame(r),p.disconnect()}},[]);let n=()=>{it()};return React.createElement(React.Fragment,null,React.createElement("button",{type:"button","data-mobile-nav":"toggle","aria-label":t(a?"close":"open"),"aria-expanded":a,title:t(a?"close":"open"),onClick:()=>e()},React.createElement(Wa,{size:16})),React.createElement("button",{type:"button","data-mobile-nav":"files","aria-label":t("files"),title:t("files"),onClick:n},React.createElement(qa,{size:16})))}function Q(e){if(typeof e!="object"||e===null)return;let t=e;if(typeof t.current=="string")return t.current;for(let a in t.byId){let o=t.byId[a];if(o===void 0)continue;let n=o.retainedBy?.mainView;if(typeof n=="number"&&n>0&&typeof o.id=="string")return o.id}}function Ka(e){return typeof e?.clear=="function"}function Ua(e){return typeof e?.open=="function"}var Hi=4,Ni=350;async function Ga(e){let t=e.attempts??Hi,a=e.intervalMs??Ni;for(let o=0;o<t;o+=1){try{await e.refresh?.()}catch{}if(!e.listed())return!0;o+1<t&&await e.sleep(a)}return!e.listed()}function $a({useSessions:e,downloadSessionLog:t,t:a}){let o=e(n=>Q(n));return React.createElement("div",{"data-mobile-nav":"drawer-actions"},React.createElement("button",{type:"button","data-mobile-nav":"session-log","aria-label":a("sessionLog"),title:a("sessionLog"),disabled:o===void 0,onClick:()=>{o!==void 0&&t(o)}},React.createElement(Ba,{size:14}),React.createElement("span",null,a("sessionLog"))))}function Xa({useInput:e,useSession:t,t:a}){let o=e(r=>r.phase!=="plain"),n=t(r=>r.subagent!==null),i=o||n;return React.createElement("button",{type:"button","data-mobile-nav":"file-upload","aria-label":a("fileUpload"),title:a("fileUpload"),disabled:i},React.createElement(Da,{size:16}))}var Ya=`
 /* ---------- base control styles (rendered at any width, hidden where unused) ---------- */
 
 [data-mobile-nav="toggle"],
@@ -165,9 +165,79 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
 }
 @media (prefers-reduced-motion: reduce) {
   [data-mobile-nav="delete-dialog-backdrop"],
-  [data-mobile-nav="delete-dialog"] {
+  [data-mobile-nav="delete-dialog"],
+  [data-mobile-nav="file-picker-backdrop"],
+  [data-mobile-nav="file-picker"] {
     animation: none !important;
   }
+}
+
+/* ---------- composer file picker (effects/composer-file-picker.ts) ----------
+   手机档回形针入口的两选项浮层（上传图片 / 上传附件）。宿主在 0.1.6 删掉了自带的
+   附件按钮，只剩 composer 里一个隐藏 input，直接点它只会弹系统文件选择器 ——
+   形态不可控、也没有「只挑图片」这条路（2026-10-06 报障）。
+   形态（同日店主反馈「这个 UI 太丑了，缩小点，不要从底部弹出」）：**贴锚点的小浮层**，
+   不是整宽底部弹层 —— 宽度贴着内容（「width: max-content」，上限 min(78vw, 240px)），行高 34px、
+   行间距 0（2026-10-07 店主：「之间的距离更紧致一点」+「右边的留白有点多了，往左边缩点」），字号 14px。
+   定位用「position: fixed」，top/left 由 JS 按回形针 rect 算（上方优先，夹进视口 8px
+   内边距，且**视口一变就重算** —— 键盘收起把整体下移一个键盘高时浮层必须跟着锚点走，
+   否则会停在会话中部，2026-10-07 真机报障），所以这里只写盒子、不写定位与整宽。
+   没有「取消」行：点浮层外或按返回键关闭（外层透明遮罩只负责收点击）。
+   挂 document.body（与上面的 delete-dialog 同一取舍：挂在 frame 里会被第三方
+   dismiss shim 的捕获链吞点击），z 在移动档块里抬到 1400。 */
+[data-mobile-nav="file-picker-backdrop"] {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: transparent;
+}
+[data-mobile-nav="file-picker"] {
+  position: fixed;
+  box-sizing: border-box;
+  /* 宽度贴着内容（2026-10-07 店主：「右边的留白有点多了，往左边缩点」）：
+     两行都是「图标 + 两字标签」，固定 168px 起步会在右侧留一大块空白。 */
+  width: max-content;
+  min-width: 0;
+  max-width: min(78vw, 240px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-2, #fff);
+  box-shadow: rgba(0, 0, 0, .16) 0 8px 28px, rgba(0, 0, 0, .06) 0 0 0 .5px;
+  animation: dsh-web-mobile-fade .12s var(--ds-ease-in-out, ease-in-out);
+}
+[data-mobile-nav="file-picker-option"] {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary, currentColor);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-mobile-nav="file-picker-icon"] {
+  flex: none;
+  display: inline-flex;
+  color: var(--dsw-alias-label-secondary, currentColor);
+}
+[data-mobile-nav="file-picker-icon"] svg {
+  width: 18px;
+  height: 18px;
+}
+[data-mobile-nav="file-picker-option"]:active {
+  background: var(--dsw-alias-interactive-bg-active, rgba(127, 127, 127, .12));
 }
 
 /* ---------- popover band above the open drawer (mobile only) ----------
@@ -230,6 +300,10 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-mobile-nav="delete-dialog-backdrop"] {
     z-index: 1400 !important;
   }
+  /* 同一个带里：回形针弹层也要压过抽屉（z 1300）与抽屉遮罩（1250）。 */
+  [data-mobile-nav="file-picker-backdrop"] {
+    z-index: 1400 !important;
+  }
   [data-mobile-nav="delete-dialog"] {
     z-index: 1401 !important;
   }
@@ -285,6 +359,48 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   body:has([data-sidebar-right-open][data-sidebar-right-panel="fullscreen"])
     [class*="_overlayLayer"] {
     z-index: 1400 !important;
+  }
+}
+
+/* ---------- touch press feedback (mobile + hover: none only) ----------
+   Android WebView paints its own translucent blue tap highlight
+   (-webkit-tap-highlight-color default) over every tapped control. The
+   property is inherited and no host package sets it on descendants (grep of
+   dsh-client-ui-* bundles, 2026-10), so transparent on html/body clears it
+   page-wide; the explicit transparent values on our own controls above stay
+   as the desktop-width fallback. In its place the UI gives its own pressed
+   state: an inset box-shadow tint (paint-only, no layout, does not fight a
+   host background) in the host's interactive-bg-active colour, which the
+   theme defines for both light and dark. Every selector sits in :where(), so
+   (0,0,0) loses to any host or plugin rule that styles the element itself —
+   aria-selected / aria-pressed / own :active states keep their look — and
+   :focus-visible outlines are untouched. Desktop and narrow mouse windows
+   never enter this block (MOBILE_QUERY + hover: none). */
+@media (max-width: 1023px) and (pointer: coarse) {
+  @media (hover: none) {
+    html,
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+    :where(button, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="option"], [role="tab"], [role="treeitem"], a[href]) {
+      transition: box-shadow .12s var(--ds-ease-in-out, ease-in-out), transform .12s var(--ds-ease-in-out, ease-in-out);
+    }
+    :where(button, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="option"], [role="tab"], [role="treeitem"], a[href]):where(:active):where(:not(:disabled, [aria-disabled="true"], [aria-selected="true"], [aria-pressed="true"], [aria-checked="true"])) {
+      box-shadow: inset 0 0 0 100vmax var(--dsw-alias-interactive-bg-active, color-mix(in srgb, currentColor 8%, transparent));
+    }
+    /* Icon-only buttons (a lone svg child, or a button that carries only an
+       aria-label) also shrink a touch. */
+    :where(button:has(> svg:only-child), button[aria-label]:not(:has(> span, > div))):where(:active):where(:not(:disabled, [aria-disabled="true"])) {
+      transform: scale(.96);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :where(button, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="option"], [role="tab"], [role="treeitem"], a[href]) {
+        transition: none;
+      }
+      :where(button:has(> svg:only-child), button[aria-label]:not(:has(> span, > div))):where(:active) {
+        transform: none;
+      }
+    }
   }
 }
 
@@ -375,7 +491,7 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   }
 }
 
-`;var Ja=`/* ---------- mobile-only layout (narrow viewport AND touch-primary pointer) ---------- */
+`;var Za=`/* ---------- mobile-only layout (narrow viewport AND touch-primary pointer) ---------- */
 
 @media (max-width: 1023px) and (pointer: coarse) {
   /* --- Phone chrome ---
@@ -451,6 +567,19 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     position: relative !important;
     grid-template-columns: minmax(0, 1fr) 0 0 !important;
     padding-top: env(safe-area-inset-top, 0px) !important;
+    /* Bottom safe area, symmetric with the top inset above. It MUST stay in
+       this rule: box-sizing: border-box is the pair that makes the padding eat
+       into the one-viewport height instead of adding scrollable overflow
+       (pitfalls §safe-area — padding without border-box pushes the composer
+       seat below the fold).
+       Why we have to own it: the third-party @linxin666 sheet (the same one
+       the grid-template-columns note above is about) ships this padding only
+       under (max-width: 768px), and the host ships none at all, so 769-1023px
+       touch devices had no bottom inset from either side and their content sat
+       in the system-bar band (issue #193). In the <=768px band that sheet's
+       declaration and this one are the same property with the same value, so
+       they do not stack. */
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 
   /* The sidebar column (first grid child) becomes a left drawer. The drawer
@@ -516,16 +645,33 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      the remaining 40px showed our own column background as a vertical strip
      along the right edge (measured: content right edge 280, column 320; the
      owner reported a white bar). The inner surface owns that band instead, so
-     the strip is filled by the drawer's real surface colour. */
+     the strip is filled by the drawer's real surface colour.
+     That scenario cannot recur as the layout stands: the column is
+     min(88vw, 280px), never wider than the 280px inner surface, so the
+     inequality that produced the band (column > surface) no longer holds at any
+     viewport width (measured 430/390/340/320 = flush at 280, 300 -> 264,
+     280 -> 246; a narrower column just crops the surface). The only change that
+     would bring it back is raising the column's upper bound past 280px, or the
+     host narrowing the inner surface below it. */
     /* The 40px band is a STACKING result, not a colour one: the drawer's inner
      surface is only 280px wide (host markup), while our column is 320px and
      carries z-index 1300 - so the column's own background paints OVER the
      surface's right 40px. Pixel-verified from a screenshot with the drawer open:
      x=10..270 rgb(249,250,251) (the surface) against x=285..315 rgb(255,255,255)
      (our white column). Repainting the column with the surface's own value makes
-     the seam invisible whatever the theme does; the surface underneath keeps its
-     own colour for the 280px it does cover. */
-    background: var(--dsw-alias-bg-surface, #f9fafb);
+     the seam invisible.
+     The value pinned here is the host's own drawer-fill token - the one
+     .pI_x6G_sidebarCol paints with: --dsw-specific-sidebar-fill, i.e.
+     --dsw-static-neutral-bluish-50 (#f9fafb) in light and
+     --dsw-static-neutral-bluish-900 (#1b1b1c) in dark. Pinning it, rather than
+     letting the host rule paint, keeps the band covered without depending on
+     cascade order. The fallback is deliberately the token's LIGHT value: if the
+     host ever renames this internal token the declaration degrades to today's
+     light behaviour instead of going unset, so it cannot get worse. Do not
+     "simplify" this back to --dsw-alias-bg-surface: that name is defined nowhere
+     in the host, which froze this rule on its fallback and painted the drawer
+     light in the dark theme (issue #192). */
+    background: var(--dsw-specific-sidebar-fill, #f9fafb);
     /* Drawer swipe gestures (edge swipe-in / content swipe-out, see
      docs/specs/2026-08-27-sidebar-swipe-gestures.md).
      One rule is load-bearing for the gesture layer: dropping pan-x on the
@@ -645,6 +791,18 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
 
+  /* Phone chrome keeps only the collapse control. Split visibility must not
+     depend on data-dockkit-split-blocked: DockLayout measures after each commit,
+     so conditional display can alternate blocked/allowed at the width threshold.
+     Hide the wrapper too, since a blocked split wrapper is a tab stop. */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-sidebar-right-panel] [data-dockkit-split-button],
+    [data-sidebar-right-panel] span:has(> [data-dockkit-split-button]),
+    [data-sidebar-right-panel] [data-sidebar-right-mode="push"] {
+      display: none !important;
+    }
+  }
+
   /* prefers-reduced-motion: the drawer's .28s slide is motion; drop it
      (audit S2 2026-08-27 — the old reduce block only covered the settings
      sheet and its mask). Same idiom as the animation:none blocks below. */
@@ -687,6 +845,65 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     width: 0;
     height: 0;
   }
+  /* ---------- selection-drag autoscroll ramp (2026-10-07 live-host probe) ----------
+     Report (Android): once the conversation chrome became unselectable, dragging
+     the selection handle up stopped grabbing the title bar, but the conversation
+     did not scroll WITH the finger - it teleported a few screens up instead.
+     Mechanism measured on the live host (390x844, touch-emulated, selection anchor
+     inside the message flow, pointer held 1.4s): Blink only starts autoscrolling a
+     selection drag once the pointer is within ~3px of the scrollport's top edge,
+     and the RATE grows with how far the pointer sits ABOVE that edge, saturating
+     fast - y=140/100 -> 0 px/s, y=70 -> 1018, y=50 -> 2225, y=30 -> 3329,
+     y=10 -> 3232 px/s. The conversation scrollport's top edge is the header's
+     bottom edge (y=67), so every finger position on the header is 17-57px "above
+     the list" and lands in the 2200-3300 px/s band: one 777px screen every ~0.23s,
+     which reads as dropped frames / a jump to somewhere else. The ramp is
+     geometric, not ours - from y>=100 nothing scrolls at all, so the speed is
+     decided by where the list's box starts.
+     Fix: extend the scrollport's box up under the header so a drag point over the
+     header is only a few px above the list edge. Measured with the box moved to
+     y=0: y=30 -> 0 px/s, y=10 -> 595 px/s. The visual position is unchanged by
+     construction - the box grows upward by H while padding-top: H pushes the
+     content back down, so an element at content offset X still paints at
+     H + X - scrollTop (live-host check: header [0,0,390,67] and the composer seat
+     [0,740,388,104] are identical before/after; only the box [0,67,388,777] ->
+     [0,0,388,844] and scrollHeight +H move).
+     H comes from --mobile-nav-header-h, written by the reconciler task
+     "header-metrics" (phone-chrome.ts) as the header's bottom edge measured from
+     the frame's top. It is 0px whenever the header is not measurable (hero / blank
+     header), which makes both declarations below a no-op - the layout fails open if
+     the host ever stops rendering a conversation header. Phone tier only: the
+     desktop header is an ordinary in-flow bar and there is no touch selection drag
+     to ramp. */
+  [data-mobile-nav="frame"] [data-phase] [class*="_scrollBody"] {
+    margin-top: calc(-1 * var(--mobile-nav-header-h, 0px)) !important;
+    padding-top: var(--mobile-nav-header-h, 0px) !important;
+  }
+  /* ---------- selection handle drag: keep the extent local (2026-10-07) ----------
+     The phone selection handle drag is a native (Android WebView
+     TouchSelectionController) gesture: each move hit-tests the handle position to
+     resolve the selection extent and then reveals that extent. With the bar
+     unselectable but still hit-testable it won that hit test, Blink walked FORWARD
+     in DOM order to the next selectable node - the flow's first item, the
+     "Load earlier" gate, measured on the live host - and revealed it: the viewport
+     teleported to the top of the conversation instead of extending by a line
+     (reported as "not scroll-selection, it jumps somewhere else"). Dropping the bar
+     out of the hit test for the duration of the selection lets the same point
+     resolve into the message the lifted box above now puts underneath it, so the
+     extent stays local and the scroll ramp stays gentle. 「pointer-events」 only -
+     no layout change, so nothing reflows while the finger is down. The marker is
+     set by installSelectionChromeYield (phone-chrome.ts) and only for selections
+     that live in the conversation (composer/drawer keep their chrome
+     interactive); header buttons remain reachable the moment the selection
+     collapses, which is also what a tap anywhere else does. */
+  html[data-mobile-nav-selecting] [data-mobile-nav="frame"] [data-phase] header {
+    pointer-events: none !important;
+  }
+  /* A transparent header was harmless while nothing could scroll underneath it;
+     with the box lifted it would show the messages through the title row
+     (headless screenshot 2026-10-07: message text bled across "Standard mode"
+     and the tab strip), so the header rule below now carries an opaque
+     background. */
   /* Message action rows (copy / run-time badges) can overflow the right
      edge on narrow screens — keep them inside the message width. */
   [data-phase] [class*="_actions"] {
@@ -795,14 +1012,6 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     max-width: 100%;
   }
 
-  /* --- Composer bottom row on mobile ---
-     The official row contains two lanes: tools (plus + permission/mode
-     controls) and trailing (model + context + send). The previous rules made
-     the modes lane flex:none, so its full intrinsic width collided with the
-     model selector on narrow phones. Keep fixed hit targets fixed, but let
-     text-bearing controls shrink and ellipsize before they paint over the
-     trailing lane. */
-
   /* 底部安全区与输入框边距（pocket 补丁）：基础内边距 5px，另加 home indicator 的
      env(safe-area-inset-bottom)。viewport-fit=cover 下 frame 只垫了顶部 inset，
      输入座位若不垫底，stats 条会落进 home indicator 保留区。类名哈希代际不同时
@@ -813,6 +1022,13 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  /* --- Composer bottom row on mobile ---
+     The official row contains two lanes: tools (plus + permission/mode
+     controls) and trailing (model + context + send). The previous rules made
+     the modes lane flex:none, so its full intrinsic width collided with the
+     model selector on narrow phones. Keep fixed hit targets fixed, but let
+     text-bearing controls shrink and ellipsize before they paint over the
+     trailing lane. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) {
     box-sizing: border-box;
     container-type: inline-size;
@@ -839,6 +1055,15 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      fit. Main-session three-control form keeps single-row layout. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) {
     flex-wrap: wrap;
+  }
+  /* Issue #140: in that same dual-primary form the stop key and the send key
+     sit one 3px lane-gap apart — two same-shaped 34px pills where a mis-touch
+     on the left one interrupts the running reply. The 2026-09-23 「焊在一起」
+     3px decision keeps governing the main session's [model][send] cluster;
+     only this form (the one with two adjacent destructive-adjacent primaries)
+     gets +8px between the stop and the send key. Knob: margin-right. */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] > [class*="_primary"]:has(~ [class*="_primary"]) {
+    margin-right: 8px;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > :first-child {
     flex: 0 1 auto;
@@ -976,6 +1201,36 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      effects/model-menu-anchor.ts centers the panel on the trigger and clamps it to the
      viewport. Do not re-add a CSS rule here without checking the portal parent. */
 
+  /* Phone reasoning-effort list is compact; the model catalog and the tablet stay
+     host-sized. Measured on the real host bundle (dsh-client-ui-model-selection
+     0.2.0-rc.2, 393x844, phone emulation): the effort pane renders 248px wide
+     (its own min-width is 240px) while its four levels need far less.
+     The two panes differ in the SHAPE of their radio list, and that difference is
+     the only reliable discriminator (measured, same run):
+       effort pane   DIV._surface_ri079_1._7KE1Ra_menu[role=menu]
+                       > DIV._material_ri079_21
+                       > button._7KE1Ra_option[role=menuitemradio]   <- DIRECT child
+       model pane    DIV._surface_ri079_1._7KE1Ra_menu[role=group]
+                       > DIV._material_ri079_21
+                       > DIV._7KE1Ra_groups.scrollable[role=menu]
+                           > SECTION._group_121p8_1[role=group] > button[role=menuitemradio]
+     The host sets 「role: pane === "model" ? "group" : "menu"」, so the effort pane is
+     the role=menu shell and its radios ARE direct children, while the catalog's sit
+     two levels deeper. Requiring both halves — role=menu AND a direct-child radio —
+     therefore selects the effort list and leaves the catalog at its host size.
+     Neither half is safe alone: dropping the role also matches the catalog's inner
+     _groups container, and matching radios as descendants selects the catalog shell.
+     (Measured with each variant: the group/descendant form hit the catalog only.)
+     「min-width: 0 !important」 is load-bearing: without it the host's own
+     min-width 240px keeps the pane at 240 no matter what width is set. */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [class*="_7KE1Ra_menu"][role="menu"]:has(> [role="menuitemradio"]) {
+      width: min(208px, calc(100vw - 32px)) !important;
+      min-width: 0 !important;
+      max-width: calc(100vw - 32px) !important;
+    }
+  }
+
   /* --- Fix composer row overflow at narrow widths (320px-360px) ---
      Force every direct child of the tools and trailing lanes to shrink,
      so they can fit within the available space without causing horizontal
@@ -1000,7 +1255,14 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      itself is shrinkable, so a squeezed root lets the trigger paint over
      the pinned send button. Keep the whole meter at its natural size; its
      trigger uses aria-haspopup="dialog", so the model-selector menu rules
-     (keyed on "menu") still do not apply. */
+     (keyed on "menu") still do not apply.
+     GENERATION NOTE (issue #140, 2026-09-29): 0.1.7-rc.2 moved the
+     ContextMeter out of this lane into the dock row under the card (next to
+     the TPS stats pills) — on rc.2 NONE of the trailing-lane meter rules in
+     this section match any more, and the trigger is back to its official
+     ~22px-tall box. They stay for the 0.1.5/0.1.6 generations where the
+     meter really rendered in the lane (structural anchors, inert elsewhere);
+     the rc.2+ hit-area repair lives in the dock-row section below. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] > [class*="_root"] {
     flex: none;
     min-width: 0;
@@ -1085,12 +1347,88 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [class*="_root"]:has(> [class*="_trigger"][aria-haspopup="dialog"]) {
     margin-left: auto;
   }
+
+  /* --- rc.2+ 的第二个失效面：子代理 composer 里环锚点回不到发送键左边（2026-10-12）---
+     上面那条「无模型胶囊时由 ContextMeter 当吸收器」的兜底，在 **0.1.7-rc.2+** 上
+     再也匹配不到：宿主已经把 ContextMeter 从 trailing 车道搬进卡片下方的 dock 行
+     （实测路径 … > [class*="_card"] > [class*="_root"] > [class*="_dock"] > span.JObwrW_root），
+     它不再是车道的子元素，「:has(> [class*="_trigger"][aria-haspopup="dialog"])」落空。
+     后果（headless 393×844 实测，主/子两视图同机对比）：子代理会话里模型胶囊整个不渲染，
+     「standardControls」塌成 0×0 且 margin-left:0，于是车道里唯一带 auto 的是发送键自己，
+     插件注入的环锚点 span[data-mobile-nav="stats-ring-reserve"]（普通流内元素）被留在
+     车道左缘 —— 环 x=127，而主会话同一元素 x=310、发送键在 333：**188px 空档**，
+     用户看到的就是「上下文表跑到左边去了」。
+     修法与 #191 同源（同一根因族：rc.2 把 meter 搬走后，车道里的 auto 归属没人接管）：
+     没有模型胶囊时让**环锚点**顶替 meter 当吸收器，并把发送键的 auto 清零 ——
+     不清零的话两个 auto 会平分空隙，环同样回不到键边。
+     门控与上面那条兜底完全一致（车道里没有 aria-haspopup="menu"），所以主会话
+     （模型胶囊在场）零改动。 */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [data-mobile-nav="stats-ring-reserve"] {
+    /* !important 不可省：compat 层有一条 [data-mobile-nav="stats-ring-reserve"]
+       { margin: 0 2px 0 0 !important }。两条都 important 时先比特异性 —— 本选择器
+       远高于那条裸属性选择器，加 !important 就能赢；不加则被它压成 margin-left:0。
+       2026-10-12 受控实验实测：不加 → 环仍停在 x=127、发送键反被拉到 150（188px 空档
+       只是从「环与键之间」搬到「键的右侧」）；加 → 环 310 / 键 333，正是期望值。 */
+    margin-left: auto !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [class*="_primary"] {
+    margin-left: 0;
+  }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] > [class*="_primary"] {
     flex: none;
     margin-left: auto;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:has([class*="_trigger"][aria-haspopup="menu"], > [class*="_root"] > [class*="_trigger"][aria-haspopup="dialog"]) > [class*="_primary"] {
     margin-left: 0;
+  }
+  /* Issue #191 — the subagent running form (stop + send, both _primary) has
+     NEITHER of the zeroing rule's two gates: ModelSelect renders nothing in an
+     addressed subagent session (no aria-haspopup="menu" in the lane) and the
+     meter lives in the card's dock row since rc.2 (no _root > dialog trigger
+     in the lane either). Both primaries therefore keep the auto margin from the
+     rule above, and flex SPLITS the free space between the two auto margins —
+     the stop key lands mid-lane with a void on both sides of it.
+     Same recipe as the model-present case (:707-712): zero every auto so no
+     element competes for the slack, and let justify-content pin the whole
+     cluster right. Zeroing alone would hug the LEFT edge instead, so both
+     halves are required. Scoped to the dual-primary form, so the main
+     session's single-primary path keeps its auto untouched. */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] {
+    justify-content: flex-end;
+  }
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] > [class*="_primary"] {
+    margin-left: 0;
+  }
+
+  /* --- ContextMeter hit area on 0.1.7-rc.2+ (issue #140) ---
+     The stats-line overlay parks the ring in the composer card's trailing
+     lane (right cluster next to the send key — a deliberate 2026-09-23
+     placement, kept per the reporter's confirmation at acceptance). The
+     official trigger is 16x20px, far under the touch minimum. Regrow the
+     hit area IN PLACE with a transparent ::after (the 📎 recipe).
+     2026-09-29 acceptance, final geometry (headless-measured): the ring
+     svg and its reserve are set to 18px (compat.css.ts — 16px was too
+     small to aim, 24px/20px too big, the reporter settled on 18px), the
+     width growth is absorbed by the lane's left slack so the key gaps
+     stay 6px/5px, and the hit box is a SYMMETRIC 26x26 square
+     (inset -4px) keeping the generous touch area around the smaller
+     ring — 2px/1px clearance to the model and send keys. The track is
+     deepened to 25% black (compat.css.ts) so the donut reads as a
+     meter, not a spinner.
+     Knobs: the svg/reserve size (compat.css.ts) and this inset; the box
+     must stay a square hugging the ring, its edges clamped by the two
+     neighbouring keys. The dock container owns only this one dialog
+     trigger (the TPS stats pills render plain text), so a scoped
+     aria-haspopup="dialog" anchor cannot cross-match anything; the DOM
+     ancestry (ring inside the dock container) is unchanged by the
+     overlay's absolute positioning. */
+  [data-phase] [class*="_dock"] [class*="_trigger"][aria-haspopup="dialog"] {
+    position: relative;
+  }
+  [data-phase] [class*="_dock"] [class*="_trigger"][aria-haspopup="dialog"]::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
   }
 
   /* --- Third-party model seats (issue #60: @hytime/dsh-thinking-effort) ---
@@ -1105,28 +1443,102 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      screen at 393px (reporter-measured: root x=106, panel left=-230; with our
      stylesheet disabled the root sat at x=339 and the panel at +3, which pins
      the blame on our injection). Both repairs anchor on the plugin's own
-     stable data-seat-* markers (identical across v0.2.3-v0.3.1) and leave the
+     stable data-seat-* markers (identical across v0.2.3-v0.3.7) and leave the
      official pill untouched:
      1. the seat root stretches across the trailing lane with its content
         pushed to the right edge, so the closed chip welds onto the
         [meter][send] cluster AND the grown root consumes all free space,
         which zeroes the meter fallback's margin-left:auto (flexible lengths
-        resolve before auto margins — no double void);
-     2. while the panel is open its anchor is re-centered on the stretched
-        root (the same left:50% + translateX recipe as the official menu
-        rule), so the panel hugs the composer's right side and the plugin's
-        own min(336px, 100vw - 32px) width keeps it inside the viewport at
-        every width. The reporter's rejected translateX attempt centered on
-        the UNFIXED zero-width root; centering only works once the root is
-        stretched. */
+        resolve before auto margins — no double void). The root is also made
+        position:static so the panel below anchors to the composer card
+        instead — the root is 0-width while the panel is open, so any
+        root-relative offset is meaningless;
+     2. while the panel is open its anchor is laid over the composer card
+        (left:0/right:0 against the card's padding box + an auto-margin
+        centre), so the panel is centred on the card, never rides the
+        collapsed root and never leaves the viewport.
+
+     ── 2026-10-04, thinking-effort 0.3.7: the old centring recipe had to go ──
+     Repair 2 used to be 'left:50%; right:auto; transform:translateX(-50%)'.
+     That recipe only worked while the plugin positioned nothing itself: a
+     mobile viewport left the panel hanging off whichever edge the collapsed
+     root sat near. 0.3.7 added its own narrow-screen clamp, which writes an
+     INLINE 'left' (390px phone, new chat: root x=122, inline left=-106px —
+     i.e. 16px, exactly the right place). Inline 'left' wins over the
+     stylesheet, so the recipe's 'left' became dead weight while its
+     'transform' kept firing, shifting the panel half its width further left:
+     x = 122 + (-106) + (-168) = -152px, off screen by 152px — the reproduced
+     bug. Two layers each half-applied. The fix keeps repair 1 (the stretch
+     is still what welds the closed chip onto the [meter][send] cluster) and
+     replaces repair 2 with the card-anchored recipe above; 'transform:none'
+     is what neutralises the stray translateX, and 'left:0' is '!important'
+     because it must beat that inline value. Panel width stays the plugin's
+     own (336px, capped at 100%) so the Off/High/Max ticks keep their
+     designed spacing.
+
+     The panel opens bottom:calc(100% + 8px) above the card, but the card is
+     only 70-108px tall on a phone while the panel is 208px, so it always
+     overflows upward — that is the plugin's own desktop behaviour and is
+     kept. What is NOT acceptable is overflowing the VIEWPORT, so three
+     guards follow (the inner listbox, the keyboard-short phone, landscape).
+     Every guard stays inside this mobile media query: desktop untouched. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] {
     flex: 1 1 auto;
     justify-content: flex-end;
+    /* Keep parked here rather than in a second rule: the panel below anchors
+       to the card, not to this root. */
+    position: static !important;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    left: 0 !important;
+    right: 0 !important;
+    max-width: min(100%, 420px) !important;
+    transform: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Guard 1 — the panel's inner model listbox opens upward (bottom:58px
+     inside the panel) with max-height:min(220px, 100vh - 96px). On a short
+     screen that ceiling is taller than the room above the panel, so the
+     listbox pokes past the viewport top (320x568: menu y=-41). Clamp it to
+     half the viewport minus the panel's own 58px offset + padding. */
+  @media (max-height: 700px) {
+    [data-seat-model-menu] {
+      max-height: min(220px, calc(50vh - 110px)) !important;
+    }
+  }
+
+  /* Guard 2 — with the on-screen keyboard up (portrait, ≤505px tall) there
+     is not even 208px of room above the card. Let the whole panel scroll
+     inside itself instead of escaping the top; children keep their natural
+     height so the slider and its ticks are never squashed. */
+  @media (orientation: portrait) and (max-height: 505px) {
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
+      max-height: calc(50dvh - 45px) !important;
+      overflow-y: auto !important;
+      overscroll-behavior: contain !important;
+    }
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] > * {
+      flex: 0 0 auto !important;
+    }
+  }
+
+  /* Guard 3 — landscape: above the card there are only ~156px (the card
+     sits low, the panel is 208px), so an upward opening can never fit.
+     Detach the panel into a bottom-docked sheet instead; it floats clear
+     of the card and the viewport top. */
+  @media (orientation: landscape) {
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
+      position: fixed !important;
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 12px !important;
+      top: auto !important;
+      transform: none !important;
+      margin: 0 auto !important;
+      max-width: min(100%, 420px) !important;
+    }
   }
 
   /* --- Composer file entry (0.1.6 host) ---
@@ -1144,11 +1556,17 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
        （面积 +47%），再由下面的 ::after 向外扩 4px（最终命中区约 42×42）。
        **图标位置不变**：盒宽 +6 后 margin-left 从 -10 收到 -13，图标中心原地不动；
        高度对齐发送键的 34px，行高不受影响。 */
-    width: 34px !important;
-    min-width: 34px !important;
-    max-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
+    /* 2026-10-07 店主：「点一下有一层深一点的灰色，也有一层浅一点的灰色，去掉一层」。
+       根因是**嵌套两层**：宿主的按钮盒底色（34x34、圆角 8）与我们的 ::before 胶囊
+       （28x28 圆）半透明叠半透明 —— 重叠区深、外圈浅。压层叠（!important）在真机上
+       压不住那一层（实测按下仍是 233 外圈 + 222 内层），所以改成**结构上只有一层**：
+       可见胶囊 = 按钮盒本身。盒子 28x28 + 全圆角，与加号同尺寸；图标中心不变
+       （盒宽 34→28 ⇒ margin-left 由 -11 收到 -8）；命中区仍由 ::after 外扩。 */
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
     padding: 0 !important;
     position: relative !important;
     /* 左移 10px + 图标 14→16px（2026-09-23，店主："太往右了、有点小"）：
@@ -1159,11 +1577,11 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
        = 盒左缘 + 8.85，故盒左缘取 98 ⇒ margin-left: -10px（吃掉 6px gap 后再
        压进 modes 尾部留白 4px，不碰它的墨迹：chevron 墨迹止于 ~91）。
        这一个数值就是"往左多少"的旋钮，可按眼睛调，别动别的。 */
-    margin: 0 0 0 -11px !important;
+    margin: 0 0 0 -8px !important;
     display: grid !important;
     place-items: center;
     border: 0 !important;
-    border-radius: 8px;
+    border-radius: 999px;
     background: transparent;
     color: inherit;
     cursor: pointer;
@@ -1182,9 +1600,24 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     background: transparent;
     transition: background .12s ease;
   }
-  [data-composer-card] [data-mobile-nav="file-upload"]:hover::before,
-  [data-composer-card] [data-mobile-nav="file-upload"]:active::before {
+  [data-composer-card] [data-mobile-nav="file-upload"]::before {
+    /* 胶囊已由盒子本体承担，这一层永久透明（保留节点是为了不惊动既有锚点）。 */
+    background: transparent !important;
+  }
+  /* 2026-10-07 店主："点一下有一层深一点的灰色，也有一层浅一点的灰色，去掉一层"。
+     真因是**半透明叠半透明**，不是我们画了两层胶囊：宿主全局 CSS 里有
+     「button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}」
+     （特异性 0,2,1 > 上面那条基础规则的 0,2,0，所以它赢了）与
+     「button:active{background-color:#0000001f}」，两者都画在这个按钮的**盒子**上；
+     而 ::before 的可见胶囊又画一层 ⇒ 重叠区深、外圈浅，看着就是两层灰。
+     可见胶囊只留 ::before 一层：盒子在所有状态下强制透明（::after 只有命中区、无底色）。 */
+  [data-composer-card] [data-mobile-nav="file-upload"]:hover,
+  [data-composer-card] [data-mobile-nav="file-upload"]:active,
+  [data-composer-card] [data-mobile-nav="file-upload"]:focus-visible {
     background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: transparent !important;
   }
   /* 压掉浏览器默认的淡蓝 tap 高亮（店主 2026-09-23："单纯点击图标，出现一个淡蓝色
      的原始的点击画面"）。读源码取证：宿主头部那几个包（dsh-client-ui-subagent /
@@ -1204,6 +1637,20 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-composer-card] [role="button"],
   [data-composer-card] [tabindex] {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 深色下顶栏与页面底色的断层（issue #176「减轻顶部纯黑区域与网页头部的突兀色差」/
+     2026-10-11 真机反馈：手机上头部呈灰黑一块，跟上面那行系统时间栏分得太开）。
+     实测（393×844，真实会话，深色）：page/body 与 frame 都是 #151517（--dsw-alias-bg-base），
+     而宿主会话头部自带层色 #232324，头部上方还夹着一条跟随页面底色的安全区带
+     ⇒ 「深色带 → 较亮头部 → 深色内容」三段断层。
+     处理：手机档（本块在移动媒体查询内）把头部底色并到页面底色，层次改由分隔线与内容承担；
+     浅色档宿主两头同为白、本来就没有断层，不参与；桌面档不碰。
+     宿主深色标记挂在 body 上（实测设 body[data-ds-dark-theme] 即切到 #151517），
+     html 上若也挂同一个标记一并覆盖。 */
+  body[data-ds-dark-theme] [data-mobile-nav="frame"] [data-phase] header,
+  html[data-ds-dark-theme] [data-mobile-nav="frame"] [data-phase] header {
+    background-color: var(--dsw-alias-bg-base, #151517) !important;
   }
   /* 头部 UI 的按下反馈（店主 2026-09-23："是头部 UI，没有触发反馈"）。
      取证：头部四个宿主包 :active 全为 0，反馈只挂 :hover。
@@ -1240,8 +1687,8 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-composer-card] [data-mobile-nav="file-upload"]::after {
     content: '';
     position: absolute;
-    inset: -4px;
-    border-radius: 12px;
+    inset: -7px;
+    border-radius: 999px;
   }
   /* A busy submit phase or a subagent session refuses attachments. The host
      gates intake on canAcceptDrop (package-private), so this reads the closest
@@ -1303,6 +1750,22 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding-left: 0 !important;
     padding-right: 8px !important;
     position: relative !important;
+    /* Opaque AND above the flow, both required: the host bar has no background,
+       and the message flow is a later sibling, so it painted OVER the bar (three
+       headless screenshots 2026-10-07: transparent -> content read through the
+       title row; opaque but unraised -> byte-identical to transparent, i.e. the
+       background was painted underneath; opaque + raised -> pixel-identical to
+       the untouched band). The scroll box runs underneath because of the
+       "selection-drag autoscroll ramp" rule above (it lifts it by
+       --mobile-nav-header-h). Same surface token the panel ghost uses, so themes
+       carry over; the host keeps its --dsw-alias-border-l3 bottom border.
+       z-index 30 clears the flow's own raised layers (host banners measured at
+       z 6-7 and the marks slot / composer seat at 7 on the live host) while
+       staying under this plugin's overlay tier (55+ backdrops/panels, FAB 21 is
+       hero-only where the header is hidden, drawer/menus 1000+) so a dialog or
+       the drawer still covers the bar. */
+    background: var(--dsw-alias-bg-layer-1, #fff) !important;
+    z-index: 30 !important;
   }
   /* The hero phase's empty header must stay hidden on phones. The host hides
      it via the headerHidden class at (0,1,0), but its own session-controller
@@ -1456,6 +1919,14 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     left: auto !important;
     top: 12px !important;
     z-index: 2 !important;
+  }
+  /* 手机档（≤767 + coarse）：文件夹按钮右移 4px（原 8px），为标题行右簇再腾出空间。
+     与左侧 ☰ 的 8px 不再对称，是用户明确接受的取舍（2026-10-12 用户规格）。
+     平板档这一档没被要求动，所以留在这条手机档作用域里；共用档保持本批之前的值。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="files"] {
+      right: 4px !important;
+    }
   }
   [data-mobile-nav="frame"] [data-phase] header [class*="_headerActions"] {
     display: flex !important;
@@ -1686,6 +2157,9 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      plus 2px of breathing room, so restore that instead of narrowing the
      opener: 46px clears the 36px box at right:8 by 2px at every width. */
   [data-mobile-nav="frame"] [data-phase] header [class*="wSkVaW_titleCluster"] {
+    /* 本批之前的值。2026-10-12/13 那串「46 → 40 → 36 → 32 → 26 → 34」的实验
+       **只针对手机档**（后台任务圆点搬进标题行后与预设 chip 的间距），已整串
+       搬进下面那条手机档作用域；共用档（= 平板档）保持本批之前的 46px 不动。 */
     padding-right: 46px !important;
   }
   /* Header crowding on narrow phones.
@@ -1731,6 +2205,18 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
       display: none !important;
     }
   }
+
+  /* --- 顶栏状态 chip 座位契约：**暂缓**（2026-10-12 受控实验后整块撤回）---
+     用户规格：「子智能体 chip 固定不变，后台任务 chip 出现在它左侧、间隔 2px」。
+     首版用 flex 容器 + order + gap 实现，**受控实验证明该机制不成立**：
+     子智能体 chip（ZKlsPq_root）在 alpha.2 代宿主上被插件自己钉成 position:absolute，
+     绝对定位元素脱离文档流，flex 的 order 与容器 gap 都决定不了它的落点 ——
+     注入一颗合成 jobs chip 后该 chip 实测从 x=292 跳到 x=174（视觉间距 −211px），
+     三个目标点无一达成；容器 computed gap 也仍是宿主自己的 4px。
+     真实 jobs chip 无法在受控环境构造（宿主在后台任务数为 0 时整颗不渲染），
+     故本条**已整块撤回**，等拿到「真机带后台任务的截图 + 视觉稿」后按绝对定位口径重做。
+     撤回是安全的：本组只在两颗 chip 同时在场时匹配，撤掉后单 chip 形态回到既有那批
+     规则的管辖（受控实验：单 chip 的 rect 与撤前逐像素一致，规则匹配数=0）。 */
 
   /* --- Header popovers on mobile (dsh-client-ui-jobs / dsh-client-ui-subagent) --- */
   /* Both entries sit in the session header and both anchor their panel to the
@@ -1807,6 +2293,44 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding: 0 !important;
     padding-left: 32px !important;
   }
+  /* --- 0.2.0-rc.x：header 变 grid，座位从 titleRow 内部搬到了 header 自己的第一列 ---
+     上面两条把「面板开关的 32px 座位」记在座位自己身上（padding-left）。在
+     0.1.6-alpha.2 里 headerLeading 是 titleRow 的第一个孩子，这个 padding 就是
+     titleRow 内容盒的起点，标题的 40px 落点是它直接算出来的。0.2.0-rc.x 把 header
+     改成 grid-template-columns: auto minmax(0,1fr)：座位成了 header 的直接孩子
+     （grid-area: 1/1），titleRow 独占第二列（grid-column: 2），于是标题的 40px 落点
+     变成「网格第一列恰好 32px」的副作用——座位一旦被谁塌掉（padding 被覆盖、宽度被
+     第三方归零、display 被藏），第一列就回到 0px，标题立刻压到 left:8 的圆形开关上。
+     2026-09-22 在 0.1.6 上实测过同一个失败面（座位被 padding 简写清零 → 第一列 0px
+     → crumbs x=8、toggle 8,6 28x28），当时靠把 padding-left 补回来止住；这一代改成
+     把座位记在标题行自己身上：padding-left 加在 titleRow 上（border-box，不撑破第二
+     列），座位格归零，标题落点不再依赖座位格存在、也不依赖它的宽度算得对不对。
+     判别式是「座位是不是 header 的直接孩子」——0.1.6 及更早座位在 titleRow 内部，
+     整块不命中，老规则原样管老宿主。
+     附带修掉一条静默漂移：老规则「header > :first-child > :last-child { display:none }」
+     在 0.1.5 藏的是会话日志胶囊；0.2.0 里 header 的第一格是座位，它最后一个孩子是
+     conversation.header.leading 槽的包装元素，整条规则于是变成「藏掉整个 leading 槽」
+     （实测：往槽里注入 28x28 按钮，计算盒 0x0）。手机档这一格是插件自己的抽屉开关
+     （绝对定位 left:8），槽里的控件必然和它叠在一起，所以「藏」的结果是对的、理由
+     一直没写下来；这里按槽名显式藏，别再靠 :last-child 误伤。
+     NOTE: 本文件整体是 JS 模板字符串，注释里绝不能出现反引号。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) > [data-conversation-header-leading] {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) [data-slot="conversation.header.leading"] {
+    display: none !important;
+  }
+  /* 这里用 [class*="_titleRow"] 后缀形而不是邻近两条的 [class*="wSkVaW_titleRow"]：
+     全包只有 wSkVaW_titleRow 含这个片段（无前缀重叠，且已被 header:has 门控），
+     后缀形对哈希前缀改名免疫——座位记错地方的代价是标题静默压回开关上，不值得
+     为风格统一冒这个险。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) [class*="_titleRow"] {
+    box-sizing: border-box !important;
+    padding-left: 32px !important;
+  }
   /* 0.1.6 的新头部里，titleRow 的第一个孩子是新增的空座位
      headerLeading（macOS 桌面控件，安卓上渲染 null）。插件按 0.1.5 老结构
      写的「header > :first-child > :first-child { flex: 1 1 auto }」现在套在
@@ -1846,6 +2370,8 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
        @container(width<=480px) 藏掉标签、只剩 14px 图标（对账见 §6），
        这一行不再需要 6px 的呼吸量；收成 4px 让「模式 / 团队 / 文件夹」
        看起来是一组。 */
+    /* 本批之前的值。2026-10-12 的「标题这一行三个之间放宽到 6px」只针对手机档
+       （后台任务圆点搬进标题行后与预设 chip 的间距），已搬进手机档作用域。 */
     gap: 0 4px !important;
     justify-content: flex-start !important;
     align-items: center !important;
@@ -1880,6 +2406,9 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     min-width: 0 !important;
     /* 6 个汉字上限：6×14px + 左右 padding 16px = 100px。再长就在本段内横滑，
        这样标题永远不会顶到右侧的预设。 */
+    /* 本批之前的值（100px 横滑窗 + 硬切）。2026-10-12 的「缩到 80px 再改省略号、
+       最后取消硬顶改 max-width: 100%」只针对手机档（子智能体 chip 进标题行后
+       要让出约 100px），已整串搬进手机档作用域；共用档（= 平板档）保持不动。 */
     max-width: 100px !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -1899,10 +2428,10 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_crumbs"] [class*="_crumbSeg"] > button {
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    max-width: 100px !important;
-    overflow-x: auto !important;
+    max-width: 80px !important;
+    overflow-x: hidden !important;
     overflow-y: hidden !important;
-    text-overflow: clip !important;
+    text-overflow: ellipsis !important;
     white-space: nowrap !important;
     text-align: left !important;
     touch-action: pan-x !important;
@@ -1945,6 +2474,8 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     justify-content: flex-end !important;
     /* 与 titleCluster 同步收到 4px（2026-09-23）：动作行里的 chip（任务 /
        谱系 / 团队）之间也只留 4px。 */
+    /* 本批之前的值。2026-10-12 的「动作行内各 chip 之间放宽到 6px」只针对手机档，
+       已搬进手机档作用域。 */
     gap: 4px !important;
     overflow-x: auto !important;
     scrollbar-width: none;
@@ -1962,18 +2493,45 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      !important 胜宿主 (0,1,0) 普通声明，与书写顺序无关；data-mobile-nav=
      "stats" 是 stats-line 效果打的稳定标记，无哈希、跨宿主代际可用。
      本条置于 ①嵌套块外：裁切陷阱与断点 A 的档位无关，全移动宽度生效。 */
-  [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats"] {
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] {
     justify-content: flex-start !important;
+    /* 指标行的空隙在手机上偏松（2026-10-07 店主截图：「距离缩一点，更紧致一点」）。
+       宿主 dsh-client-ui-chat 的 StatsPills 叠了三层：root 的 12px 列间距 +
+       sep 的 6px 两侧 margin + pill 的 8px 内边距 ⇒ 390px 实测两个指标之间的
+       视觉空隙 ~28px。手机档收成 gap 6 / sep 2 / pill 6：同组内 ~14px、组间
+       6px，仍然留得住「·」的读法，pill 的垂直尺寸没动（触控高度由宿主
+       line-height 决定）。类名前缀 bOPqQW_ 会随宿主换代，故用子串锚并整条
+       限定在本插件自己的 stats 标记内：换代只会让规则惰性化，不会误伤别处。 */
+    gap: 6px !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_sep"] {
+    margin: 0 2px !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_pill"] {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
   }
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-mobile-nav="files"] {
-    width: 36px !important;
-    height: 36px !important;
-    flex: 0 0 36px !important;
     /* Keep the 36px seat the reference phone UI shows (opener box 316..352 at
        360px, icon 326..342): it is the geometry the lane's 46px reservation
        above is tuned against. Mirror the toggle's centre (top:6px for a 28px
-       control -> centre y=20) by lifting the taller box to top:2px. */
+       control -> centre y=20) by lifting the taller box to top:2px.
+       本批之前的值；2026-10-12 的「座位 36→30 + top 2→5」只针对手机档，见手机档作用域。 */
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
     top: 2px !important;
+  }
+  /* 手机档（≤767 + coarse）：2026-10-12 用户规格 —— 座位 36 → 30px（原来比左侧 ☰
+     的 28px 胖一圈，用户指出"外部灰色胶囊"偏大）。top 由 2 改 5，保持图标中心仍在
+     y=20，与 ☰ 同一水平线。平板档没被要求动，仍是 36px / top:2。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-mobile-nav="files"] {
+      width: 30px !important;
+      height: 30px !important;
+      flex: 0 0 30px !important;
+      top: 5px !important;
+    }
   }
   /* 新宿主把「右侧栏入口」放进了 titleRow 的 headerCorner。手机上市宿右侧栏
      就是 Files 面板，所以它和插件的文件按钮是同一个面板的两个入口；而它带
@@ -2026,9 +2584,17 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
        预留才是"整整 118px"。 */
     box-sizing: border-box !important;
   }
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([class*="QsffPG_root"]) [role="tablist"] {
-    padding-right: 118px !important;
-  }
+  /* 2026-10-12（受控实测后删除）：原「jobs 在场 ⇒ tablist 右侧预留 118px」规则
+     被证明是**惰性的** —— 同一 DOM 上切 8px ↔ 118px，tablist 的 rect、clientWidth 与
+     注入元素的 x **差量全为 0**。原因：本表 box-sizing 为 border-box，padding 落在声明
+     宽度之内、不缩小 flex 容器的 content box；而 tablist 是 overflow-x 为 auto 的滚动容器，
+     子元素可以排进 padding 区 ⇒ 预留区挡不住任何视觉重叠，只让 scrollWidth 多 110px，
+     并在溢出后造成整行左移 8px（临界从 159 抬到 167）。
+     实测临界（393×844，合成"第三方 chip"）：无 jobs 时 >159px 压到谱系 chip；
+     有 jobs（74px 文案态）时 >83px 压到 jobs chip；标签行溢出要到 260px 才发生。
+     要真正预留，border-box 下 padding 做不到，须用 margin-right 或
+     width: calc(100% - Npx)（该替代方案未实测，属推断）；而 83px 这个上限的根源是
+     jobs 的定位公式（左缘 = 谱系左缘 − 2 − jobs 宽），要腾更多得动定位而不是 padding。 */
    /* Agent Team chip（VoX2oq_root，data-team-action）被 rc 代 pin 规则钉死
       （flex 0 0 auto + order 2，实测 98.7px），动作行里唯一可缩的模式 chip
       被压到 56.2px（390px 实测「创造模式」只剩「创造…」）。模式 chip 是
@@ -2059,10 +2625,18 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
       left: 3px !important;
     }
   }
+  /* @patch
+     id: header-chip-seat
+     for: 宿主 3.0.6 的 headerActions / titleCluster 槽位（两颗状态 chip 的座位）
+     why: 槽位树由宿主 React 管理，本插件不能插入自有节点，只能靠 CSS 改排位
+     until: 上游在标题行提供稳定的 actions/title 槽标记，或把两颗 chip 分到独立容器
+     test: tests/a2-header-gating.test.ts
+  */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] [class*="QsffPG_root"] {
+    /* 本批之前的值：后台任务 chip 坐在标签行右端（贴 header 底边 + 下内边距 9px
+       = 与标签文字齐平）。2026-10-12 的「搬进标题行」只针对手机档，见手机档作用域。 */
     position: absolute !important;
     right: 8px !important;
-    /* 和子代理 chip 同一套：贴 header 底边 + 下内边距 9px = 与标签文字齐平。 */
     bottom: 0 !important;
     height: 25px !important;
     min-height: 25px !important;
@@ -2085,6 +2659,21 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding: 0 2px 9px !important;
     line-height: 16px !important;
     align-items: center !important;
+  }
+  /* 手机档（≤767 + coarse）：2026-10-12 第三批·B 方案 —— 后台任务 chip **进标题行**
+     （static + order 9，排在智能体预设 chip 之后），按钮去掉贴底用的 9px 下内边距。
+     为什么只搬一颗：受控实测两颗状态 chip 同搬 ⇒ 标题触 72px 地板后右簇仍溢出 10px
+     （带文案态直接盖住文件夹按钮），所以子智能体 chip 回标签行、这颗进标题行。
+     平板档没被要求动，仍是本批之前的「标签行右端」形态。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] [class*="QsffPG_root"] {
+      position: static !important;
+      order: 9 !important;
+      margin: 0 0 0 2px !important;
+    }
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="QsffPG_root"] > button {
+      padding: 0 2px !important;
+    }
   }
   /* 头部弹层定位（jobs 任务列表 / subagent 谱系 / 预设菜单都会命中的同一族）：
      插件老规则是「弹层左缘 = chip 左缘 + 8px」，那条规则成立的年代 chip 都
@@ -2163,13 +2752,16 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      实测 84.6..264 盖住轨迹/记忆两 tab；headless 中任务已结束但
      QsffPG_root 仍在 DOM，:has 命中幽灵元素）；聚合态不受影响，让位语义
      原样保留。 */
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
-    right: 126px !important;
-  }
+  /* 2026-10-12：原「后台任务在场 ⇒ 谱系 chip 让位到 right:126px」规则已删除。
+     用户规格是主次对调（谱系 chip 固定不动、后台任务 chip 让到它左侧），
+     让位一旦保留就会把谱系 chip 推走 —— 与规格直接冲突。 */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"] > button {
     height: 25px !important;
     min-height: 25px !important;
     line-height: 16px !important;
+    /* 原 9px 下内边距是「贴 header 底边、与标签文字齐平」用的；搬进标题行后要改贴
+       预设 chip 的竖直中心（与后台任务 chip 搬上去时同一处理）。 */
+    /* 2026-10-12 用户规格：右侧内边距 4 → 2px，让 chip 的文字/箭头更靠近右缘。 */
     padding: 0 4px 9px !important;
     align-items: center !important;
   }
@@ -2188,10 +2780,8 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     right: 8px !important;
     margin: 0 !important;
   }
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([role="tablist"] button:nth-of-type(3)):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]),
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([role="tablist"] > button:nth-child(3)):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
-    right: 126px !important;
-  }
+  /* 2026-10-12：≥3 标签版的让位规则（原 right:126px）已一并删除 —— 同 Y1，
+     主次对调后谱系 chip 不再为后台任务 chip 让位。 */
   /* 真机反馈：「标题下面多了一条灰色滑条」。第 4/5 条为了让长标题能左右拖着看，
      把面包屑做成了横向滚动容器 —— 实测 button.wSkVaW_crumb: overflow-x:auto、
      scrollWidth − clientWidth = 88；像素实测那条灰条是 x=40.0~89.5、高 7.8、
@@ -2250,9 +2840,26 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      findHorizontalScroller/后续实测定去留（数值 48/8/180 均可调）。菜单
      position:fixed 独立定位层，不受本条影响（取证已证）。 */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"][class*="_switcherRoot"] {
+    /* 同上，进标题行流程。变体实测宽 180px，而标题行右簇只有约 229px 可用
+       （= 可用 305 − 标题地板 72 − 间隙 4），减去预设 chip 95 与间距后只剩约 124px，
+       所以这里封顶，超出部分由内部 span 的 ellipsis 收掉（见本文件 ZKlsPq span 规则）。 */
+    /* 换位后同样回标签行；标题行才需要的 124px 封顶随之撤掉。 */
+    /* 2026-10-12 用户要求：**位置定死，不被其他插件移动**。
+       绝对定位元素的落点由「四边偏移 + 包含块 + transform」三者决定，所以三处都钉：
+       ① 四边写全（含 bottom: auto），别的插件只改一条也推不动；
+       ② 包含块锁死在 header（见下面把 _titleCluster/_headerActions 钉成 static 的那条）；
+       ③ transform/margin 归零并加 !important，防被 translate / 外边距挪走；
+       ④ z-index 提固定值，防止标签行后来者把它盖住。
+       ⚠ 本块只钉「不被别的插件移动」——落点本身仍是本批之前那套（绝对定位贴
+       标签行右缘）；手机档的形态差异由手机档作用域表达。 */
+    position: absolute !important;
     left: auto !important;
     right: 8px !important;
     top: 48px !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 3 !important;
   }
   /* 聚合 chip 右锚（用户拍板 2026-09-19：中置的子代理元素应右靠）：与
      switcher 同款右靠 + 基线（top:48 → 25 高中心 60.5 ≈ tab 中心 60；
@@ -2266,10 +2873,34 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      tab/QsffPG 重叠，属无害惰性，彻底解（JS 可见性标记）留 effects
      车道。聚合 max-width min(32vw,116) 沿用基础规则不动；数值 48/8 可
      调。 */
+  /* @patch
+     id: lineage-chip-pinned
+     for: 宿主 ZKlsPq 子智能体 chip 的绝对定位落点（含包含块）
+     why: 别的插件只要给任一祖先加 position:relative，包含块被抢、chip 就会挪位；四边偏移加 transform 是唯一能钉死的手段
+     until: 宿主为该 chip 提供非绝对定位的稳定槽（届时四边偏移与祖先 static 都可删）
+     test: tests/a2-header-gating.test.ts
+  */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
+    /* 2026-10-12 用户规格（第三批·B 方案）：把**子智能体 chip 从标签行搬进标题行**，
+       坐在「智能体预设 chip」与「文件夹按钮」之间 —— 即原先后台任务圆点占的那个位置；
+       后台任务圆点同时回到标签行（见 QsffPG 规则）。
+       原来它是 absolute + right:8px + top:48px（相对 header，视觉上落在标签行 y=42..67）。
+       进流程后 left/right/top 全部失效，由 order 排在预设 chip 之后。 */
+    /* 2026-10-12 换位后回标签行：绝对定位贴右缘、top:48（原形态）。 */
+    /* 2026-10-12 用户要求：**位置定死，不被其他插件移动**。
+       绝对定位元素的落点由「四边偏移 + 包含块 + transform」三者决定，所以三处都钉：
+       ① 四边写全（含 bottom: auto），别的插件只改一条也推不动；
+       ② 包含块锁死在 header（见下面把 _titleCluster/_headerActions 钉成 static 的那条）；
+       ③ transform/margin 归零并加 !important，防被 translate / 外边距挪走；
+       ④ z-index 提固定值，防止标签行后来者把它盖住。 */
+    position: absolute !important;
     left: auto !important;
     right: 8px !important;
     top: 48px !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 3 !important;
   }
   /* 手机档（≤767 + coarse）：上面两条的 top:48 是按"标题行 40 + 页签行 36"的老几何
      推的（25 高中心 60.5 ≈ tab 中心 60）。本插件的手机档把页签行压到 26px 之后，
@@ -2297,6 +2928,74 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
       同为 (0,4,1) !important 且书写在后，同特异性后到先得把 separator
       顶回 display:block（实测 390px separator [269.1,·,5.5,25] 实绘可见）。
       加 :not 把 separator 从本条管辖范围摘掉，隐藏权交还 rc 代那条。 */
+  /* 2026-10-12 用户规格：给智能体预设 chip 套一层**不可见的胶囊**。
+     动机：公共车道里预设 chip 与子智能体 chip 会贴在一起（间距已被收到 0），
+     不套这层就分不清是两个控件。
+     做法：外壳用 ::before 画一个透明底的圆角胶囊（「灰色层、不显现」——形状与圆角
+     就位，底色透明；将来要显灰只需把 background 换成变量），实际间隔由 margin-right
+     给出（几 px，用户明确要求「不至于为 0」）。
+     用 ::before 而不是给本体加 padding：本 chip 的图标是 position:absolute 贴左缘的，
+     给本体加左内边距会让文字右移而图标不动，两者会叠上。 */
+  /* @patch
+     id: preset-invisible-capsule
+     for: 宿主 SVAs4q_label 智能体预设 chip 的外包裹层
+     why: 该 chip 的图标是 position:absolute 贴左缘，给本体加内边距会让文字与图标叠上；只能加一层绝对定位外壳
+     until: 宿主给预设 chip 自身加上左右内边距（本外壳与 margin 一并删）
+     test: tests/a2-header-gating.test.ts
+  */
+  /* 智能体预设 chip（SVAs4q_label）：**本批之前这里没有任何本插件的规则** ——
+     宿主的 max-width 180px + ellipsis 边界照旧，外层不加包裹层。
+     2026-10-12 的「不可见胶囊 + 可收缩 + 超长省略号」是一组只针对手机档的改动，
+     见下面的手机档作用域（平板档继续走宿主原样）。 */
+  /* 手机档（≤767 + coarse）：2026-10-12 用户规格 —— 给智能体预设 chip 套一层
+     **不可见的胶囊**。动机：公共车道里预设 chip 与子智能体 chip 会贴在一起
+     （间距已被收到 0），不套这层就分不清是两个控件。做法：外壳用 ::before 画一个
+     透明底的圆角胶囊（「灰色层、不显现」——形状与圆角就位，底色透明），实际间隔由
+     margin-right 给出（几 px，用户明确要求「不至于为 0」）。用 ::before 而不是给
+     本体加 padding：本 chip 的图标是 position:absolute 贴左缘的，给本体加左内边距
+     会让文字右移而图标不动，两者会叠上。
+     另加「长名字防护」：宿主自带的 min-width:auto（= 内容宽）会让长名字把同级挤出去、
+     先压垮标题的 72px 地板再让整簇溢出；这里补可收缩 + min-width:0 + 省略号。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="SVAs4q_label"] {
+      position: relative !important;
+      /* 先归零（去掉与宿主自带 2px 右内边距的重复），用户看过之后要求
+         「外包裹层的 px 抬一丢丢」⇒ 占回 2px。现在的构成 = 宿主自带右内边距 2 + 本 margin 2
+         + 容器 gap 0 + 团队 chip 左内边距 2 = 6px（改前是 11px，大头那 7px 已收掉）。 */
+      margin-right: 2px !important;
+      flex: 0 1 auto !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      border-radius: 999px !important;
+    }
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="SVAs4q_label"]::before {
+      content: '' !important;
+      position: absolute !important;
+      /* 用户要求「外包裹层的 px 抬一丢丢」：左右各 4 → 5px，上下也包 1px。 */
+      inset: -1px -5px !important;
+      border-radius: 999px !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+    /* 2026-10-12 用户反馈「预设与团队之间距离太多」：实测大头来自**团队 chip 自己**的
+       左内边距（宿主 .VoX2oq_trigger 是 padding: 3px 7px）。7 → 2px 收掉 5px，
+       与上面预设的 margin 归零合起来，这段总间距从 11px 降到 4px（视觉上才看得出来）。
+       代价：该按钮左侧命中区窄 5px（高度仍由 min-height: 28px 保证）—— 用户若觉得难点，
+       把 2px 往上调即可，值就是唯一旋钮。 */
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-team-action][class*="_root"] > button,
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="VoX2oq_trigger"] {
+      padding-left: 2px !important;
+    }
+  }
+  /* 2026-10-12：把子智能体 chip 与 header 之间的两个祖先钉成 static ——
+       绝对定位元素认「最近的已定位祖先」作包含块，别的插件只要给它们其中任何一个
+       加上 position:relative，chip 就会以那个元素为基准重新落点（相对位移）。
+       二者今天本来就不是定位元素，钉成 static 对现有布局零影响，只是把包含块锁死在 header。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) > [class*="_titleCluster"],
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_titleCluster"] > [class*="_headerActions"] {
+    position: static !important;
+  }
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"] span:not([class*="_separator"]) {
     display: block !important;
     overflow: hidden !important;
@@ -2428,14 +3127,22 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     border-radius: 14px !important;
     animation: dsh-web-mobile-sheet-in .22s var(--ds-ease-out, ease-in-out);
   }
-  /* The settings sheet's dimmed mask fades in with the panel (the mask is
-     the first child of the overlay that directly contains the sheet). */
-  :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"])) > :first-child {
+  /* The settings sheet's dimmed mask fades in with the panel: the mask is the
+     overlay's first child, so it is reached as a direct child of the overlay
+     that holds the settings panel. The panel is identified by its stable
+     data-shortcut-modal="settings" marker (host value; the shortcut editor uses
+     "shortcut-edit" instead, so this cannot reach that family) plus
+     role/aria-modal. Keep the outer :has() ATTRIBUTE-ONLY: an earlier form
+     tested the panel's shape by nesting a :has() inside this one, which is an
+     invalid selector — Chromium dropped the entire rule without a word and the
+     fade never ran once (issue: settings mask, found 2026-09-27 and 2026-10-10).
+     scripts/css-structure-check.mjs now fails the build on nested :has(). */
+  :has(> [aria-modal="true"][data-shortcut-modal="settings"]) > [class*="_mask"] {
     animation: dsh-web-mobile-fade .18s var(--ds-ease-out, ease-in-out);
   }
   @media (prefers-reduced-motion: reduce) {
     [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"]),
-    :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"])) > :first-child {
+    :has(> [aria-modal="true"][data-shortcut-modal="settings"]) > [class*="_mask"] {
       animation: none !important;
     }
   }
@@ -2701,6 +3408,20 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-mobile-nav="frame"] section[data-plugin-panel] [data-plugin-row-detail] button[class*="_crumb"] {
     margin-left: var(--dsh-web-mobile-panel-clearance) !important;
   }
+  /* 自动化任务面板（@deepseek-ai/dsh-client-ui-schedule，0.2.0-rc.2 随实验性
+     bundle 提供）不是 section[data-plugin-panel]：该 bundle 里
+     「data-plugin-panel」命中 0 次，页头是 t-XoWW_pageHeading(display:flex)，
+     标题是 h1{flex:1;min-width:0;margin:0}。盒模型取自宿主自己的 CSS：
+     pageContent padding = clamp(24px,4vw,48px)（390px 视口取 24px），
+     于是标题左缘 24px 落进 FAB 盒 [10,12,38,38]（右缘 48）——20px 字号的
+     首字被整颗压住（2026-10-06 报障截图）。让位量沿用同一口径
+     （56px − 宿主自身 padding）；作用对象取 h1：它是 margin:0 的 flex item，
+     margin-left 只吃 flex 自由空间，不需要 width 补偿，也不会像整宽盒那样
+     顶出横向滚动条。「_pageHeading」片段在全部宿主 client bundle 里只有这一个
+     渲染者（2026-10-06 全量扫描），不误伤。 */
+  [data-mobile-nav="frame"] [class*="_pageHeading"] > h1 {
+    margin-left: var(--dsh-web-mobile-panel-clearance, calc(56px - clamp(24px, 4vw, 48px))) !important;
+  }
   /* 快捷键弹层在手机上的落地形态。上面那条 :not([data-shortcut-modal="shortcuts"])
      只是把它从设置面板家族里摘出来、还它官方的内部排版（2026-09-25 实测：纵向列
      回来了、标题「快捷键」回来了、列表 441px 可滚、无横向溢出、docScrollWidth
@@ -2760,6 +3481,43 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
        重复变暗：屏幕的整体明暗在弹层开合前后完全一致，剩下的变化只有卡片本身。 */
     background: transparent !important;
   }
+  /* --- 插件管理页（dsh-client-ui-plugin-manager）：整卡 / 整行可点 ---
+     2026-10-07 店主：「打开如图里面的功能，需要点击那些加黑字体才行」。读宿主源码确认到两层：
+     ① 宿主**已经**给标题按钮铺了整卡覆盖层（「.cardOpen:after{position:absolute;inset:0}」 配
+        「.cardLink{position:relative}」，标准 stretched-link）；
+     ② 但卡片 DOM 顺序是 icon → titleRow(button) → **cardDesc**，描述是个 -webkit-box 盒子，
+        绘制顺序排在覆盖层**之后** ⇒ 描述整块把点击吃掉，点它什么都不发生；只有标题（按钮自身）
+        与描述以外的细缝能开详情。
+     所以本规则不是「再加一层」，而是**把覆盖层抬到描述之上**（z-index），并把卡片里的其它
+     交互件（开关等）抬得更高，保证它们仍能单独点。
+     根节点仍钉 「position: relative」：一旦宿主换代不再给 cardLink 定位，「inset:0」 的包含块会
+     落到更外层 —— 覆盖层铺满整页，就成了「点哪都开第一个插件的详情」。
+     2026-10-08 补：宿主的条目根有**三种**（li[data-plugin-package] 包卡片、li[data-plugin-row]
+     包详情里的行、li[data-plugin-item] 官方 item 卡）。item 卡（plugins.item 槽）当初漏了 ——
+     真机症状正是「有开关的包卡片能整卡点，从『终端』起的 item 卡只有加黑标题能点」。 */
+  li[data-plugin-package],
+  li[data-plugin-row],
+  li[data-plugin-item] {
+    position: relative !important;
+  }
+  li[data-plugin-package] button[class*="_cardOpen"]::after,
+  li[data-plugin-row] button[class*="_rowOpen"]::after,
+  li[data-plugin-item] button[class*="_cardOpen"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    /* 关键一行：压过同卡片里的描述/徽标等静态盒子（宿主那层没有 z-index）。 */
+    z-index: 1;
+  }
+  li[data-plugin-package] :is(button:not([class*="_cardOpen"]), a, input),
+  li[data-plugin-row] :is(button:not([class*="_rowOpen"]), a, input),
+  li[data-plugin-item] :is(button:not([class*="_cardOpen"]), a, input) {
+    position: relative;
+    /* 比覆盖层高一档：开关等控件仍在覆盖层之上，可单独点。 */
+    z-index: 2;
+  }
+
   /* ---------- sidebar panel enter / exit (see effects/panel-exit.ts) ----------
      A sidebar panel REPLACES the main area. Two motions, both short and
      horizontal, matching the drawer's own rail-in (.15s, translate + fade):
@@ -2777,26 +3535,91 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      element's first style resolution and there is no full-opacity frame first.
      The exit marker is set by JS before the swap for the same reason. */
   @keyframes dsh-web-mobile-panel-in {
-    from { opacity: 0; transform: translateX(16px); }
+    from { opacity: .55; transform: translateX(100%); }
   }
-  /* Deliberately NOT reusing dsh-web-mobile-fade: the exit cleanup listens on
-     animationend BY NAME, and that keyframe also runs on the backdrop and the
-     dialogs, which are frame descendants too — reusing it would end the
-     transition early. */
+  /* Deliberately NOT reusing dsh-web-mobile-fade. The reason is the GHOST tail,
+     not the whole exit: since 2026-10-12 the reveal side compares Animation
+     objects (panel-exit.ts finishMain reads event.animationName only for the
+     ghost), and the ghost cleanup still listens on animationend BY NAME
+     (panel-exit.ts ghostEnd). dsh-web-mobile-fade also runs on the backdrop and
+     the dialogs, which are frame descendants too — reusing it would end the
+     ghost early. Comment corrected 2026-10-13 (was claiming the whole exit
+     listens by name; the code had moved on). */
   @keyframes dsh-web-mobile-panel-reveal {
-    from { opacity: 0; }
+    from { opacity: 0; transform: translateX(-14px); }
   }
   [data-mobile-nav="frame"]:has([class*="panelRow"][aria-current="page"]) [class*="_centerCol"] > * > * {
-    animation: dsh-web-mobile-panel-in .15s var(--ds-ease-in-out, ease-in-out) backwards;
+    animation: dsh-web-mobile-panel-in .28s cubic-bezier(0, 0, .2, 1) backwards;
   }
   [data-mobile-nav="frame"][data-mobile-panel-exit]:not(:has([class*="panelRow"][aria-current="page"])) [class*="_centerCol"] > * > * {
     /* ease-out rather than the shared in-out curve: the panel vanishes and the
        conversation appears on the same frame, so the fade has to come up fast
        or the first frames read as a flash of empty background. */
-    animation: dsh-web-mobile-panel-reveal .15s cubic-bezier(0, 0, .2, 1) backwards;
+    animation: dsh-web-mobile-panel-reveal .18s cubic-bezier(0, 0, .2, 1) backwards;
+  }
+  /* ---------- 面板进出：从侧面滑出 / 从原路滑回（2026-10-07 店主两轮报障） ----------
+     ① 第一轮：「退出的时候看着跟掉帧一样，直接回到聊天界面」—— 逐帧实测（390×844，插件页）：
+        点返回后的**第一帧**面板元素就已从 DOM 消失，退场动画落在 0×0 空槽上。
+     ② 第二轮：「空档有点久了……像打开侧边栏一样，从侧面滑出来，然后从原路返回」——
+        上一版把切换推迟 220ms 等真面板滑完，结果会话重挂那次 commit（长会话 ~390ms）
+        又往后挪了 220ms，空档反而更明显。
+     终态：退场不再动真面板，而是把面板 clone 成**冻结快照**（panel-exit.ts 里的
+     panel-ghost），**立刻**切换，让快照在合成器上滑回右侧 —— 主线程忙着重挂会话时它照样
+     不掉帧；进场整屏从右侧滑入（时长与抽屉的 .28s 对齐），会话侧从左侧 14px 滑回。
+     方向：进 = 从右往左推入，退 = 原路推回右侧。 */
+  [data-mobile-nav="panel-ghost"] {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    pointer-events: none;
+    overflow: hidden;
+    background: var(--dsw-alias-bg-layer-1, #fff);
+    animation: dsh-web-mobile-panel-ghost-out .28s cubic-bezier(.4, 0, .2, 1) both;
+  }
+  [data-mobile-nav="panel-ghost"] > * {
+    width: 100%;
+    height: 100%;
+  }
+  @keyframes dsh-web-mobile-panel-ghost-out {
+    to { opacity: .72; transform: translateX(100%); }
+  }
+  /* ---------- 长会话：消息块 content-visibility（2026-10-07 实测） ----------
+     店主报「对话越长、切换/开侧边栏越卡」。真宿主取证（最长会话，中心列 ~6000 节点）：
+       · 点抽屉那一拍 = 236ms longtask / 3 条（短会话 0ms），且随会话长度暴涨；
+       · CPU profile：「(program)」（样式计算/布局/绘制）1216ms、宿主自己的
+         「getAnimations({subtree:true})」 75ms、宿主 JS 个位数 ms、**插件 JS ≈ 8ms**
+         ⇒ 代价是「大 DOM 的布局/绘制」，不是插件逻辑。
+     这里让会话滚动区里的**消息块**自己跳过屏外内容的布局/绘制（窄选择器：只命中
+     滚动区的直接子块，本次实测 3 个；宿主的 scrollBody 自身用 :not 排除）：
+       · 运行时注入 A/B（同一会话，每臂 n=3）：点抽屉长任务 关 = 247/62/143ms
+         （复测 386/206）→ 开 = **57/61/70ms**（紧致一条 ~60ms 带）；
+       · 「contain-intrinsic-size: auto 320px」：auto 表示「渲染过就用记住的真实高度」，
+         只有从未渲染过的块才吃 320px 兜底 ⇒ 本次实测 scrollHeight 17699 前后不变、
+         置顶/置底位置正常，没有滚动跳变。 */
+  [data-mobile-nav="frame"] [class*="scrollBody"] [class*="_scroll"]:not([class*="scrollBody"]) > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 320px;
+  }
+  /* ---------- 文档预览的代码行：屏外行跳过布局/绘制（2026-10-09 实测） ----------
+     报障场景：打开一份 13.4k 行文件的文档预览（DOM 23,662 节点）后整页卡死。
+     真机读数（Android 16 WebView）：单帧最差 269 / 310 / 395 / 485 / 530ms，
+     rAF 帧率掉到 2 / 5 / 17，长任务每秒合计最高 1031ms；加上下面这条规则后
+     最长帧 33ms、帧率 88–119、长任务归零，只剩首次挂载建 React 元素的那几帧。
+     代码行行高统一（约 20px），所以 contain-intrinsic-size 的估值精确，滚回很久
+     以前的历史也不会跳滚动条 —— 这正是它与上面那条消息块规则（高度差异大、
+     兜底给 320px）分开写的原因。
+     选择器保持窄：只在移动 frame 内，且必须落在宿主文档预览模块自己的代码行
+     容器里（dsh-client-ui-sidebar-documentpreview 的 TextPreview：_textDocument
+     容器中的 _line 行）。同模块的 _preview 是更泛的词根，chat / conversation /
+     deliverables 等别的宿主模块也有这个名字，纳入会越界改到那些面板，所以不收。
+     这一条只省布局与绘制，不省 React 挂载的 JS，「切换会话」的卡顿不在它的射程内。 */
+  [data-mobile-nav="frame"] [class*="_textDocument"] [class*="_line"] {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 20px;
   }
   @media (prefers-reduced-motion: reduce) {
     [data-mobile-nav="frame"]:has([class*="panelRow"][aria-current="page"]) [class*="_centerCol"] > * > *,
+    [data-mobile-nav="panel-ghost"],
     [data-mobile-nav="frame"][data-mobile-panel-exit]:not(:has([class*="panelRow"][aria-current="page"])) [class*="_centerCol"] > * > * {
       animation: none !important;
     }
@@ -2883,16 +3706,105 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   }
   /* ---------- 会话行的 ⋯ 菜单在触屏常显（2026-09-22 交互契约） ----------
      宿主只在 :hover 和 menuOpen 时显示 _rowActions，而手机没有 hover。
-     长按以前是触屏进这个菜单的唯一路径，现在长按改成「改会话名」（见
-     phone-chrome.ts 的 requestRowRename → 标题 dblclick），所以把锚点常显，
-     删除 / 归档 / 分叉 继续有触屏入口。行内布局不动：标题是 flex:1 +
-     min-width:0，自己让位并省略；host 的 time / pinIndicator 保持原样。
-     只作用于抽屉里的会话行，搜索行（searchResultRow）不受影响。 */
+     长按改名已于 2026-10-07 下线（真机上它依赖的事件重放到不了宿主），
+     所以这个锚点是触屏到达重命名 / 分叉 / 归档 / 删除的唯一入口，必须常显。
+     行内布局不动：标题是 flex:1 + min-width:0，自己让位并省略；host 的
+     time / pinIndicator 保持原样。只作用于抽屉里的会话行，搜索行
+     （searchResultRow）不受影响。 */
   [data-mobile-nav="frame"] [class*="sessionRow"] [class*="_rowActions"] {
     display: inline-flex !important;
   }
+  /* ---------- 归档 / 置顶快捷按钮在手机档收进 ⋯ 菜单（issue #154） ----------
+     宿主把两颗快捷按钮注册进「sidebar.workspaces.session.row.action」槽位
+     （archive order 100 / pin order 200）；_rowActions 一常显，抽屉里每一行
+     就多两颗图标、行尾发挤，而手机用户多数并不需要这两个入口。四个动作
+     （归档 / 取消归档 / 置顶 / 取消置顶）在 ⋯ 菜单里都有，所以按宿主自己的
+     aria-label 精确匹配隐藏它们——⋯ 锚点的 label 含会话标题（「会话“X”的
+     操作」/「Session actions for X」），精确匹配不会误撞。宿主字典目前只有
+     zh/en 两套（2026-10-10 核对 0.2.0-rc.2 产物），换到别的语言时本规则静默
+     失效：按钮照常显示，不会隐藏错东西；第三方注册进同一槽位的快捷按钮也
+     不动。 */
+  [data-mobile-nav="frame"] [class*="sessionRow"] [class*="_rowActions"] :is([aria-label="归档会话"], [aria-label="取消归档"], [aria-label="置顶会话"], [aria-label="取消置顶"], [aria-label="Archive session"], [aria-label="Unarchive session"], [aria-label="Pin session"], [aria-label="Unpin session"]) {
+    display: none !important;
+  }
+
+  /* ---------- 提问卡（ask-user）头部按钮热区（issue #140） ----------
+     宿主 dsh-client-ui-user-questions 的 QuestionComposer 头部两颗图标按钮
+     ——「收起问题卡片」与「放弃整组问题」——官方 24×24px、headerActions
+     gap 4px，远低于触控下限；「放弃」紧贴「收起」（放弃 = pending.cancel()
+     后 actions.clear，整组草稿不可恢复地清空，宿主无确认），单手误触即丢
+     内容。手机档原地放大命中盒（::after 透明扩展，墨迹与版式零变化），
+     同时拉开两颗按钮的节距：24px 按钮 + 12px gap + ±4px 扩展 = 32px 命中
+     盒、命中盒之间净空 4px——扩展幅度若超过节距的一半，两颗命中盒会互相
+     重叠，反而制造新的误触，这是本组数值的硬约束。
+     作用域：头部动作区专用（_headerActions 后代），翻页器的 prev/next 也
+     是同族 iconButton，但节距只有 6px，吃不下 ±4px 扩展，不掺和。哈希族
+     Mbwy4a_ 是该包 QuestionComposer.module.css 的稳定前缀，哈希变更时整组
+     规则自动失效，不误伤别家（哈希子串锚，非后缀锚，见 pitfalls「哈希子
+     串」）。 */
+  [class*="Mbwy4a_headerActions"] {
+    gap: 12px !important;
+  }
+  [class*="Mbwy4a_iconButton"] {
+    position: relative;
+  }
+  [class*="Mbwy4a_headerActions"] [class*="Mbwy4a_iconButton"]::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+  /* ===== 手机档作用域补充（2026-10-13）=====
+     下面四组是本批（2026-10-12/13）顶栏改动里「共用档已还原成本批之前的值、
+     手机档需要另一个值」的那部分。它们与本文件里其它 @media (max-width: 767px)
+     and (pointer: coarse) 嵌套块同权限 —— 同层 + 同特异性 + 书写在后，覆盖共用档。 */
+  /* ① 标题簇右侧预留：共用 46px（给右端文件夹按钮）→ 手机档 34px。
+     34 是 2026-10-12/13 那串「46 → 40 → 36 → 32 → 26 → 34」的终值，每一档的动机：
+       46 → 40：后台任务圆点搬进标题行后偏左、与预设 chip 显得拥挤，收 6px 整簇右移；
+       40 → 36：文件夹按钮盒子从 x=349 起、36px 宽，36 让整簇右缘正好贴到它的左沿
+                （视觉上离图标仍余 10px 内边距），是**安全上限**，再往下会压进命中区；
+       36 → 32：与「文件夹按钮右移 4px」**配对** —— 只移按钮不缩本值，两者之间会凭空
+                多出 4px（用户要的是整组右移，不是拉开）；
+       32 → 26：与「文件夹座位 36→30」**配对** —— 座位窄 6px 后其左沿右移 6px；
+       26 → 34：用户反馈圆点离文件夹太近（0px），左下 8px 后按钮盒内还有 7px 内边距到
+                图标，视觉距离约 15px。代价：整簇左移 8px，标题窗口相应窄 8px。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header [class*="wSkVaW_titleCluster"] {
+      padding-right: 34px !important;
+    }
+  }
+  /* ② 标题行三个（标题 / 预设 / 后台任务）之间的间距：共用 4px → 手机档 6px
+     （2026-10-12 用户要求；本条管「标题 ↔ 右侧 chip 簇」）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_titleCluster"] {
+      gap: 0 6px !important;
+    }
+  }
+  /* ③ 标题本体：共用 100px 横滑窗 + clip（截断处是硬切，像被裁掉）→ 手机档
+     可扩展 + 省略号（2026-10-12 用户规格）。第一轮收 80px 硬顶，第二轮取消硬顶改
+     100%：硬顶的问题是「关掉团队 chip 后腾出的空间标题吃不到」；改成 100% 后由 flex
+     决定 —— 右侧各 chip 是 flex 0 0 auto（不收缩，先拿够自己的地方），标题再吃掉
+     剩下的，不够时由本条 ellipsis 收尾，既有 72px 地板（在 _crumbs 上）仍兜底。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_crumbs"] [class*="_crumbCurrent"] {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      text-overflow: ellipsis !important;
+      /* 共用档保留本批之前的 pan-x（那时标题是横滑窗，横滑要先被浏览器认领，
+         免得左缘抽屉手势抢走这一笔）；手机档改成不横滑的省略号窗口 ⇒ 横滑认领
+         随之撤掉，否则手势层的判定与实际可滚动性对不上。
+         写成 pan-y pinch-zoom（而不是 auto）与全库其余的 touch-action 声明同形，
+         tests/ios-zoom-guard.test.ts 会逐条检查「非 pan-x 的值必须含 pinch-zoom」。 */
+      touch-action: pan-y pinch-zoom !important;
+    }
+  }
+  /* ④ 动作行内各 chip 之间：共用 4px → 手机档 6px（2026-10-12 用户要求）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] {
+      gap: 6px !important;
+    }
+  }
 }
-`;var eo=`@media (max-width: 1023px) and (pointer: coarse) {
+`;var Qa=`@media (max-width: 1023px) and (pointer: coarse) {
   /* ---------- dsh-web-ui family compatibility ----------
      The linxin666 plugin suite extends the shell frame directly:
        - aionui-panel appends two trailing grid columns (explorer / preview)
@@ -3402,6 +4314,71 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     border: 1px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .12)) !important;
   }
 
+  /* ---------- dsh-model-capabilities: model row must not crush its name ----------
+     On the Models page each catalog model is a flex row:
+     [model id] [display name] [chips] [chevron]. A chip can be long — the
+     reasoning summary prints the whole level list
+     ("reasoning: minimal/low/medium/high/xhigh/max", measured 322px at
+     min-content) — and the chips wrapper inherits the flex default
+     min-width: auto, so it grows past the row and squeezes the model id to
+     its minimum content width. With overflow-wrap: anywhere on the id, the
+     text then breaks one character per line: owner report 2026-10-05,
+     "gpt-6.1-sol" rendering as a 8x270px vertical sliver at 393px (a 223px
+     chip against a 259px row).
+
+     Upstream already declares flex-wrap: wrap on the wrapper — it is MEANT
+     to move to another line — but a single chip alone exceeds the row, so
+     wrapping never triggers. Let the row itself wrap and give the chips a
+     full-width line of their own; the chips then wrap chip-by-chip inside
+     it and every chip keeps a readable width.
+
+     Measured at 393px (id width x height): none 8x270 vertical ->
+     this rule keeps the id one line (72x15 on the widest case) and every
+     chip intact.
+
+     Two things this rule set has to get right beyond the id:
+     - the chips take a FULL line (flex: 1 0 100%) and must therefore be sent
+       after the id/name with order:1; without it the chevron, which is the
+       row's last child, is pushed onto a line of its own at the far LEFT
+       (measured: chevron 237px from the right edge = flush left, the orphaned
+       arrow the first cut of this rule produced).
+     - the chevron then needs margin-left:auto to stay flush right on the
+       first line (measured 10px from the edge on every row).
+     Rejected alternatives: min-width:0 + flex:1 1 auto on the wrapper alone
+     still left the id crushed at 44x60 vertical; white-space:nowrap on the id
+     kept it unreadably narrow at 44px; truncating the over-long chip
+     (white-space:nowrap + ellipsis on the chip) hid the reasoning summary
+     entirely - the user needs to see which levels a model offers.
+     Scoped to the settings dialog and the plugin's own class prefix; the
+     whole file is mobile-gated, so desktop never sees it. */
+  [aria-modal="true"] [class*="Qzh-QG_rowHeader"] {
+    flex-wrap: wrap !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_chips"] {
+    order: 1 !important;
+    flex: 1 0 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+  }
+  /* NOTE the :not() guard below: [class*="..._chip"] is a SUBSTRING match and
+     also hits the wrapper ("..._chips" contains "..._chip"), which would put
+     max-width/overflow-wrap on the container too. Exclude the wrapper by its
+     own overlapping prefix, the way this file's other _stat / _header families
+     do (pitfall: 哈希子串). */
+  [aria-modal="true"] [class*="Qzh-QG_chip"]:not([class*="Qzh-QG_chips"]) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_modelId"] {
+    min-width: 0 !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_modelName"] {
+    min-width: 0 !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_rowHeader"] > svg {
+    margin-left: auto !important;
+  }
+
   /* ---------- dsh-web-ui polish: explorer sheet ----------
      The aionui explorer was designed for a desktop side column: compact the
      header, search box and tree rows so a phone shows more entries, and pad
@@ -3472,7 +4449,7 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   /* ---------- dsh-web-ui polish: conversation stats line ----------
      The official session-status row (turns / steps / LLM time / TTFT /
      cache) is long. The client marks the exact row with
-     [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
+     body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
      targeted). Layout: ONE fixed-height (28px) flex strip that scrolls
      horizontally — the full metrics stream stays reachable by swiping,
      the row never grows vertically, no ellipsis or fade, 12px gaps
@@ -3486,9 +4463,17 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      4px 下内边距；overflow 改 hidden（不可滑）、滚动条显式干掉；第一组
      flex:0 0 auto 保持完整，最后一组 flex:0 1 auto + min-width:0 自己吃掉
      差额并在末尾出省略号（实测截到"…缓存命…"，tok 数字仍完整可读）。
-     高度仍是 28px：composer 的底部占位（8px + 28px）不变，其它几何不跟着动。 */
+     高度仍是 28px：composer 的底部占位（8px + 28px）不变，其它几何不跟着动。
 
-  [data-mobile-nav="stats"] {
+      2026-10-06 加档（店主："输入框下面的轮次这一条和输入框底部的距离缩减一下，
+      但不能挨得太近，还是要留出一点空间"）。**实测（真机同源 headless，工厂版）**：
+      卡片 rect.bottom=808、轮次条 rect.top=812 → flex 间隙只有 4px，视觉间距
+      ≈ 4px + 28px 行高里文字上方的约 5px ≈ 9px。所以只上提 2px（margin-top:-2px）
+      → 视觉间距约 7px，仍留余量；早前的 -4px 会把间隙压到 0（就是"挨得太近"），
+      已按实测改回。不改 28px 行高、不动 composer 底部占位（8px + 28px 几何契约）。 */
+
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] {
+    margin-top: -2px !important;
     display: flex !important;
     flex-flow: row nowrap !important;
     align-items: center !important;
@@ -3507,12 +4492,12 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     line-height: 18px !important;
     font-size: 10px !important;
   }
-  [data-mobile-nav="stats"]::-webkit-scrollbar {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"]::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
   }
-  [data-mobile-nav="stats"] > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > * {
     display: flex !important;
     flex-flow: row nowrap !important;
     align-items: center !important;
@@ -3521,7 +4506,7 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     padding: 0 !important;
   }
   /* 第一组（轮次·步数·tok/s）保持完整。 */
-  [data-mobile-nav="stats"] > *:first-child {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:first-child {
     flex: 0 0 auto !important;
     width: max-content !important;
     min-width: max-content !important;
@@ -3533,7 +4518,7 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
      这版保持 flex 对齐，只让药丸**内部的文字 span** 收缩 + 出省略号；
      图标 svg 固定不缩。另外把两组药丸的左右内边距压到 6px、组间距压到 4px，
      抠出来的宽度全部让给第二组（实测它原本只分到 76px 而需要 156px）。 */
-  [data-mobile-nav="stats"] > *:last-child {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child {
     display: flex !important;
     align-items: center !important;
     flex: 0 1 auto !important;
@@ -3543,23 +4528,23 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     overflow: hidden !important;
     margin-right: 0 !important;
   }
-  [data-mobile-nav="stats"] > *:last-child > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child > * {
     display: flex !important;
     align-items: center !important;
     min-width: 0 !important;
     max-width: 100% !important;
     overflow: hidden !important;
   }
-  [data-mobile-nav="stats"] > *:last-child svg {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child svg {
     flex: 0 0 auto !important;
   }
-  [data-mobile-nav="stats"] > *:last-child span {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child span {
     flex: 0 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
-  [data-mobile-nav="stats"] button {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button {
     padding: 0 3px !important;
     margin: 0 !important;
     min-width: 0 !important;
@@ -3567,17 +4552,17 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   }
   /* 药丸内部的 span/svg 有自己的字号（宿主 .pill 自带），只在外层设 10px 不会被
      继承进去 —— 真机上第二组仍差 ~20px 被省略号切掉，所以这里显式压到内部。 */
-  [data-mobile-nav="stats"] button,
-  [data-mobile-nav="stats"] button span,
-  [data-mobile-nav="stats"] button svg,
-  [data-mobile-nav="stats"] > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button span,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button svg,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > * {
     font-size: 10px !important;
     line-height: 18px !important;
   }
-  [data-mobile-nav="stats"] > *:not(:last-child) {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:not(:last-child) {
     margin-right: 3px !important;
   }
-  [data-mobile-nav="stats"] * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] * {
     white-space: nowrap !important;
   }
   /* 「上下文环」显示在输入框行的右簇（店主 2026-09-23 确认：
@@ -3615,9 +4600,24 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   }
   [data-mobile-nav="stats-ring"] svg {
     display: inline-block !important;
-    width: 16px !important;
-    height: 16px !important;
+    /* 2026-09-29 验收定稿（issue #140）：16px 难瞄准、24px 过大、20px 仍偏大，
+       店主拍板 18px；与 26×26 命中盒（见 layout.css.ts 的环规则）匹配。
+       增宽由尾道左侧富余吸收，按键间距不变。 */
+    width: 18px !important;
+    height: 18px !important;
     flex: 0 0 auto !important;
+  }
+  /* 轨道深化（2026-09-29 验收，issue #140）：宿主轨道只有 12% 黑，环放大到
+     24px 后深灰进度弧显得像残缺的加载圈（店主「什么玩意儿」）。加深到 25%
+     让 donut 成完整圆环——是「用量表」不是「spinner」。子串锚 class*=_track
+     与仓库哈希锚惯例一致，环标记内不会跨匹配（fill 类名不同）。
+     #142：25% 黑改按主题取色——color-mix 取 25% 标签色（label-primary 浅色
+     =近黑、暗色=近白），浅色维持 #140 验收观感，暗色自动翻成 25% 白（裸
+     rgba(0,0,0,.25) 在暗色下不可见，环又退回残缺加载圈）；token 缺失时 var
+     兜底 #000 与原值等价。border 族没有 25% 等价档，纯 var 兜底会让浅色回
+     归宿主 12%，故用 color-mix；宿主 CSS 已用同款 color-mix+var 组合。 */
+  [data-mobile-nav="stats-ring"] [class*="_track"] {
+    stroke: color-mix(in srgb, var(--dsw-alias-label-primary, #000) 25%, transparent) !important;
   }
   /* 环与 TPS 读数不再搬动宿主 React 节点（#104：搬动后宿主卸载调 removeChild
      对不上父节点直接抛 NotFoundError，SlotErrorBoundary 把整个 composer 槽位
@@ -3631,8 +4631,10 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-mobile-nav="stats-ring-reserve"] {
     flex: 0 0 auto !important;
     display: inline-block !important;
-    width: 16px !important;
-    height: 16px !important;
+    /* 18px 与定稿的环（上方 svg 规则）同尺寸：占位顶住的槽位即环的落点，
+       尾道左侧富余吸收增宽，按键间距不变。 */
+    width: 18px !important;
+    height: 18px !important;
     margin: 0 2px 0 0 !important;
     padding: 0 !important;
   }
@@ -3903,14 +4905,14 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
+  /* 到头继续拽不把整页拖出（pocket 补丁） */
+  overscroll-behavior-x: contain !important;
   scrollbar-width: thin !important;
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   gap: 8px !important;
   padding: 4px 0 !important;
-  /* 到头继续拽不把整页拖出（pocket 补丁） */
-  overscroll-behavior-x: contain !important;
   }
   [data-mobile-nav="frame"] [class*="cardShots"] > [class*="cardShot"] {
   flex: 0 0 min(100%, 420px) !important;
@@ -4034,9 +5036,112 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
       animation: none !important;
     }
   }
+
+  /* ---------- File share (effects/file-share.ts) ----------
+     Files tree rows: the plugin appends one share button after the host's
+     own row button inside li[data-files-entry="file"] (host nodes are never
+     moved). The li becomes a flex row only while it carries that button, the
+     host button keeps the remaining width. Preview header: one icon button in
+     the official document.actions slot, sized like the host tool buttons. */
+  [data-files-body] li[data-files-entry="file"]:has(> [data-mobile-nav="file-share-row"]) {
+    display: flex;
+    align-items: center;
+  }
+  [data-files-body] li[data-files-entry="file"]:has(> [data-mobile-nav="file-share-row"]) > button:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  [data-mobile-nav="file-share-row"],
+  [data-mobile-nav="file-share-preview"] {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: var(--dsw-radius-sm, 6px);
+    background: transparent;
+    color: var(--dsw-alias-label-tertiary, currentColor);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  [data-mobile-nav="file-share-row"] {
+    width: 36px;
+    height: 32px;
+  }
+  [data-mobile-nav="file-share-preview"] {
+    width: 32px;
+    height: 32px;
+    color: var(--dsw-alias-label-secondary, currentColor);
+  }
+  [data-mobile-nav="file-share-row"] svg,
+  [data-mobile-nav="file-share-preview"] svg {
+    width: 16px;
+    height: 16px;
+  }
+  [data-mobile-nav="file-share-row"]:active,
+  [data-mobile-nav="file-share-preview"]:active {
+    background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.16));
+  }
+  [data-mobile-nav="file-share-row"]:focus-visible,
+  [data-mobile-nav="file-share-preview"]:focus-visible {
+    outline: 2px solid var(--dsw-alias-border-focus, #4d6bfe);
+    outline-offset: -2px;
+  }
+  [data-mobile-nav="file-share-row"][aria-busy="true"],
+  [data-mobile-nav="file-share-preview"][aria-busy="true"] {
+    opacity: 0.45;
+    cursor: progress;
+  }
+  /* Fallback notice, only on hosts without the primitives Toast. */
+  [data-mobile-nav="file-share-toast"] {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 1500;
+    max-width: min(90vw, 420px);
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(28, 28, 30, 0.92);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.45;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /* ---------- Markdown 表格：手机档（≤767px）不再被压成「一字一行」 ----------
+     2026-10-06 真机报障：6 列宽表在 390px 上被 table-layout:auto 压到每列
+     1~2 字宽，表头竖排成一列单字，完全不可读。宿主 chat 包（ui-chat）只给
+     表格外面套了 .md-table-wide —— 用容器查询单位做「出血加宽」
+     （--dsh-table-lead / --dsh-table-spare），**整包没有任何 th/td/table
+     规则**（已 grep 确认，唯一命中在 settings-subagent 的 depthTable，与本页
+     无关），所以列宽完全由内容最小宽度决定，没有下限也没有滚动容器。
+     这里补齐手机档的两件事：给单元格一个最小宽度下限 + 让包裹层横向滚动。
+     th 允许 nowrap（表头本来就短、竖排最难看），td 只设下限、长句仍可换行，
+     不会把表格撑到无法阅读的宽度。
+     平板（768–1023）与桌面不动 —— 店主明确「平板不用」（对齐上游 768px
+     分档边界，与 layout.css.ts 的手机档写法一致）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] .md-table-wide {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table {
+      width: auto !important;
+      min-width: 100% !important;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table th {
+      white-space: nowrap !important;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table th,
+    [data-mobile-nav="frame"] .md-table-wide > table td {
+      min-width: 4.5em !important;
+    }
+  }
 }
 
-`;var to=`@media (max-width: 1023px) and (pointer: coarse) {
+`;var Ja=`@media (max-width: 1023px) and (pointer: coarse) {
   /* ---------- hero composer on mobile ----------
      The official hero card carries a 2-line textarea plus a tall tool row,
      which reads oversized on a phone. Tighten the empty-state rhythm: keep
@@ -4130,6 +5235,56 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
   [data-slot="conversation.input.dock"] [data-gitgraph-chip-anchor] [data-gitgraph-chip]:active {
     transform: scale(.96) !important;
     transition: transform .12s !important;
+  }
+
+  /* ---------- mattskills status capsule: keep its tail (skills button / fold
+      chevron) inside the pill on portrait ----------
+      dsh-mattpocock-skills-deck renders a capsule status bar in
+      conversation.input.dock (order 40, the row above the composer card). Its
+      own sheet deliberately never shrinks icons or counters ("图标与普通计数
+      永不收缩"), so as soon as the capsule's content is wider than the pill the
+      host wrapper's overflow:hidden cuts the right edge and the two segments
+      that sit last — the skills-list button (2×2 grid) and the fold chevron
+      that collapses the whole deck strip — are not painted at all.
+      Measured 2026-10-10 on a 393px portrait viewport, session bound to a
+      ticket with two-digit counters (可接 21 / 诊断 20): capsule content
+      ≈ 415px against a ~360px pill, i.e. ~55px short — exactly those two
+      segments; the same session on landscape shows both, so this is width
+      pressure, not a missing feature (and not a deck version difference:
+      1.7.51 / 1.8.0-rc.1 / 1.8.0-rc.2 all render both unconditionally).
+      Reclaim the width from the capsule's desktop-sized spacing (6px column
+      gap plus 7px padding on each of ~11 children) rather than hiding any
+      segment, and keep a horizontal scroll as the fallback for the narrowest
+      phones so the tail can still be swiped into view. The scrollbar stays
+      hidden, so the pill still reads as one pill. Desktop untouched: this
+      block lives inside the max-width: 1023px media query. */
+  [data-slot="conversation.input.dock"] .dsws-capsule {
+    gap: 1px 3px !important;
+    padding: 3px 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule::-webkit-scrollbar {
+    display: none !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-capsule-word {
+    padding: 2px 4px !important;
+    column-gap: 3px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-seg {
+    padding: 2px 4px !important;
+    gap: 3px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-split .dsws-split-part {
+    padding: 2px 4px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-timebtn {
+    padding: 2px 4px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-skillbtn,
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-fold-toggle {
+    padding: 1px 2px !important;
   }
 
   /* ---------- ask question composer (ask_user_question): kill iOS Safari
@@ -4235,6 +5390,58 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     content-visibility: auto;
     contain-intrinsic-size: auto 600px;
   }
+
+  /* ---------- text selection stays inside content (B1, 2026-10-04) ----------
+     Report (Android): long-press a word in an AI reply, drag the selection
+     handle up over the session header, and the selection jumps to "select
+     all" instead of extending through the message list. Mechanism: the
+     header and the composer card are ordinary selectable boxes; the header
+     sits BEFORE the scrollport in DOM order (header, then
+     [data-conversation-scroll]) and the drawer earlier still (frame first
+     child, parked off-screen at -110%). A selection extent whose hit point
+     resolves into that chrome lands IN the chrome, so the highlighted range
+     covers the header and app shell on top of the messages - on a phone it
+     reads as the whole page. With the chrome unselectable the extent snaps
+     to the nearest message text instead (headless drag-select 390x844
+     touch-emulated, message -> header: focus node went from the header
+     title span to a message <p>; message -> composer row: from the Send
+     button to a message <p>; the scrollport kept auto-scrolling in both).
+     Layout is untouched: this only sets user-select.
+     Kept selectable: the message flow (outside every rule below) and the
+     composer editing surface, which is re-enabled explicitly - auto would
+     inherit none from the card, and an unselectable contenteditable cannot
+     host a caret or a paste on WebKit. Dialogs and text fields portalled
+     into the drawer DOM (settings sheet) are re-enabled the same way, so
+     their values stay copyable. Scope: the conversation header is the
+     header inside the [data-phase] root (chat content never renders one
+     there), and the anchor stays the DESCENDANT form on purpose: 0.2.0-rc.2
+     (live-host probe 2026-10-07) renders an unclassed wrapper <div> between
+     .wSkVaW_root[data-phase] and <header class="wSkVaW_header">, so the
+     child-combinator form this rule used to carry matched 0 elements - the
+     title bar kept user-select:auto and a drag-select up over it still ended
+     in the header title span (4391 selected chars, opening with the title /
+     mode / tab labels). On the composer side only the input card
+     ([data-composer-card], host marker since 0.1.2) and the plugin stats
+     row - the dock above the card (todo card, approval / ask-question
+     panels) is reply content and stays copyable. */
+  [data-mobile-nav="frame"] > :first-child,
+  [data-mobile-nav="frame"] [data-phase] header,
+  [data-mobile-nav="frame"] [data-composer-card],
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"],
+  [data-mobile-nav="fab"],
+  [data-mobile-nav="backdrop"] {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+  [data-mobile-nav="frame"] [data-composer-input],
+  [data-mobile-nav="frame"] [data-composer-card] textarea,
+  [data-mobile-nav="frame"] > :first-child [role="dialog"],
+  [data-mobile-nav="frame"] > :first-child input,
+  [data-mobile-nav="frame"] > :first-child textarea,
+  [data-mobile-nav="frame"] [data-phase] header input {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
 }
 
 /* ---------- tablet / wide mobile: keep sheets from becoming full-width ----------
@@ -4321,33 +5528,35 @@ var Vo=Object.create;var Be=Object.defineProperty;var Uo=Object.getOwnPropertyDe
     display: none !important;
   }
 }
-`;var ao=[Qa,Ja,eo,to].join(`
-`);var oo='[data-mobile-nav="frame"] button[class*="_trigger"][aria-haspopup="tree"][aria-expanded]:not([class*="_switcherTrigger"])',Un='[class*="ZKlsPq_root"], [class*="ZKlsPq_menu"], [class*="h8S2Va_root"], [class*="h8S2Va_menu"]',$n=800,Xn=1e3,no=["mouseover","mouseout","mouseenter","mouseleave"];function ro(e){D(e,"dsh-web-mobile: lineage chip touch toggle",()=>{if(typeof PointerEvent>"u")return;let t=0,a=()=>{t=Date.now()+$n},o=null,n=0,r=c=>{if(c.pointerType!=="touch"&&c.pointerType!=="pen")return;a();let i=c.target;if(!(i instanceof Element))return;let s=i.closest(oo);if(s===null)return;let h=s.getAttribute("aria-expanded")==="true";s.dispatchEvent(new KeyboardEvent("keydown",{key:h?"Escape":"ArrowDown",bubbles:!0,cancelable:!0})),o=s,n=Date.now()+Xn},d=c=>{if(o===null)return;if(Date.now()>=n){o=null;return}let i=c.target;i instanceof Element&&i.closest(oo)===o&&(o=null,c.stopPropagation())},f=c=>{c.pointerType!=="touch"&&c.pointerType!=="pen"||a()},p=c=>{if(Date.now()>=t||!c.isTrusted)return;let i=c.target;i instanceof Element&&i.closest(Un)!==null&&c.stopImmediatePropagation()};document.addEventListener("pointerdown",f,!0),document.addEventListener("pointerup",r,!0),document.addEventListener("click",d,!0);for(let c of no)document.addEventListener(c,p,!0);return()=>{document.removeEventListener("pointerdown",f,!0),document.removeEventListener("pointerup",r,!0),document.removeEventListener("click",d,!0);for(let c of no)document.removeEventListener(c,p,!0)}})}var Zn="mobileNav",Yn="workspace",io='data-mobile-nav="session-delete"',Rt="var(--dsw-alias-state-error-primary, #b91c1c)",Qn='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4782 4.84067L14.2138 10.1152C14.1102 12.1872 14.067 13.0115 13.3866 13.9607C13.1044 14.3546 12.7498 14.6912 12.3424 14.9535C11.8239 15.2872 11.2415 15.4316 10.5585 15.4998C9.88727 15.5668 9.04946 15.5656 7.99998 15.5656C6.95051 15.5656 6.1127 15.5668 5.44142 15.4998C4.75851 15.4316 4.17602 15.2872 3.65753 14.9535C3.25012 14.6912 2.89559 14.3546 2.61332 13.9607C1.93296 13.0115 1.88979 12.1872 1.78619 10.1152L1.52179 4.84067L2.89006 4.77277L3.15343 10.0463C3.26221 12.2218 3.32452 12.6015 3.72646 13.1624C3.90825 13.4161 4.13686 13.6334 4.39927 13.8023C4.66204 13.9714 5.00263 14.0792 5.57825 14.1367C6.16562 14.1953 6.92298 14.1963 7.99998 14.1963C9.07699 14.1963 9.83434 14.1953 10.4217 14.1367C10.9973 14.0792 11.3379 14.1367 11.6007 13.8023C11.8631 13.6334 12.0917 13.4161 12.2735 13.1624C12.6755 12.6015 12.7378 12.2218 12.8465 10.0463L13.1099 4.77277L14.4782 4.84067ZM5.43011 6.22849H6.7994V11.3909H5.43011V6.22849ZM9.20056 6.22849H10.5699V11.3909H9.20056V6.22849ZM8.53597 0.434431C9.17976 0.434431 9.6522 0.426926 10.0966 0.571258C10.2357 0.616451 10.3717 0.672554 10.502 0.738948C10.9182 0.951107 11.2464 1.29099 11.7015 1.74612L12.4978 2.54136H15.3742V3.91169H0.625732V2.54136H3.50218L4.29845 1.74612C4.75358 1.29099 5.08174 0.951107 5.49801 0.738948C5.62831 0.672554 5.76425 0.616451 5.90334 0.571258C6.34776 0.426926 6.82021 0.434431 7.46399 0.434431H8.53597ZM7.46399 1.80476C6.73208 1.80476 6.51641 1.81187 6.32617 1.87369C6.25545 1.89667 6.18668 1.92533 6.12041 1.95907C5.96398 2.03878 5.82348 2.16253 5.44142 2.54136H10.5585C10.1765 2.16253 10.036 2.03878 9.87955 1.95907C9.81329 1.92533 9.74452 1.89667 9.6738 1.87369C9.48356 1.81187 9.26789 1.80476 8.53597 1.80476H7.46399Z" fill="currentColor" /></svg>';function we(e){return e.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}function so(e){D(e,"dsh-web-mobile: session-menu delete",()=>{let t=e.locale.bind(Zn),a=(v,S)=>e.locale.bind(Yn)(v,S),o=null,n=0,r=null,d=null,f=(v,S)=>{let _=e.sessions.list.getSnapshot(),C=e.workspaces.list.getSnapshot(),M=new Set(C.archivedSessionIds),R=_.ids.filter(q=>{let k=_.byId[q];return k!==void 0&&!k.blank&&k.displayTitle===S&&!M.has(q)});if(R.length===1)return R[0];if(R.length===0)return;let z=v.closest('[class*="_groupSection"]');if(z===null)return;let N=z.querySelector(':scope > [class*="_projectRow"] [class*="_title"]')?.textContent?.trim(),U=new Set(C.items.flatMap(q=>q.sessionIds)),F=N===void 0?void 0:C.items.find(q=>q.title===N),G=F===void 0?[]:F.sessionIds,H=(F===void 0?_.ids.filter(q=>!U.has(q)&&!M.has(q)&&_.byId[q]!==void 0):G.filter(q=>!M.has(q)&&_.byId[q]!==void 0)).filter(q=>_.byId[q]?.displayTitle===S),W=[...z.querySelectorAll(':scope > [class*="_sessionRow"]')],K=W.indexOf(v),$=K===-1?0:W.slice(0,K).filter(q=>q.querySelector('[class*="_title"]')?.textContent?.trim()===S).length;return H[$]},p=v=>(v.querySelector('[class*="_itemLabel"]')??v).textContent?.trim()??"",c=v=>{let S=[...v.querySelectorAll('[role="menuitem"]')].map(p),_=a("rename"),C=a("menu.fork");return S.includes(_)&&S.includes(C)&&S.includes(a("menu.archiveSession"))},i=()=>{d!==null&&(document.removeEventListener("keydown",d,!0),d=null),r!==null&&(r.backdrop.remove(),r.card.remove(),r=null)},s=(v,S)=>{i();let _=document.body,C=document.createElement("div");C.dataset.mobileNav="delete-dialog-backdrop";let M=document.createElement("div");M.dataset.mobileNav="delete-dialog",M.setAttribute("role","dialog"),M.setAttribute("aria-modal","true"),M.innerHTML=`
-        <div data-mobile-nav="delete-confirm-title">${we(t("deleteConfirmTitle"))}</div>
-        <div data-mobile-nav="delete-confirm-desc">${we(t("deleteConfirmDesc",{title:S}))}</div>
+`;var eo=[Ya,Za,Qa,Ja].join(`
+`);var me="(max-width: 1023px) and (pointer: coarse)",to="(min-width: 1024px)",st="(pointer: coarse)";function O(e,t,a,o=me){e.effect(()=>{let n=window.matchMedia(o),i,r=()=>{i?.(),i=n.matches?a(n):void 0};return r(),n.addEventListener("change",r),()=>{n.removeEventListener("change",r),i?.()}},t)}function Re(e,t){if(t!==null)try{if(t("(font: -apple-system-body) and (-webkit-touch-callout: none)"))return!0}catch{}let a=e.userAgent;return/iP(hone|ad|od)/.test(a)?!0:/Macintosh/.test(a)&&e.maxTouchPoints>1}var Bt="--mobile-nav-header-h",zi='[data-mobile-nav="frame"] [data-phase] header',Ue=null,Me=null;function oo(e){if(typeof document>"u")return;let t=document.documentElement;t.style.getPropertyValue(Bt)!==e&&t.style.setProperty(Bt,e)}function no(){let e=N(),t=Ue;return t===null||e===null||!(t instanceof HTMLElement)?"0px":`${Math.round(Math.max(0,t.getBoundingClientRect().bottom-e.getBoundingClientRect().top))}px`}function ao(){oo(no())}function Di(){let e=Ue;oo(e instanceof HTMLElement&&e.offsetHeight===0?"0px":no())}function Bi(){if(typeof document>"u")return;let e=document.querySelector(zi);if(e===Ue){e!==null&&typeof ResizeObserver>"u"&&ao();return}Me?.disconnect(),Ue=e,e!==null&&typeof ResizeObserver<"u"&&(Me=Me??new ResizeObserver(()=>{ao()}),Me.observe(e)),Di()}function io(){return{name:"header-metrics",scopes:["*"],ensure:()=>{Bi()},dispose:()=>{Me?.disconnect(),Me=null,Ue=null,typeof document<"u"&&document.documentElement.style.removeProperty(Bt)}}}var Wt="characterData";function ro(e){return e.type==="attributes"?e.attributeName===null?"*":e.attributeName:e.type==="characterData"?Wt:"*"}function so(e){let t=e.onError??((y,A,C)=>{console.error(`[dsh-web-mobile] reconciler task ${y}${C==="dispose"?" dispose":""} failed`,A)}),a=new Set,o=null,n=new Set,i=!1,r=null,s=y=>{try{y.ensure()}catch(A){t(y.name,A,"ensure")}},p=y=>{try{y.dispose()}catch(A){t(y.name,A,"dispose")}},h=()=>{if(r!==null&&(r(),r=null),o===null){n.clear(),i=!1;return}let y=n,A=i;if(n=new Set,i=!1,A)for(let C of o)s(C);else if(y.size>0)for(let C of o){let E=C.scopes;(E===void 0||E.some(b=>y.has(b)))&&s(C)}},l=()=>{r===null&&(r=e.requestFrame(()=>{r=null,h()}))};return{get size(){return a.size},register:y=>(a.add(y),o!==null&&(o.add(y),s(y)),()=>{a.delete(y),o!==null&&o.delete(y)&&p(y)}),activate:()=>{o===null&&(o=new Set(a),i=!0,h())},deactivate:()=>{if(r!==null&&(r(),r=null),n.clear(),i=!1,o!==null){let y=o;o=null;for(let A of y)p(A)}},note:y=>{for(let A of y)n.add(A);l()},flush:h}}var J="pocketMobileNav",lo={open:"打开目录",close:"收起目录",backdrop:"点击关闭目录",backToConversation:"返回会话",sessionLog:"导出会话日志",files:"文件浏览",fileUpload:"添加文件",fileUploadImage:"上传图片",fileUploadAttachment:"上传附件",previewFullscreen:"全屏预览",previewExitFullscreen:"退出全屏",deleteSession:"删除会话",deleteConfirmTitle:"删除会话？",deleteConfirmDesc:"将删除「{title}」的完整会话记录，此操作不可恢复。",deleteConfirmYes:"删除",deleteConfirmNo:"取消",deletePending:"正在删除…",deleteErrorBusy:"该会话正在运行且无法停止，请稍后重试。",deleteErrorNotFound:"会话不存在或已被删除。",deleteErrorResolve:"无法确定要删除的会话，请重试。",deleteErrorGeneric:"删除失败：{message}"},co={open:"Open directory",close:"Close directory",backdrop:"Click to close directory",backToConversation:"Back to conversation",sessionLog:"Session log",files:"Files",fileUpload:"Add files",fileUploadImage:"Upload image",fileUploadAttachment:"Upload attachment",previewFullscreen:"Fullscreen preview",previewExitFullscreen:"Exit fullscreen",deleteSession:"Delete session",deleteConfirmTitle:"Delete session?",deleteConfirmDesc:"The complete log of “{title}” will be permanently removed. This cannot be undone.",deleteConfirmYes:"Delete",deleteConfirmNo:"Cancel",deletePending:"Deleting…",deleteErrorBusy:"This session is running and could not be stopped. Try again later.",deleteErrorNotFound:"The session does not exist or was already deleted.",deleteErrorResolve:"Could not identify the session to delete. Please try again.",deleteErrorGeneric:"Delete failed: {message}"};function po(e){O(e,"dsh-web-mobile: aionui explorer close marker",()=>{let t=a=>{let o=a.target;o===null||!o.closest(".aionui-collapse-chevron")||N()?.removeAttribute("data-aionui-explorer-open")};return document.addEventListener("click",t,!0),()=>document.removeEventListener("click",t,!0)}),O(e,"dsh-web-mobile: preview sheet open marker",()=>{let t=()=>{N()?.removeAttribute("data-aionui-preview-open"),N()?.removeAttribute("data-mobile-preview-full")},a="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",o="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",n=null,i=!1,r=["platform","userAgent","appVersion"],s=new Map,p=()=>{if(n!==null&&(window.clearTimeout(n),n=null),!!i){i=!1;for(let d of r){let x=s.get(d)??null;x===null?delete navigator[d]:Object.defineProperty(navigator,d,x)}s.clear()}},h=()=>{if(!i){for(let d of r)s.set(d,Object.getOwnPropertyDescriptor(navigator,d)??null);Object.defineProperty(navigator,"platform",{value:"Win32",configurable:!0}),Object.defineProperty(navigator,"userAgent",{value:a,configurable:!0}),Object.defineProperty(navigator,"appVersion",{value:o,configurable:!0}),i=!0}n!==null&&window.clearTimeout(n),n=window.setTimeout(p,1e3)},l=d=>{let x=d.target;if(x===null)return;let y=x.closest('[data-aionui-explorer-col] [class*="_treeRow"]');y!==null&&y.querySelector('[class*="_treeArrow"]:not([class*="_treeArrowEmpty"])')===null&&(h(),N()?.setAttribute("data-aionui-preview-open",""))},c=d=>{let x=d.target;x!==null&&x.closest('[data-aionui-preview-col] [class*="_panelCollapse"]')!==null&&t()};return document.addEventListener("click",l,!0),document.addEventListener("click",c,!0),()=>{p(),document.removeEventListener("click",l,!0),document.removeEventListener("click",c,!0)}})}function ho(){return{name:"preview-close-sync",scopes:["style"],ensure:()=>{let e=document.querySelector("[data-aionui-preview-col]");e!==null&&e.style.visibility==="hidden"&&(N()?.removeAttribute("data-aionui-preview-open"),N()?.removeAttribute("data-mobile-preview-full"))},dispose:()=>{}}}function uo(){let e=["[data-aionui-explorer-col]","[data-aionui-preview-col]"],t=new Map,a=new Map,o=()=>typeof window<"u"&&typeof window.matchMedia=="function"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,n=s=>{let p=a.get(s);if(p!==void 0){a.delete(s);try{p.anim.cancel()}catch{}}},i=()=>{for(let s of e){let p=a.get(s);if(p===void 0)continue;if(!p.el.isConnected){n(s);continue}let h=document.querySelector(s);h!==null&&h!==p.el&&n(s)}},r=(s,p)=>{if(n(s),o())return;let h=p.animate([{opacity:0,transform:"translateY(28px)"},{opacity:1,transform:"none"}],{duration:280,easing:"cubic-bezier(.16, 1, .3, 1)",fill:"backwards"});a.set(s,{el:p,anim:h}),h.finished.then(()=>{a.get(s)?.anim===h&&a.delete(s)}).catch(()=>{})};return{name:"sheet-rise-replay",scopes:["*","style","class","data-aionui-explorer-open","data-aionui-preview-open","data-mobile-preview-full"],ensure:()=>{let s=e.map(p=>document.querySelector(p));if(!(a.size===0&&s[0]===null&&s[1]===null)){i();for(let p=0;p<e.length;p++){let h=e[p],l=s[p];if(l===null){n(h);continue}let c=a.get(h);c!==void 0&&c.el!==l&&n(h);let d=getComputedStyle(l).visibility==="visible",x=t.get(h)??!1;d&&!x&&r(h,l),t.set(h,d)}}},dispose:()=>{for(let s of e)n(s);a.clear(),t.clear()}}}function Wi(e){return e===null||!e.isConnected||e.closest("[data-phase]")===null?!1:e.closest('[class*="_composerStack"]')!==null}var qi=/^TPS\s+\d/,ji=/TPS\s+\d/,Vi=e=>{for(let[t,a]of e.entries())if(qi.test((a.textContent??"").trim())&&!(a.children.length>0)&&a.parentElement!==null)return{index:t,mark:a.getAttribute("data-mobile-nav")!=="stats-tps"};return{index:-1,mark:!1}};function Ki(e,t,a,o){return e!==null?{el:e.el,reserve:e.reserve,live:t}:ji.test(a())?o():null}function Ui(e,t,a,o){return e?t:a&&o}function mo(){let e=(m,g)=>{getComputedStyle(m).position==="static"&&m.setAttribute("data-mobile-nav",g)},t=m=>{for(let g=m.parentElement;g!==null;g=g.parentElement)if(getComputedStyle(g).position!=="static")return g;return null},a=(m,g)=>{let f=t(m);if(f===null)return null;let T=g.getBoundingClientRect(),M=f.getBoundingClientRect(),P=m.getBoundingClientRect();return{host:m,left:T.left-M.left-f.clientLeft,top:T.top-M.top-f.clientTop-(P.height-T.height)/2}},o=m=>{let g=m.host;g.style.left!==`${m.left}px`&&(g.style.left=`${m.left}px`),g.style.top!==`${m.top}px`&&(g.style.top=`${m.top}px`)},n=m=>{let g=m.closest('[class*="_composerStack"]');if(g===null)return null;let f=m.querySelector(':scope > [data-mobile-nav="stats-tps-reserve"]'),T=[...g.querySelectorAll("div")],M=Vi(T);if(M.index<0)return null;let P=T[M.index];if(P===void 0)return null;f===null&&(f=document.createElement("span"),f.setAttribute("data-mobile-nav","stats-tps-reserve"),f.setAttribute("aria-hidden","true"),m.appendChild(f));let z=P.textContent??"";f.textContent!==z&&(f.textContent=z),M.mark&&P.setAttribute("data-mobile-nav","stats-tps");let W=P.parentElement;return W===null?null:(e(W,"stats-tps-row"),{el:P,reserve:f,live:z})},i=m=>{let{el:g,reserve:f}=m,T=a(g,f);return{el:g,measured:T,width:f.getBoundingClientRect().width}},r=m=>{m.measured!==null&&o(m.measured);let g=m.el,f=`${m.width}px`;g.style.maxWidth!==f&&(g.style.maxWidth=f)},s=(m,g)=>!m.contains(g)&&/\d\s*%/.test(m.textContent??""),p=m=>{let g=m.parentElement,f=g===null?null:g.parentElement;if(f===null)return null;let T=[...f.children].find(W=>s(W,m));if(T===void 0)return null;let M=document.querySelector('[data-composer-card] [class*="_row"] [class*="_trailing"]');if(M===null)return null;let P=M.querySelector(':scope > [data-mobile-nav="stats-ring-reserve"]'),z=M.querySelector(':scope > [class*="_primary"]');return P===null?(P=document.createElement("span"),P.setAttribute("data-mobile-nav","stats-ring-reserve"),M.insertBefore(P,z)):(z===null?M.lastElementChild!==P:P.nextElementSibling!==z)&&M.insertBefore(P,z),T.getAttribute("data-mobile-nav")!=="stats-ring"&&T.setAttribute("data-mobile-nav","stats-ring"),e(f,"stats-ring-dock"),{ring:T,reserve:P,measured:a(T,P)}},h=m=>{let g=n(m);g!==null&&r(i(g))},l=m=>{let g=p(m);g!==null&&g.measured!==null&&o(g.measured)},c=null,d=0,x="",y=m=>{if(m===null)return"none";let g=m.getBoundingClientRect();return`${Math.round(g.left)}:${Math.round(g.top)}:${Math.round(g.width)}`},A=()=>{let m=document.querySelector('[data-mobile-nav="stats"]');if(m===null)return;let g=m.getBoundingClientRect(),f=`${Math.round(g.left)}:${Math.round(g.top)}:${Math.round(g.width)}:${Math.round(g.height)}|${y(document.querySelector('[data-mobile-nav="stats-ring-reserve"]'))}`;if(f===x)return;x=f;let T=n(m),M=T===null?null:i(T),P=p(m);M!==null&&r(M),P!==null&&P.measured!==null&&o(P.measured)},C=()=>{d===0&&(d=requestAnimationFrame(()=>{d=0,A()}))},E="",b=null,w=null,k=null,_=null,R=(m,g)=>m!==null&&m.isConnected&&m.getAttribute("data-mobile-nav")===g,S=m=>{let g=m.parentElement,f=g===null?null:g.parentElement;return f===null?!1:[...f.children].find(T=>s(T,m))===k};return{name:"stats-line",scopes:["*",Wt],ensure:()=>{c===null&&(c=C,window.addEventListener("resize",C),window.visualViewport?.addEventListener("resize",C));let m=document.querySelector('[data-mobile-nav="stats"]');if(m!==null&&Wi(m)){let f=m.getBoundingClientRect(),T=`${Math.round(f.left)}:${Math.round(f.top)}:${Math.round(f.width)}:${Math.round(f.height)}`,M=R(b,"stats-tps"),P=R(w,"stats-tps-reserve"),z=M&&P&&b!==null&&w!==null?{el:b,reserve:w,live:""}:null,W=m.closest('[class*="_composerStack"]'),D=Ki(z,b?.textContent??"",()=>W?.textContent??"",()=>n(m)),q=`${T}|${D===null?"none":D.live}|${y(_)}`,X=Ui(D===null,b===null&&w===null,R(b,"stats-tps"),R(w,"stats-tps-reserve"));if(q===E&&X&&R(k,"stats-ring")&&S(m)&&R(_,"stats-ring-reserve"))return;E=q;let Z=D!==null&&D.el===b?n(m):D,$=Z===null?null:i(Z),V=p(m);$!==null&&r($),V!==null&&V.measured!==null&&o(V.measured),b=Z===null?null:Z.el,w=Z===null?null:Z.reserve,k=V===null?null:V.ring,_=V===null?null:V.reserve,E=`${T}|${D===null?"none":D.live}|${y(_)}`;return}m?.removeAttribute("data-mobile-nav");let g=document.querySelector('[class*="_composerStack"]');if(g!==null)for(let f of g.querySelectorAll('[class*="_root"]')){if(f.matches('[data-testid="todo-panel"]'))continue;let T=f.querySelectorAll("button");if(T.length>0&&![...T].every(P=>P.getAttribute("aria-haspopup")!==null))continue;let M=f.textContent??"";if(/(turns|steps|\bLLM\b|轮|步)/.test(M)&&f.querySelector("textarea, [data-composer-input]")===null){f.setAttribute("data-mobile-nav","stats"),h(f),l(f);return}}},dispose:()=>{d!==0&&(cancelAnimationFrame(d),d=0),x="",c!==null&&(window.removeEventListener("resize",c),window.visualViewport?.removeEventListener("resize",c),c=null);for(let m of document.querySelectorAll('[data-mobile-nav="stats-ring"], [data-mobile-nav="stats-tps"]')){let g=m;g.style.left="",g.style.top="",g.style.maxWidth=""}for(let m of["stats","stats-ring","stats-ring-dock","stats-tps","stats-tps-row"])for(let g of document.querySelectorAll(`[data-mobile-nav="${m}"]`))g.removeAttribute("data-mobile-nav");for(let m of document.querySelectorAll('[data-mobile-nav="stats-ring-reserve"], [data-mobile-nav="stats-tps-reserve"]'))m.remove()}}}function fo(e){let t=null,a=n=>{let i=N()?.hasAttribute("data-mobile-preview-full")??!1,r=e(i?"previewExitFullscreen":"previewFullscreen");n.getAttribute("aria-label")!==r&&(n.setAttribute("aria-label",r),n.title=r)},o=()=>{N()?.toggleAttribute("data-mobile-preview-full"),t!==null&&a(t)};return{name:"preview-fullscreen-toggle",scopes:["data-aionui-preview-open","data-mobile-preview-full"],ensure:()=>{let n=document.querySelector("[data-aionui-preview-col]");n!==null&&(t===null&&(t=document.createElement("button"),t.type="button",t.dataset.mobileNav="preview-full-toggle",t.innerHTML=['<svg class="dsh-web-mobile-full-in" viewBox="0 0 16 16" fill="none" aria-hidden="true">','<path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',"</svg>",'<svg class="dsh-web-mobile-full-out" viewBox="0 0 16 16" fill="none" aria-hidden="true">','<path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',"</svg>"].join(""),t.addEventListener("click",o)),a(t),t.parentElement!==n&&n.appendChild(t))},dispose:()=>{t?.remove(),t=null}}}function jt(){qt?.()}var qt=null,Gi=200,$i='<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="18" height="18"><path d="M9.8 3.4 5.2 8l4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',Xi='<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="18" height="18"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.67272 0.522841C10.8339 0.522841 11.76 0.522714 12.4963 0.602493C13.2453 0.683657 13.8789 0.854248 14.4264 1.25197C14.7504 1.48739 15.0355 1.77247 15.2709 2.0965C15.6686 2.64394 15.8392 3.27758 15.9204 4.02655C16.0002 4.7629 16 5.68895 16 6.85014V9.14986C16 10.3111 16.0002 11.2371 15.9204 11.9735C15.8392 12.7224 15.6686 13.3561 15.2709 13.9035C15.0355 14.2275 14.7504 14.5126 14.4264 14.748C13.8789 15.1458 13.2453 15.3163 12.4963 15.3975C11.76 15.4773 10.8339 15.4772 9.67272 15.4772H6.3273C5.16611 15.4772 4.24006 15.4773 3.50371 15.3975C2.75474 15.3163 2.1211 15.1458 1.57366 14.748C1.24963 14.5126 0.964549 14.2275 0.729131 13.9035C0.331407 13.3561 0.160817 12.7224 0.0796529 11.9735C-0.000126137 11.2371 1.25338e-09 10.3111 1.25338e-09 9.14986V6.85014C1.25329e-09 5.68895 -0.000126137 4.7629 0.0796529 4.02655C0.160817 3.27758 0.331407 2.64394 0.729131 2.0965C0.964549 1.77247 1.24963 1.48739 1.57366 1.25197C2.1211 0.854248 2.75474 0.683657 3.50371 0.602493C4.24006 0.522714 5.16611 0.522841 6.3273 0.522841H9.67272ZM5.54303 1.88715V14.1118C5.78636 14.1128 6.04709 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14986V6.85014C14.6398 5.65896 14.6393 4.81967 14.5693 4.1736C14.5007 3.54048 14.3723 3.17318 14.1711 2.89609C14.0195 2.68747 13.8354 2.50337 13.6268 2.35179C13.3497 2.1506 12.9824 2.02212 12.3493 1.95353C11.7032 1.88358 10.8639 1.88307 9.67272 1.88307H6.3273C6.04709 1.88307 5.78636 1.8862 5.54303 1.88715ZM4.1828 1.91166C3.99125 1.9216 3.8148 1.93577 3.65076 1.95353C3.01764 2.02212 2.65034 2.1506 2.37325 2.35179C2.16463 2.50337 1.98052 2.68747 1.82895 2.89609C1.62776 3.17318 1.49928 3.54048 1.43069 4.1736C1.36074 4.81967 1.36023 5.65896 1.36023 6.85014V9.14986C1.36023 10.341 1.36074 11.1803 1.43069 11.8264C1.49928 12.4595 1.62776 12.8268 1.82895 13.1039C1.98052 13.3125 2.16463 13.4966 2.37325 13.6482C2.65034 13.8494 3.01764 13.9779 3.65076 14.0465C4.29683 14.1164 5.13612 14.1169 6.3273 14.1169H9.67272C10.8639 14.1169 11.7032 14.1164 12.3493 14.0465C12.9824 13.9779 13.3497 13.8494 13.6268 13.6482C13.8354 13.4966 14.0195 13.3125 14.1711 13.1039C14.3723 12.8268 14.5007 12.4595 14.5693 11.8264C14.6393 11.1803 14.6398 10.341 14.6398 9.14986V6.85014C14.6398 5.65896 14.6393 4.81967 14.5693 4.1736C14.5007 3.54048 14.3723 3.17318 14.1711 2.89609C14.0195 2.68747 13.8354 2.50337 13.6268 2.35179C13.3497 2.1506 12.9824 2.02212 12.3493 1.95353C11.7032 1.88358 10.8639 1.88307 9.67272 1.88307H6.3273C5.13612 1.88307 4.29683 1.88358 3.65076 1.95353C3.47672 1.97129 3.30027 1.98546 3.10872 1.9954L4.1828 1.91166Z" fill="currentColor"/></svg>';function bo(e,t,a){let o=null,n=null,i=null,r=!1,s=()=>{let c=N();return c===null?!1:!c.hasAttribute("data-sidebar-collapsed")},p=()=>document.querySelector('[data-phase="active"]')===null,h=c=>{if(a!==null&&a.panelOpen()){c.preventDefault(),c.stopPropagation(),a.exit();return}t()},l=()=>{if(n===null)return;let c=a!==null&&a.panelOpen(),d=c?"exit-panel":"open-drawer";if(n.dataset.mobileNavFabMode===d)return;n.dataset.mobileNavFabMode=d;let x=e(c?"backToConversation":"open");n.setAttribute("aria-label",x),n.title=x,n.innerHTML=c?$i:Xi};return{name:"overlay-backdrop-fab",scopes:["*","data-sidebar-collapsed","data-phase"],ensure:()=>{qt=()=>{o!==null&&(r=!0,o.style.pointerEvents="none",o.style.opacity="0")};let c=N();if(c===null){i!==null&&(window.clearTimeout(i),i=null),o?.remove(),o=null,n?.remove(),n=null;return}s()?o===null?(o=document.createElement("div"),o.dataset.mobileNav="backdrop",o.setAttribute("role","button"),o.setAttribute("aria-label",e("backdrop")),c.appendChild(o),r=!1):r&&i!==null&&(window.clearTimeout(i),i=null,r=!1,o.style.removeProperty("pointer-events"),o.style.removeProperty("opacity")):o!==null&&(o.style.pointerEvents="none",o.style.opacity="0",r=!0,i===null&&(i=window.setTimeout(()=>{i=null,o?.remove(),o=null},Gi+60))),p()&&!s()&&n===null?(n=document.createElement("button"),n.type="button",n.dataset.mobileNav="fab",n.setAttribute("aria-label",e("open")),n.title=e("open"),n.addEventListener("click",h),c.appendChild(n)):(!p()||s())&&n!==null&&(n.remove(),n=null),l()},dispose:()=>{i!==null&&(window.clearTimeout(i),i=null),qt=null,o?.remove(),o=null,n?.remove(),n=null}}}function go(){let e=null,t=null;return{name:"file-viewer-open-marker",scopes:["*"],ensure:()=>{let a=N();if(a===null)return;let o=document.querySelector(".dsfv-panel")!==null;o===e&&a===t||(e=o,t=a,o?a.setAttribute("data-file-viewer-open",""):a.removeAttribute("data-file-viewer-open"))},dispose:()=>{e=null,t=null,N()?.removeAttribute("data-file-viewer-open")}}}var Pe=new WeakMap,Vt=!1;function Kt(){Vt=!0}function Ut(){Vt=!1}function Gt(){return Vt}function lt(e){return typeof e=="object"&&e!==null&&"parentElement"in e&&e.parentElement!==void 0}function wo(e,t,a){let o=performance.now()+t;if(!lt(e)){if(typeof e!="object"&&typeof e!="function"||e===null)return;Pe.set(e,o);return}let n=e;for(;n!==null&&(Pe.set(n,o),n!==a);)n=lt(n.parentElement)?n.parentElement:null}function Ge(e){let t=performance.now(),a=e.target;if(!lt(a)){if(typeof a!="object"&&typeof a!="function"||a===null)return!1;let n=Pe.get(a);return n===void 0?!1:n<=t?(Pe.delete(a),!1):!0}let o=a;for(;o!==null;){let n=Pe.get(o);if(n!==void 0)if(n<=t)Pe.delete(o);else return!0;o=lt(o.parentElement)?o.parentElement:null}return!1}var Yi=["node","session","summary","result"],Zi=["sessionId","id"],Qi=["__reactFiber$","__reactInternalInstance$"];function Ji(e){if(typeof e!="object"||e===null)return null;let t=e.id;return typeof t=="string"?t:null}function er(e,t){if(e==null)return null;for(let a of Yi){let o=Ji(e[a]);if(o!==null&&t(o))return o}for(let a of Zi){let o=e[a];if(typeof o=="string"&&t(o))return o}return null}function dt(e,t,a=60){let o=e;for(let n=0;n<a&&o!==null&&o!==void 0;n+=1){let i=er(o.memoizedProps,t);if(i!==null)return i;o=o.return}return null}function ct(e){if(e==null||typeof e!="object")return null;let t=e;for(let a of Qi)for(let o of Object.keys(t)){if(!o.startsWith(a))continue;let n=t[o];if(typeof n=="object"&&n!==null)return n}return null}function $t(e,t,a){return Math.abs(t.x-e.x)<=a&&Math.abs(t.y-e.y)<=a}var tr=.45;function vo(e,t=tr){return Math.round(e*t)}var Xt=8,ar=.16,xo=.13,Ao=60,or=.45,nr=.45,be=350,ir=300,rr=8,ve=110,yo=280,ko=101,sr=.45,lr=.16,dr=.45,re=0,He=!1,se=[],Ye=0,Zt=0,xe=!1,le=0,Xe=null,G=null,ye=!1,Lo=0,ge=!1,oe=!1,Ze=!1,we="drawer",Qt=!1,Ro=()=>!1;function cr(e,t,a){let o=a?-t.dx:t.dx;if(Math.abs(o)<=e.lockPx||Math.abs(o)<=Math.abs(t.dy))return"none";if(e.drawerOpen){if(Math.abs(o)/e.viewportWidthPx>=e.closeDistanceRatio)return"close";let r=a?-t.velX:t.velX;return r>0!=o>0?"none":Math.abs(r)>=e.closeVelocity?"close":"none"}return o<=0?"none":o/e.viewportWidthPx>=e.openDistanceRatio||(a?-t.velX:t.velX)>=e.openVelocity?"open":"none"}function pr(e,t,a){let o=a?-t.dx:t.dx;if(Math.abs(o)<=e.lockPx||Math.abs(o)<=Math.abs(t.dy))return"none";let n=a?-t.velX:t.velX;if(o<0)return e.panelOpen||e.drawerOpen?"none":-o/e.viewportWidthPx>=e.distanceRatio?"files":n>0!=o>0?"none":-n>=e.velocity?"files":"none";if(e.drawerOpen){let i=e.drawerCloseDistanceRatio??e.distanceRatio;return o/e.viewportWidthPx>=i?"close":n<=0?"none":n>=e.velocity?"close":"none"}return e.panelOpen?o/e.viewportWidthPx>=e.distanceRatio?"files":n>0!=o>0?"none":n>=e.velocity?"files":"none":"none"}function hr(e,t,a){let o=a-t,n=e.filter(p=>p.t>=o);if(n.length<2)return 0;let i=n[n.length-2],r=n[n.length-1],s=r.t-i.t;return s<=0?0:(r.x-i.x)/s}function ur(e,t,a,o){let n=a?t-e:e;return n>=0&&n<=o.startZonePx}function Eo(e,t,a,o){let n=a?e:t-e;return n>=0&&n<=o}function mr(e,t){return e||!t?"drawer":"files"}function fr(e,t,a,o){let n=e<=0?-1:1,i=Math.abs(e),r=a?-t:t;return o?r>=0?null:n*Math.min(i,-r)+0:r<=0?null:n*(i-Math.min(i,r))+0}function Mo(e,t){let a=t?-e:e;return a<=0?null:t?`translateX(max(0px, calc(${ko}% - ${a}px)))`:`translateX(min(0px, calc(-${ko}% + ${a}px)))`}function br(e){let t=e;for(;t!==null;){if((t.overflowX==="auto"||t.overflowX==="scroll")&&t.scrollWidth>t.clientWidth+1)return t;t=t.parent}return null}function Ne(){let e=N();return e!==null&&e.firstElementChild instanceof HTMLElement?e.firstElementChild:null}function Jt(){let e=N();return e!==null&&!e.hasAttribute("data-sidebar-collapsed")}function gr(){let e=document.querySelector("[data-sidebar-right-panel]");if(e===null)return!1;let t=getComputedStyle(e);return t.visibility==="hidden"||t.display==="none"?!1:e.getBoundingClientRect().left<window.innerWidth}function wr(e){let t=null,a=e;for(;a!==null;)t={parent:t,scrollWidth:a.scrollWidth,clientWidth:a.clientWidth,overflowX:getComputedStyle(a).overflowX},a=a.parentElement;return t}function ft(){return document.querySelector('[aria-modal="true"]')!==null}function ea(){return document.documentElement.hasAttribute("data-dsh-taskboard-active")||document.documentElement.hasAttribute("data-dsh-ssh-active")||document.querySelector("[data-conversation-composer-overlay]")!==null}function Po(){if(typeof window>"u")return!1;let e=window.getSelection();if(e!==null&&!e.isCollapsed)return!0;if(typeof document>"u")return!1;let t=document.activeElement;if(t===null)return!1;let a=t.tagName;if(a!=="TEXTAREA"&&a!=="INPUT")return!1;try{let{selectionStart:o,selectionEnd:n}=t;return typeof o=="number"&&typeof n=="number"&&o!==n}catch{return!1}}function Oo(){return performance.now()<le}function Io(e){return document.documentElement.hasAttribute("data-mobile-nav-dragging")||document.body.hasAttribute("data-mobile-nav-dragging")?!0:e.target instanceof Element&&e.target.closest("[data-mobile-nav-dragging]")!==null}var To=200;function vr(e){if(e.closest('[data-mobile-nav="frame"]')!==null)return null;let t=e;for(;t!==null;){if(t instanceof HTMLElement){let a=getComputedStyle(t);if((a.position==="fixed"||a.position==="absolute")&&t.offsetWidth<=To&&t.offsetHeight<=To)return t}t=t.parentElement}return null}function Fo(e){return e.target instanceof Element&&vr(e.target)!==null}function _o(){G=null,ye=!1,oe=!1,Ze=!1,ge=mt();let e=Ne();if(e===null||!xe)return;G=e;let t=e.getBoundingClientRect().width*ve/100;Lo=ge?t:-t}var Yt=!1,Oe=0;function ta(){if(!Yt)return;Yt=!1,G?.style.removeProperty("content-visibility");let e=Ne();e!==null&&e!==G&&e.style.removeProperty("content-visibility")}function xr(e){if(oe||Ze)return;let t=Ne();if(t===null||ft()||ea()){Ze=!0;return}G=t,ye=!0,t.style.setProperty("transition","none","important");let a=Mo(1e-4,ge);t.style.setProperty("transform",a??`translateX(-${ve}%)`,"important"),t.style.willChange="transform",t.style.setProperty("content-visibility","hidden","important"),Yt=!0,oe=!0,e.layout.toggleSidebar(),Oe=requestAnimationFrame(()=>{Oe=requestAnimationFrame(()=>{Oe=0,ta()})})}function So(e,t){if(!He||we!=="drawer")return;if(!xe){let o=ge?-t:t;if(!oe&&(o<rr||(xr(e),!oe)))return;let n=Mo(t,ge);if(n===null){G?.style.setProperty("transform",`translateX(-${ve}%)`,"important");return}G?.style.setProperty("transform",n,"important");return}if(G===null)return;let a=fr(Lo,t,ge,xe);if(a===null){ye=!0,G.style.setProperty("transition","none","important"),G.style.setProperty("transform","translateX(0px)","important");return}ye=!0,G.style.setProperty("transition","none","important"),G.style.setProperty("transform",`translateX(${a}px)`,"important")}function ut(){let e=G;!ye||e===null||(ye=!1,e.style.removeProperty("transition"),e.style.removeProperty("transform"),e.style.removeProperty("will-change"))}var Ie=null;function pt(){let e=Ie;if(e===null)return;Ie=null,window.clearTimeout(e.timer),e.el.style.removeProperty("transition"),e.el.style.removeProperty("transform"),e.el.style.removeProperty("will-change");let t=N();t!==null&&!t.hasAttribute("data-sidebar-collapsed")&&e.ctx.layout.toggleSidebar()}function Ho(e,t,a){let o=Ie;if(!(o!==null&&o.el===t&&o.target===a)){if(pt(),window.matchMedia("(prefers-reduced-motion: reduce)").matches){jt(),le=performance.now()+be,Ie={el:t,ctx:e,timer:0,target:a},pt();return}t.style.setProperty("transition",`transform ${yo}ms ease-in-out`,"important"),t.style.getPropertyValue("transform")!==""&&t.getBoundingClientRect(),t.style.setProperty("transform",a,"important"),jt(),le=performance.now()+be,Ie={el:t,ctx:e,timer:window.setTimeout(pt,yo+40),target:a}}}function ht(e){let t=G;if(G=null,ye=!1,t===null){ut(),e.layout.toggleSidebar(),le=performance.now()+be;return}let a=ge?`translateX(${ve}%)`:`translateX(-${ve}%)`;Ho(e,t,a)}function No(e){if(!Jt()||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return!1;let t=Ne();if(t===null)return!1;let a=mt()?`translateX(${ve}%)`:`translateX(-${ve}%)`;return Ho(e,t,a),!0}function fe(e,t=!1){if(Ie!==null){t&&pt();return}let a=oe;if(oe=!1,Ze=!1,ta(),a&&e!==null&&G!==null&&!t){Fe(),ht(e);return}ut(),Fe(),a&&e!==null&&(e.layout.toggleSidebar(),le=performance.now()+be)}function yr(e,t,a){if(Oo()||ft()||ea()||Po()||Io(e)||Fo(e)||!(e.target instanceof Element)||br(wr(e.target))!==null||e.target.closest('[class*="_composerSeat"], [data-composer-card], [class*="_dock"]')!==null)return!1;let o=Jt(),n=vo(a,sr);if(o){let i=N();if(i===null)return!1;let r=i.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom||e.target.closest('[class*="sessionRow"] button')!==null)return!1;let s=Ne(),p=s===null?null:s.getBoundingClientRect(),h=p!==null&&e.clientX>=p.left&&e.clientX<=p.right;we=mr(h,Eo(e.clientX,a,t,n))}else if(ur(e.clientX,a,t,{startZonePx:vo(a)}))we="drawer";else if(Eo(e.clientX,a,t,n))we="files";else return!1;return re=e.pointerId,He=!1,Ye=e.clientX,Zt=e.clientY,se=[{t:e.timeStamp,x:e.clientX}],!0}function kr(e){let t=e.clientX-Ye,a=e.clientY-Zt;return Math.max(Math.abs(t),Math.abs(a))<Xt?!1:Io(e)||Fo(e)||Math.abs(t)<=Math.abs(a)?(Fe(),!1):(He=!0,xe=Jt(),we==="files"?(Qt=gr(),xe&&_o(),Kt(),!0):(Kt(),_o(),!0))}function Co(e){se.push({t:e.timeStamp,x:e.clientX});let t=e.timeStamp-Ao,a=0;for(;a<se.length-1&&se[a].t<t;)a+=1;a>0&&(se=se.slice(a))}function Er(e,t,a,o){let n=He,i=oe;oe=!1,Ze=!1;let r=we==="files",s=Qt,p=hr(se,Ao,t.timeStamp),h=t.clientX-Ye,l=t.clientY-Zt;if(Fe(),!n){i&&ht(e);return}let d=ft()||!i&&Oo()?"none":r?pr({distanceRatio:lr,velocity:dr,lockPx:Xt,viewportWidthPx:o,panelOpen:s,drawerOpen:xe,drawerCloseDistanceRatio:xo},{dx:h,dy:l,velX:p},a):cr({openDistanceRatio:ar,closeDistanceRatio:xo,openVelocity:or,closeVelocity:nr,lockPx:Xt,viewportWidthPx:o,drawerOpen:xe},{dx:h,dy:l,velX:p},a);if(ta(),i){d==="open"?(ut(),le=performance.now()+be):ht(e),t.target instanceof Element&&$e(t.target);return}if(t.target instanceof Element){if(d==="close"){$e(t.target),ht(e);return}ut(),d==="open"&&($e(t.target),e.layout.toggleSidebar(),le=performance.now()+be),d==="files"&&(Ro(),$e(t.target),le=performance.now()+be),r&&d==="none"&&$e(t.target)}}function $e(e){let t=Ne(),a=t!==null&&t.contains(e)?t:N()??null;wo(e,ir,a),Xe=e}function Fe(){re=0,He=!1,se=[],we="drawer",Qt=!1,Ut()}function mt(){let e=N();return e!==null&&getComputedStyle(e).direction==="rtl"}function zo(e,t){O(e,"dsh-web-mobile: sidebar swipe gestures",()=>{Ro=t;let a=()=>window.innerWidth||document.documentElement.clientWidth||0,o=c=>{if(Xe=null,Ut(),!(c.pointerType!=="touch"&&c.pointerType!=="pen")){if(re!==0&&re!==c.pointerId){fe(e);return}yr(c,mt(),a())}},n=c=>{if(c.pointerId===re){if(ft()||ea()){fe(e);return}if(He)Co(c),So(e,c.clientX-Ye);else{if(Po()){Fe();return}kr(c)&&(Co(c),So(e,c.clientX-Ye))}}},i=c=>{c.pointerId===re&&Er(e,c,mt(),a())},r=c=>{c.pointerId===re&&fe(e)},s=c=>{if(Xe===null||!(c.target instanceof Element))return;let d=c.target.closest('[data-mobile-nav="backdrop"], [data-mobile-nav="fab"]');d!==null&&!d.contains(Xe)||Ge(c)&&(c.stopPropagation(),c.preventDefault(),Xe=null)},p=()=>{document.hidden&&fe(e)},h=c=>{if(re!==0){if(c.touches.length!==1||!c.cancelable||document.hidden){fe(e);return}c.preventDefault()}};document.addEventListener("pointerdown",o,!0),document.addEventListener("pointermove",n,!0),document.addEventListener("pointerup",i,!0),document.addEventListener("pointercancel",r,!0),document.addEventListener("click",s,!0),document.addEventListener("touchmove",h,{capture:!0,passive:!1});let l=()=>fe(e);return document.addEventListener("visibilitychange",p),window.addEventListener("blur",l),()=>{document.removeEventListener("pointerdown",o,!0),document.removeEventListener("pointermove",n,!0),document.removeEventListener("pointerup",i,!0),document.removeEventListener("pointercancel",r,!0),document.removeEventListener("click",s,!0),document.removeEventListener("touchmove",h,{capture:!0}),document.removeEventListener("visibilitychange",p),window.removeEventListener("blur",l),Oe!==0&&(cancelAnimationFrame(Oe),Oe=0),fe(e,!0)}})}var Do=12,ze=null,Tr='button[data-dsh-taskboard-entry], button[data-dsh-ssh-entry], [class*="newSession"], [class*="sessionRow"], [class*="searchResultRow"], [class*="searchResultWorkspace"], [class*="panelRow"]';function Qe(e){No(e)||e.layout.toggleSidebar()}function Bo(e){O(e,"dsh-web-mobile: drawer close (Escape + navigate)",()=>{let t=()=>{Qe(e)},a=()=>{let f=N();return f!==null&&!f.hasAttribute("data-sidebar-collapsed")},o=f=>{f.key==="Escape"&&document.querySelector('[aria-modal="true"]')===null&&a()&&t()},n=()=>document.querySelector('[data-mobile-nav="frame"] > :first-child'),i=f=>{if(document.querySelector('[aria-modal="true"]')!==null||!a()||!(f instanceof Element))return!1;let T=n();return T===null||!T.contains(f)||f.closest('[class*="sessionRow"] button')!==null?!1:f.closest(Tr)!==null},r=f=>!(f instanceof Element&&f.closest("[data-dsha-session-select]")!==null)&&i(f),s=0,p="",h=null,l=null,c=f=>{if(!f.isTrusted)return;let T=f.target;T instanceof Element&&T.closest('[class*="sessionRow"] [class*="_title"]')!==null&&(f.preventDefault(),f.stopPropagation())},d=()=>n()?.querySelector('[role="treeitem"][aria-selected="true"]')?.querySelector('[class*="_title"]')?.textContent?.trim()??null,x=()=>{h?.disconnect(),h=null,l!==null&&window.clearTimeout(l),l=null,p=""},y=()=>{x(),p=d()??"";let f=n();f!==null&&(h=new MutationObserver(()=>{if(!a()){x();return}let T=d();T!==null&&T!==p&&(x(),t())}),h.observe(f,{childList:!0,subtree:!0,attributes:!0,attributeFilter:["aria-selected"]}),l=window.setTimeout(x,2e3))},A=f=>e.sessions.list.getSnapshot().byId[f]!==void 0,C=(f,T)=>{if(ze===null||!$t(ze,{x:T.clientX,y:T.clientY},Do))return null;let M=dt(ct(f),A);return M===null||Q(e.sessions.list.getSnapshot())===M?null:M},E=null,b=!1,w=0,k=()=>{b=!0,E?.(),E=null,w!==0&&(window.clearTimeout(w),w=0)},_=f=>{k(),b=!1;let T=()=>{b||(k(),a()&&t())};E=e.sessions.list.subscribe(()=>{Q(e.sessions.list.getSnapshot())===f&&(w!==0&&window.clearTimeout(w),w=window.setTimeout(()=>{w=0,T()},0))})},R=0,S=f=>{R=performance.now(),ze=f.pointerType==="touch"||f.pointerType==="pen"?{x:f.clientX,y:f.clientY}:null},F=f=>{let T=f.target;if(Gt()||Ge(f))return;if(T instanceof Element&&T.closest('[data-mobile-nav="backdrop"]')!==null){a()&&t();return}let M=T instanceof Element?T.closest('[role="treeitem"][data-dsha-session-select]'):null;if(M!==null&&f.detail>0&&i(T)){if(f.defaultPrevented||ze!==null&&(performance.now()-R>=500||!$t(ze,{x:f.clientX,y:f.clientY},Do)))return;f.preventDefault(),f.stopPropagation(),x(),k(),s=performance.now(),M.dispatchEvent(new MouseEvent("click",{bubbles:!0,cancelable:!0,view:window,detail:0}));return}performance.now()-s<500||r(T)&&t()},m=f=>{if(Gt()||Ge(f)||f.pointerType!=="touch"&&f.pointerType!=="pen")return;let T=f.target;if(!(T instanceof Element)||!r(T))return;let M=T.closest('[role="treeitem"]');if(M!==null){if(s=performance.now(),M.getAttribute("aria-selected")==="true")t();else{let P=C(M,f);P===null?(k(),y()):(x(),Ua(e.sessions)?(_(P),e.sessions.open(P)):(k(),y()))}return}},g=()=>{a()&&t()};return document.addEventListener("dsha-session-open",g),document.addEventListener("dblclick",c,!0),document.addEventListener("keydown",o,!0),document.addEventListener("click",F,!0),document.addEventListener("pointerdown",S,!0),document.addEventListener("pointerup",m,!0),()=>{x(),k(),ze=null,document.removeEventListener("dsha-session-open",g),document.removeEventListener("dblclick",c,!0),document.removeEventListener("keydown",o,!0),document.removeEventListener("click",F,!0),document.removeEventListener("pointerdown",S,!0),document.removeEventListener("pointerup",m,!0)}})}var aa=!1,oa=!1,bt=so({requestFrame:e=>{let t=0;return t=requestAnimationFrame(()=>{t=0,e()}),()=>{t!==0&&cancelAnimationFrame(t)}}});function Wo(e){return aa?()=>{}:(aa=!0,O(e,"dsh-web-mobile: DOM reconciler",()=>{let t=new MutationObserver(a=>{let o=new Set;for(let n of a)(n.target instanceof Element?n.target:n.target.parentElement)?.closest("[data-chat-flow]")||o.add(ro(n));o.size>0&&bt.note(o)});return t.observe(document.documentElement,{childList:!0,subtree:!0,attributes:!0,characterData:!0,attributeFilter:["style","class","data-phase","data-sidebar-collapsed","data-aionui-explorer-open","data-aionui-preview-open","data-mobile-preview-full"]}),bt.activate(),()=>{t.disconnect(),bt.deactivate()}}),()=>{aa=!1})}function ee(e){return bt.register(e)}function qo(e,t){if(oa)return()=>{};oa=!0;let a=e.locale.bind(J),o=[ee(fo(a)),ee(ho()),ee(uo()),ee(mo()),ee(bo(a,()=>Qe(e),t)),ee(t.task),ee(go())];return()=>{for(let n of o)n();oa=!1}}var jo="data-mobile-nav-ios",na="width=device-width, initial-scale=1, viewport-fit=cover",Vo="--dsh-web-mobile-vh",ia=()=>document.querySelector('meta[name="viewport"]');function Ko(){let e=null,t=null,a=!1,o=()=>{let s=ia();s!==null&&(e===null&&(e=s.content),!(a||s.content===na)&&(a=!0,s.content=na,a=!1))},n=new MutationObserver(o),i=()=>{let s=ia();s!==t&&(t!==null&&n.disconnect(),t=s,s!==null&&n.observe(s,{attributes:!0,attributeFilter:["content"]}))},r=new MutationObserver(()=>{i(),o()});return r.observe(document.head,{childList:!0}),i(),o(),()=>{n.disconnect(),r.disconnect();let s=ia();s!==null&&e!==null&&s.content===na&&(s.content=e)}}function Uo(){let e=document.documentElement,t=0,a=0,o="",n=()=>{let i=window.innerHeight,r=window.innerWidth,s=window.visualViewport,h=`${Math.max(1,Math.min(i,s?.height??i))}px`,l=`${s?.offsetTop??0}px`;if(e.style.getPropertyValue("--dsha-mobile-visible-vh")!==h&&e.style.setProperty("--dsha-mobile-visible-vh",h),e.style.getPropertyValue("--dsha-mobile-viewport-top")!==l&&e.style.setProperty("--dsha-mobile-viewport-top",l),t===0||i>t||r!==a){t=i,a=r;let c=`${i}px`;c!==o&&(o=c,e.style.setProperty(Vo,c))}};return n(),window.addEventListener("resize",n),window.visualViewport?.addEventListener("resize",n),window.visualViewport?.addEventListener("scroll",n),()=>{window.removeEventListener("resize",n),window.visualViewport?.removeEventListener("resize",n),window.visualViewport?.removeEventListener("scroll",n),e.style.removeProperty("--dsha-mobile-visible-vh"),e.style.removeProperty("--dsha-mobile-viewport-top"),o="",e.style.removeProperty(Vo)}}function Go(e){if(!e)return;let t=document.documentElement;return t.setAttribute(jo,""),()=>{t.removeAttribute(jo)}}var _r='[data-dsh-responsive-part="sidebar-toggle"]:not([data-mobile-nav])',$o='[data-mobile-nav="dismiss-shadow"]';function Sr(){if(typeof document>"u")return;let e=document.querySelector($o),t=document.querySelector(_r),a=t?.closest('[data-pane="sidebar"]')??null;if(t===null||a===null){e?.remove();return}if(e!==null&&e.parentElement===a&&a.firstElementChild===e)return;let o=e??document.createElement("span");e===null&&(o.setAttribute("data-mobile-nav","dismiss-shadow"),o.setAttribute("data-dsh-responsive-part","sidebar-toggle"),o.setAttribute("aria-hidden","true"),o.style.setProperty("display","none","important")),a.insertBefore(o,a.firstElementChild)}function Xo(){if(ra)return()=>{};ra=!0;let e=null,t=ee({name:"frame-marker",scopes:["*"],ensure:()=>{(e===null||!e.isConnected)&&(e=Dt()),e!==null&&!e.hasAttribute("data-mobile-nav")&&e.setAttribute("data-mobile-nav","frame"),Sr()},dispose:()=>{e!==null&&(e.removeAttribute("data-mobile-nav"),e.removeAttribute("data-mobile-preview-full"),e.removeAttribute("data-aionui-explorer-open"),e.removeAttribute("data-aionui-preview-open")),typeof document<"u"&&document.querySelector($o)?.remove(),e=null}}),a=ee(io());return()=>{a(),t(),ra=!1}}var ra=!1;function Yo(e){O(e,"dsh-web-mobile: status bar theme + viewport + zoom guard",()=>{let t=document.createElement("meta");t.name="theme-color";let a=()=>getComputedStyle(document.body).backgroundColor,o=typeof CSS<"u"&&typeof CSS.supports=="function"?p=>CSS.supports(p):null;t.content=a(),t.parentElement===null&&document.head.appendChild(t);let n=new MutationObserver(()=>{t.content=a()});n.observe(document.body,{attributes:!0,attributeFilter:["data-ds-dark-theme"]});let i=Ko(),r=Go(Re(navigator,o)),s=Uo();return()=>{s(),n.disconnect(),i(),t.remove(),r?.()}})}var gt="data-mobile-nav-selecting";function Cr(){let e=window.getSelection();if(e===null||e.isCollapsed)return!1;let t=e.anchorNode;if(t===null)return!1;let a=t instanceof HTMLElement?t:t.parentElement;return a===null||a.closest("[data-composer-card]")!==null?!1:a.closest("[data-phase]")!==null}function Zo(e){O(e,"dsh-web-mobile: selection chrome yield",()=>{if(typeof document>"u")return;let t=document.documentElement,a=()=>{let o=Cr();o!==t.hasAttribute(gt)&&(o?t.setAttribute(gt,""):t.removeAttribute(gt))};return document.addEventListener("selectionchange",a),a(),()=>{document.removeEventListener("selectionchange",a),t.removeAttribute(gt)}})}var Qo='[data-mobile-nav="frame"] button[class*="_trigger"][aria-haspopup="tree"][aria-expanded]:not([class*="_switcherTrigger"])',Ar='[class*="ZKlsPq_root"], [class*="ZKlsPq_menu"], [class*="h8S2Va_root"], [class*="h8S2Va_menu"]',Lr=800,Rr=1e3,Jo=["mouseover","mouseout","mouseenter","mouseleave"];function en(e){O(e,"dsh-web-mobile: lineage chip touch toggle",()=>{if(typeof PointerEvent>"u")return;let t=0,a=()=>{t=Date.now()+Lr},o=null,n=0,i=h=>{if(h.pointerType!=="touch"&&h.pointerType!=="pen")return;a();let l=h.target;if(!(l instanceof Element))return;let c=l.closest(Qo);if(c===null)return;let d=c.getAttribute("aria-expanded")==="true";c.dispatchEvent(new KeyboardEvent("keydown",{key:d?"Escape":"ArrowDown",bubbles:!0,cancelable:!0})),o=c,n=Date.now()+Rr},r=h=>{if(o===null)return;if(Date.now()>=n){o=null;return}let l=h.target;l instanceof Element&&l.closest(Qo)===o&&(o=null,h.stopPropagation())},s=h=>{h.pointerType!=="touch"&&h.pointerType!=="pen"||a()},p=h=>{if(Date.now()>=t||!h.isTrusted)return;let l=h.target;l instanceof Element&&l.closest(Ar)!==null&&h.stopImmediatePropagation()};document.addEventListener("pointerdown",s,!0),document.addEventListener("pointerup",i,!0),document.addEventListener("click",r,!0);for(let h of Jo)document.addEventListener(h,p,!0);return()=>{document.removeEventListener("pointerdown",s,!0),document.removeEventListener("pointerup",i,!0),document.removeEventListener("click",r,!0);for(let h of Jo)document.removeEventListener(h,p,!0)}})}var Mr="workspace",Pr='data-mobile-nav="session-delete"',sa="var(--dsw-alias-state-error-primary, #b91c1c)",Or='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4782 4.84067L14.2138 10.1152C14.1102 12.1872 14.067 13.0115 13.3866 13.9607C13.1044 14.3546 12.7498 14.6912 12.3424 14.9535C11.8239 15.2872 11.2415 15.4316 10.5585 15.4998C9.88727 15.5668 9.04946 15.5656 7.99998 15.5656C6.95051 15.5656 6.1127 15.5668 5.44142 15.4998C4.75851 15.4316 4.17602 15.2872 3.65753 14.9535C3.25012 14.6912 2.89559 14.3546 2.61332 13.9607C1.93296 13.0115 1.88979 12.1872 1.78619 10.1152L1.52179 4.84067L2.89006 4.77277L3.15343 10.0463C3.26221 12.2218 3.32452 12.6015 3.72646 13.1624C3.90825 13.4161 4.13686 13.6334 4.39927 13.8023C4.66204 13.9714 5.00263 14.0792 5.57825 14.1367C6.16562 14.1953 6.92298 14.1963 7.99998 14.1963C9.07699 14.1963 9.83434 14.1953 10.4217 14.1367C10.9973 14.0792 11.3379 14.1367 11.6007 13.8023C11.8631 13.6334 12.0917 13.4161 12.2735 13.1624C12.6755 12.6015 12.7378 12.2218 12.8465 10.0463L13.1099 4.77277L14.4782 4.84067ZM5.43011 6.22849H6.7994V11.3909H5.43011V6.22849ZM9.20056 6.22849H10.5699V11.3909H9.20056V6.22849ZM8.53597 0.434431C9.17976 0.434431 9.6522 0.426926 10.0966 0.571258C10.2357 0.616451 10.3717 0.672554 10.502 0.738948C10.9182 0.951107 11.2464 1.29099 11.7015 1.74612L12.4978 2.54136H15.3742V3.91169H0.625732V2.54136H3.50218L4.29845 1.74612C4.75358 1.29099 5.08174 0.951107 5.49801 0.738948C5.62831 0.672554 5.76425 0.616451 5.90334 0.571258C6.34776 0.426926 6.82021 0.434431 7.46399 0.434431H8.53597ZM7.46399 1.80476C6.73208 1.80476 6.51641 1.81187 6.32617 1.87369C6.25545 1.89667 6.18668 1.92533 6.12041 1.95907C5.96398 2.03878 5.82348 2.16253 5.44142 2.54136H10.5585C10.1765 2.16253 10.036 2.03878 9.87955 1.95907C9.81329 1.92533 9.74452 1.89667 9.6738 1.87369C9.48356 1.81187 9.26789 1.80476 8.53597 1.80476H7.46399Z" fill="currentColor" /></svg>';function ke(e){return e.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}function tn(e){O(e,"dsh-web-mobile: session-menu delete",()=>{let t=e.locale.bind(J),a=(m,g)=>e.locale.bind(Mr)(m,g),o=null,n=0,i=null,r=null,s=0,p=m=>{let g=m.getAttribute("data-row-key")??"";if(g.startsWith("session:")){let T=g.slice(8);if(T!=="")return T}let f=m.getAttribute("data-dsha-session-select");return f!==null&&f!==""?f:dt(ct(m),b)},h=m=>(m.querySelector('[class*="_itemLabel"]')??m).textContent?.trim()??"",l=m=>{let g=[...m.querySelectorAll('[role="menuitem"]')].map(h),f=a("rename"),T=a("menu.fork");return g.includes(f)&&g.includes(T)&&g.includes(a("menu.archiveSession"))},c=()=>{r!==null&&(document.removeEventListener("keydown",r,!0),r=null),i!==null&&(i.backdrop.remove(),i.card.remove(),i=null)},d=(m,g)=>{c();let f=document.body,T=document.createElement("div");T.dataset.mobileNav="delete-dialog-backdrop";let M=document.createElement("div");M.dataset.mobileNav="delete-dialog",M.setAttribute("role","dialog"),M.setAttribute("aria-modal","true"),M.innerHTML=`
+        <div data-mobile-nav="delete-confirm-title">${ke(t("deleteConfirmTitle"))}</div>
+        <div data-mobile-nav="delete-confirm-desc">${ke(t("deleteConfirmDesc",{title:g}))}</div>
         <div data-mobile-nav="delete-confirm-actions">
-          <button type="button" data-mobile-nav="delete-confirm-no">${we(t("deleteConfirmNo"))}</button>
-          <button type="button" data-mobile-nav="delete-confirm-yes">${we(t("deleteConfirmYes"))}</button>
+          <button type="button" data-mobile-nav="delete-confirm-no">${ke(t("deleteConfirmNo"))}</button>
+          <button type="button" data-mobile-nav="delete-confirm-yes">${ke(t("deleteConfirmYes"))}</button>
         </div>
-        <div data-mobile-nav="delete-error" role="alert" hidden></div>`;let R=M.querySelector('[data-mobile-nav="delete-confirm-no"]'),z=M.querySelector('[data-mobile-nav="delete-confirm-yes"]'),N=M.querySelector('[data-mobile-nav="delete-error"]');R?.addEventListener("click",i),C.addEventListener("click",H=>{H.target===C&&i()});let U=H=>{H.key==="Escape"&&i()};document.addEventListener("keydown",U,!0),d=U;let F=()=>{z!==null&&(z.disabled=!1,z.textContent=t("deleteConfirmYes")),R!==null&&(R.disabled=!1)},G=H=>{N!==null&&(N.textContent=H,N.hidden=!1),F()},ee=(H,W)=>{let K=H?.error?.code;if(K==="session-not-found")return t("deleteErrorNotFound");if(K==="session-busy")return t("deleteErrorBusy");let $=H?.error?.message??(W instanceof Error?W.message:String(W));return t("deleteErrorGeneric",{message:$})};z?.addEventListener("click",async()=>{z.disabled=!0,R!==null&&(R.disabled=!0),z.textContent=t("deletePending"),N!==null&&(N.hidden=!0);let H=le(e.sessions.list.getSnapshot())===v;try{let K=await fetch("/api/mobile-nav.session.delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:v})}),$=await K.json().catch(()=>null);if(!K.ok||$===null||$.ok!==!0){G(ee($,new Error(`HTTP ${K.status}`)));return}}catch(K){G(ee(null,K));return}i(),H&&da(e.sessions)&&e.sessions.clear(),await e.sessions.refresh?.(),H&&window.matchMedia(ge).matches&&Qe(e)}),_.appendChild(C),C.appendChild(M),r={backdrop:C,card:M}},h=v=>{i();let S=document.body,_=document.createElement("div");_.dataset.mobileNav="delete-dialog-backdrop";let C=document.createElement("div");C.dataset.mobileNav="delete-dialog",C.setAttribute("role","dialog"),C.setAttribute("aria-modal","true"),C.innerHTML=`
-        <div data-mobile-nav="delete-confirm-title">${we(t("deleteSession"))}</div>
-        <div data-mobile-nav="delete-error" role="alert">${we(v)}</div>
+        <div data-mobile-nav="delete-error" role="alert" hidden></div>`;let P=M.querySelector('[data-mobile-nav="delete-confirm-no"]'),z=M.querySelector('[data-mobile-nav="delete-confirm-yes"]'),W=M.querySelector('[data-mobile-nav="delete-error"]');P?.addEventListener("click",c),T.addEventListener("click",$=>{$.target===T&&c()});let D=$=>{$.key==="Escape"&&c()};document.addEventListener("keydown",D,!0),r=D;let q=()=>{z!==null&&(z.disabled=!1,z.textContent=t("deleteConfirmYes")),P!==null&&(P.disabled=!1)},X=$=>{W!==null&&(W.textContent=$,W.hidden=!1),q()},Z=($,V)=>{let Te=$?.error?.code;if(Te==="session-not-found")return t("deleteErrorNotFound");if(Te==="session-busy")return t("deleteErrorBusy");let _e=$?.error?.message??(V instanceof Error?V.message:String(V));return t("deleteErrorGeneric",{message:_e})};z?.addEventListener("click",async()=>{z.disabled=!0,P!==null&&(P.disabled=!0),z.textContent=t("deletePending"),W!==null&&(W.hidden=!0);let $=++s;try{let te=await fetch("/api/mobile-nav.session.delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:m})}),ae=await te.json().catch(()=>null);if(!te.ok||ae===null||ae.ok!==!0){X(Z(ae,new Error(`HTTP ${te.status}`)));return}}catch(te){let ae=!1;try{ae=await Ga({listed:()=>e.sessions.list.getSnapshot()?.byId?.[m]!==void 0,refresh:async()=>{await e.sessions.refresh?.()},sleep:ce=>new Promise(We=>{window.setTimeout(()=>{We()},ce)})})}catch{ae=!1}if(!ae){X(Z(null,te));return}}let V=Q(e.sessions.list.getSnapshot())===m;if($!==s)return;c(),V&&Ka(e.sessions)&&e.sessions.clear();let Te=e.sessions;try{await Te.refresh?.()}catch(te){console.warn("[dsh-web-mobile] session list refresh after delete failed:",te)}let _e=N();_e===null||_e.hasAttribute("data-sidebar-collapsed")||V&&window.matchMedia(me).matches&&Qe(e)}),f.appendChild(T),T.appendChild(M),i={backdrop:T,card:M}},x=m=>{c();let g=document.body,f=document.createElement("div");f.dataset.mobileNav="delete-dialog-backdrop";let T=document.createElement("div");T.dataset.mobileNav="delete-dialog",T.setAttribute("role","dialog"),T.setAttribute("aria-modal","true"),T.innerHTML=`
+        <div data-mobile-nav="delete-confirm-title">${ke(t("deleteSession"))}</div>
+        <div data-mobile-nav="delete-error" role="alert">${ke(m)}</div>
         <div data-mobile-nav="delete-confirm-actions">
-          <button type="button" data-mobile-nav="delete-confirm-no">${we(t("deleteConfirmNo"))}</button>
-        </div>`,C.querySelector('[data-mobile-nav="delete-confirm-no"]')?.addEventListener("click",i),_.addEventListener("click",R=>{R.target===_&&i()});let M=R=>{R.key==="Escape"&&i()};document.addEventListener("keydown",M,!0),d=M,S.appendChild(_),_.appendChild(C),r={backdrop:_,card:C}},g=v=>{if(v.querySelector(`[${io}]`)!==null)return;let S=v.querySelector('[role="menuitem"]'),_=S?.parentElement,C=v.querySelector('[class*="_viewport"]');if(S===null||_===null||_===void 0||C===null)return;let M=_.cloneNode(!0),R=M.querySelector('[role="menuitem"]');if(R===null)return;let z=R.querySelector('[class*="_itemIcon"]');z!==null&&(z.innerHTML=Qn,z.style.color=Rt);let N=R.querySelector('[class*="_itemLabel"]');N!==null?(N.textContent=t("deleteSession"),N.style.color=Rt):R.firstElementChild===null&&(R.textContent=t("deleteSession"),R.style.color=Rt),R.setAttribute("data-mobile-nav","session-delete"),R.addEventListener("click",U=>{U.preventDefault(),U.stopPropagation();let F=o;F?.button.click();try{if(F==null){h(t("deleteErrorResolve"));return}let G=f(F.row,F.title);if(G===void 0){h(t("deleteErrorResolve"));return}s(G,F.title)}catch(G){console.error("[dsh-web-mobile] session delete failed:",G),h(t("deleteErrorGeneric",{message:G instanceof Error?G.message:String(G)}))}}),C.appendChild(M)},u=()=>{let v=a("session.new");for(let S of document.querySelectorAll('[role="menu"]'))c(S)&&(o!==null&&o.title===v||g(S))},w=()=>{n===0&&(n=requestAnimationFrame(()=>{n=0,u()}))},y=v=>{if(!(v instanceof Element))return;let S=v.closest('[class*="_sessionRow"]');if(S===null)return;let _=S.querySelector("button");if(_===null)return;let C=S.querySelector('[class*="_title"]')?.textContent?.trim()??"";o={button:_,row:S,title:C},w()},x=v=>y(v.target),b=v=>y(v.target);document.addEventListener("click",x,!0),document.addEventListener("contextmenu",b,!0);let O=v=>{if(o===null)return!1;for(let S of v.removedNodes)if(S instanceof Element&&(S.matches('[role="menu"]')||S.querySelector('[role="menu"]')!==null))return!0;return!1},E=new MutationObserver(v=>{let S=!1;for(let _ of v){if(_.type!=="childList")continue;let C=_.target;if(C===document.body){w();break}if(S||(S=O(_)),C instanceof HTMLElement&&(C.matches('[role="menu"]')||C.closest('[role="menu"]')!==null)){w();break}}S&&o!==null&&![...document.querySelectorAll('[role="menu"]')].some(c)&&(o=null)});return E.observe(document.body,{childList:!0,subtree:!0}),u(),()=>{document.removeEventListener("click",x,!0),document.removeEventListener("contextmenu",b,!0),E.disconnect(),n!==0&&cancelAnimationFrame(n);for(let v of document.querySelectorAll(`[${io}]`))v.remove();i(),o=null}},qa)}var Jn="[data-composer-card]",Pt="[data-composer-input]",Mt="data-mobile-nav-focus-shadow";function lo(e){D(e,"dsh-web-mobile: composer keyboard guard",()=>{let t=At(navigator,typeof CSS<"u"&&typeof CSS.supports=="function"?CSS.supports.bind(CSS):null),a=typeof matchMedia=="function"&&matchMedia("(pointer: coarse)").matches;if(!t&&!a)return;let o=0,n=()=>{window.clearTimeout(o),o=0;let f=document.querySelector(`[${Mt}]`);if(f===null)return;f.removeAttribute(Mt);let p=f;Object.prototype.hasOwnProperty.call(f,"focus")&&delete p.focus},r=f=>{let p=f.target;if(!(p instanceof Element)||typeof p.closest!="function")return;let c=p.closest(Jn);if(c===null)return;let i=c.querySelector(Pt);if(i!==null){if(p.closest(Pt)!==null){n();return}n(),i.setAttribute(Mt,""),Object.defineProperty(i,"focus",{configurable:!0,writable:!0,value:function(){}}),window.clearTimeout(o),o=window.setTimeout(n,700)}},d=f=>{if(o===0)return;let p=f.target;p instanceof HTMLElement&&p.closest(Pt)!==null&&p.blur()};return document.addEventListener("pointerdown",r,!0),document.addEventListener("touchstart",r,!0),document.addEventListener("mousedown",r,!0),document.addEventListener("focusin",d,!0),()=>{document.removeEventListener("pointerdown",r,!0),document.removeEventListener("touchstart",r,!0),document.removeEventListener("mousedown",r,!0),document.removeEventListener("focusin",d,!0),n()}})}var Ot='[class*="_add"]',er="[data-trigger-menu]",po="[data-composer-input]",tr=e=>{let t=e.getBoundingClientRect();return t.width>0&&t.height>0&&e.getClientRects().length>0},It=()=>{for(let e of document.querySelectorAll(er))if(tr(e))return e;return null},ho=()=>{let e=document.querySelector(po);return e instanceof HTMLElement?e:null},co=()=>{let e=ho();e!==null&&document.activeElement===e&&e.blur()},ar=()=>{let e=ho();e!==null&&e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",code:"Escape",keyCode:27,which:27,bubbles:!0,cancelable:!0}))};function mo(e){D(e,"dsh-web-mobile: composer plus toggle",()=>{let t=!1,a=[],o=()=>{for(let p of a)window.clearTimeout(p);a=[]},n=p=>{let c=p.target;t=c instanceof Element&&c.closest(Ot)!==null&&It()!==null},r=p=>{let c=p.target;c instanceof Element&&c.closest(Ot)!==null&&co()},d=p=>{let c=t;t=!1;let i=p.target;if(!(!(i instanceof Element)||i.closest(Ot)===null)){c&&It()!==null&&ar(),o();for(let s of[120,320,640])a.push(window.setTimeout(()=>{It()!==null&&co()},s))}},f=p=>{let c=p.target;c instanceof Element&&c.closest(po)!==null&&o()};return document.addEventListener("pointerdown",r,!0),document.addEventListener("pointerdown",f,!0),document.addEventListener("click",n,!0),document.addEventListener("click",d,!1),()=>{o(),document.removeEventListener("pointerdown",r,!0),document.removeEventListener("pointerdown",f,!0),document.removeEventListener("click",n,!0),document.removeEventListener("click",d,!1)}})}var or='[class*="heroWorkspaceRow"] > button[aria-haspopup="menu"]',nr='[role="menu"]';function uo(e){D(e,"dsh-web-mobile: workspace chip toggle",()=>{let t=null,a=r=>r instanceof Element?r.closest(or):null,o=r=>{t=null;let d=a(r.target);d!==null&&d.getAttribute("aria-expanded")==="true"&&document.querySelector(nr)!==null&&(t=d)},n=r=>{let d=t;t=null,!(d===null||a(r.target)!==d)&&r.stopPropagation()};return document.addEventListener("pointerdown",o,!0),document.addEventListener("click",n,!0),()=>{t=null,document.removeEventListener("pointerdown",o,!0),document.removeEventListener("click",n,!0)}})}var rr="[data-team-action]",ir='[data-team-action] > button[aria-haspopup="dialog"]',sr="[data-team-panel]";function fo(e){D(e,"dsh-web-mobile: team chip toggle",()=>{let t=null,a=r=>r instanceof Element?r.closest(ir):null,o=r=>{t=null;let d=a(r.target);d!==null&&d.getAttribute("aria-expanded")==="true"&&document.querySelector(rr)!==null&&document.querySelector(sr)!==null&&(t=d)},n=r=>{let d=t;t=null,!(d===null||a(r.target)!==d)&&(document.body.dispatchEvent(new PointerEvent("pointerdown",{bubbles:!0,cancelable:!0})),r.stopPropagation())};return document.addEventListener("pointerdown",o,!0),document.addEventListener("click",n,!0),()=>{t=null,document.removeEventListener("pointerdown",o,!0),document.removeEventListener("click",n,!0)}})}var bo='[class*="_7KE1Ra_trigger"]',go='[class*="_7KE1Ra_menu"]',lr="[data-composer-card]",zt=8,wo=[0,60,200];function vo(e){D(e,"dsh-web-mobile: model menu anchor",()=>{let t=0,a=[],o=null,n=x=>{if(x===null)return null;let b=x.getBoundingClientRect();return b.width>0&&b.height>0?b:null},r=()=>{for(let x of document.querySelectorAll(go))if(n(x)!==null)return x;return null},d=x=>{let b=n(x);if(b===null)return;let O=b.width,E=document.documentElement.clientWidth,v=Math.max(zt,E-O-zt),S=document.querySelector(lr),_=S===null?null:S.getBoundingClientRect(),C=_!==null&&_.width>0?null:document.querySelector(bo),M=C===null?null:C.getBoundingClientRect(),R=_!==null&&_.width>0?_.left+_.width/2:M===null?null:M.left+M.width/2;if(R===null)return;let z=Math.min(Math.max(R-O/2,zt),v),N=`${Math.round(z)}px`;x.style.left!==N&&(x.style.left=N)},f=()=>{o=r(),o!==null&&d(o)},p=()=>{if(o!==null){if(n(o)===null){o=null;return}d(o)}},c=x=>{t===0&&(t=window.requestAnimationFrame(()=>{t=0,x()}))},i=()=>{c(f);for(let x of wo)a.push(window.setTimeout(()=>c(f),x));for(;a.length>wo.length*2;){let x=a.shift();x!==void 0&&window.clearTimeout(x)}},s=x=>{let b=x.target;return b instanceof Element?b.closest(bo)!==null||b.closest(go)!==null:!1},h=x=>{s(x)&&i()},g=x=>{s(x)&&i()},u=x=>{s(x)&&i()},w=x=>{s(x)&&i()},y=()=>{c(p)};return document.addEventListener("pointerdown",h,!0),document.addEventListener("keydown",g,!0),document.addEventListener("focusin",u,!0),document.addEventListener("click",w,!0),window.addEventListener("resize",y),document.addEventListener("scroll",y,!0),()=>{document.removeEventListener("pointerdown",h,!0),document.removeEventListener("keydown",g,!0),document.removeEventListener("focusin",u,!0),document.removeEventListener("click",w,!0),window.removeEventListener("resize",y),document.removeEventListener("scroll",y,!0),t!==0&&window.cancelAnimationFrame(t);for(let x of a)window.clearTimeout(x);a.length=0,o=null}})}var dr='[data-shortcut-modal="settings"]',xo='[data-shortcut-modal="shortcuts"]',cr=xo+" [data-modal-autofocus]";function yo(e){D(e,"dsh-web-mobile: shortcut modal keyboard guard",()=>{let t=HTMLInputElement.prototype,a=null,o=()=>{if(a!==null)return;let f=t.focus;a=f,t.focus=function(c){this.matches(cr)||f.call(this,c)}},n=()=>{a!==null&&(t.focus=a,a=null)},r=()=>{document.querySelector(dr)!==null||document.querySelector(xo)!==null?o():n()},d=new MutationObserver(r);return d.observe(document.body,{childList:!0}),r(),()=>{d.disconnect(),n()}})}function ko(e){if(typeof e!="object"||e===null)return null;let t=e.selectPanel;return typeof t!="function"?null:()=>{t.call(e,null)}}var pr='[class*="panelRow"][aria-current="page"]',Ht=!1;function _o(){return document.querySelector(pr)!==null}function To(){return!Ht&&_o()}var Eo="data-mobile-panel-exit",hr=2e3;function So(e){let t=ko(e),a=t!==null,o=!1,n=null;function r(p){p.animationName==="dsh-mobile-panel-reveal"&&d()}function d(){n!==null&&(window.clearTimeout(n),n=null);let p=I();p!==null&&(p.removeEventListener("animationend",r,!0),p.removeAttribute(Eo)),Ht=!1,o=!1}let f=()=>{if(!a||o)return;o=!0,Ht=!0;let p=I();p!==null&&(p.setAttribute(Eo,""),p.addEventListener("animationend",r,!0)),t(),n=window.setTimeout(d,hr)};return{exit:f,supported:a,panelOpen:_o,task:mr(f,a)}}function mr(e,t){let a=!1,o=!1,n=!1,r=null;function d(){n=!1,r!==null&&(window.clearTimeout(r),r=null)}function f(){n=!0,r!==null&&window.clearTimeout(r),r=window.setTimeout(d,1200);try{history.back()}catch{d()}}function p(){if(n){d();return}a&&(a=!1,To()&&e())}function c(){o||(window.addEventListener("popstate",p),o=!0)}function i(){o&&(window.removeEventListener("popstate",p),o=!1)}return{name:"panel-back-exit",scopes:["*"],ensure:()=>{if(t){if(c(),To()){if(a)return;a=!0;try{history.pushState({mobilePanelExit:!0},"")}catch{a=!1}return}a&&(a=!1,f())}},dispose:()=>{i(),d(),a&&(a=!1,f())}}}function Co(e,t){D(e,"dsh-web-mobile: panel row returns to conversation",()=>{let a=o=>{let n=o.target;if(!(n instanceof Element)||typeof n.closest!="function")return;let r=n.closest('[class*="panelRow"]');r!==null&&r.getAttribute("aria-current")==="page"&&(o.preventDefault(),o.stopPropagation(),t())};return document.addEventListener("click",a,!0),()=>document.removeEventListener("click",a,!0)})}function Lo(e,t){let a=0,o=!1;return{schedule(n){o||(o=!0,a=e(()=>{o=!1,n()}))},cancel(){o&&(t(a),o=!1)}}}function Ao(e){e.effect(()=>{let t=new URLSearchParams(location.search);if(!t.has("mobile-nav-debug"))return()=>{};let a=[],o=y=>a.push(`ERR ${y.message.slice(0,120)}`),n=y=>a.push(`REJ ${String(y.reason).slice(0,120)}`);window.addEventListener("error",o),window.addEventListener("unhandledrejection",n);let r=document.createElement("div");r.style.cssText=["position:fixed","top:40px","right:6px","z-index:2147483000","background:rgba(0,0,0,.82)","color:#fff","font:11px/1.5 ui-monospace,monospace","padding:8px 10px","border-radius:8px","max-width:94vw","max-height:70vh","overflow:auto","white-space:pre-wrap","pointer-events:none"].join(";");let d=()=>{let y=E=>!!document.querySelector(E),x=E=>{let v=document.querySelector(E);return v===null?"absent":getComputedStyle(v).visibility},b=document.querySelector('[data-mobile-nav="frame"]'),O=()=>{let E=document.querySelector("[data-sidebar-right-panel]");if(E===null)return"absent";let v=E.getBoundingClientRect();return`${E.getAttribute("data-sidebar-right-panel")} pad ${getComputedStyle(E).paddingTop} rect ${Math.round(v.top)},${Math.round(v.left)} ${Math.round(v.width)}x${Math.round(v.height)}`};return["build 20260919 (diag chips)",`URL ${location.pathname}${location.search}`,`W ${innerWidth} x ${innerHeight} dpr ${devicePixelRatio}`,`mq≤1023 ${matchMedia(ge).matches}  mq≥1024 ${matchMedia(Wa).matches}`,`safeTop framePad ${b===null?"n/a":getComputedStyle(b).paddingTop}  rightPanel ${O()}`,`css ${y('style[data-plugin-css*="mobile"]')}  frame ${!!b}`,`previewCol ${x("[data-aionui-preview-col]")}  explorerCol ${x("[data-aionui-explorer-col]")}`,`previewOpen ${b?.hasAttribute("data-aionui-preview-open")??"?"}  explorerOpen ${b?.hasAttribute("data-aionui-explorer-open")??"?"}  previewFull ${b?.hasAttribute("data-mobile-preview-full")??"?"}`,`header ${x("[data-phase] header")}  composer ${y("textarea, [data-composer-input]")}`,`genui cards ${document.querySelectorAll("[data-genui]").length}  panel ${y("[data-genui-panel]")}`,`phase ${document.querySelector("[data-phase]")?.getAttribute("data-phase")??"?"}`,`errs ${a.slice(-5).join(" | ")||"none"}`].join(`
-`)},f=()=>{r.textContent=d()};f();let p=0,c=()=>{p===0&&(p=requestAnimationFrame(()=>{p=0,f()}))},i=new MutationObserver(y=>{for(let x of y)if(!(x.target===r||r.contains(x.target))){c();return}});i.observe(document.body,{childList:!0,subtree:!0,attributes:!0});let s=setInterval(f,1500);document.body.appendChild(r);let h=y=>{let x=document.querySelector(y);if(x===null)return"absent";let b=x.getBoundingClientRect();return`${Math.round(b.x)},${Math.round(b.y)} ${Math.round(b.width)}x${Math.round(b.height)}`},g=()=>[d(),`rects toggle ${h('[data-mobile-nav="toggle"]')} files ${h('[data-mobile-nav="files"]')} header ${h("[data-phase] header")} titleCluster ${h('[class*="_titleCluster"]')}`,`chips crea ${h('[class*="SVAs4q_"]')} team ${h("[data-team-action]")} model ${h('[class*="_7KE1Ra_trigger"]')} crumbs ${h('[class*="_crumbs"]')} crumbCurrent ${h('[class*="_crumbCurrent"]')}`,`ua ${navigator.userAgent}`,`screen ${screen.width}x${screen.height} standalone ${matchMedia("(display-mode: standalone)").matches}`,`vv ${visualViewport===null?"n/a":`${Math.round(visualViewport.width)}x${Math.round(visualViewport.height)}@${Math.round(visualViewport.offsetTop)}`}`].join(`
-`),u=t.get("beacon")||"http://127.0.0.1:3199/diag",w=setInterval(()=>{fetch(u,{method:"POST",mode:"no-cors",body:g()}).catch(()=>{})},2e3);return()=>{window.removeEventListener("error",o),window.removeEventListener("unhandledrejection",n),i.disconnect(),p!==0&&cancelAnimationFrame(p),clearInterval(s),clearInterval(w),r.remove()}},"dsh-web-mobile: debug badge")}var De="mobileNav",Ro={open:"打开目录",close:"收起目录",backdrop:"点击关闭目录",backToConversation:"返回会话",sessionLog:"导出会话日志",files:"文件浏览",fileUpload:"添加文件",previewFullscreen:"全屏预览",previewExitFullscreen:"退出全屏",deleteSession:"删除会话",deleteConfirmTitle:"删除会话？",deleteConfirmDesc:"将删除「{title}」的完整会话记录，此操作不可恢复。",deleteConfirmYes:"删除",deleteConfirmNo:"取消",deletePending:"正在删除…",deleteErrorBusy:"该会话正在运行且无法停止，请稍后重试。",deleteErrorNotFound:"会话不存在或已被删除。",deleteErrorResolve:"无法确定要删除的会话，请重试。",deleteErrorGeneric:"删除失败：{message}"},Po={open:"Open directory",close:"Close directory",backdrop:"Click to close directory",backToConversation:"Back to conversation",sessionLog:"Session log",files:"Files",fileUpload:"Add files",previewFullscreen:"Fullscreen preview",previewExitFullscreen:"Exit fullscreen",deleteSession:"Delete session",deleteConfirmTitle:"Delete session?",deleteConfirmDesc:"The complete log of “{title}” will be permanently removed. This cannot be undone.",deleteConfirmYes:"Delete",deleteConfirmNo:"Cancel",deletePending:"Deleting…",deleteErrorBusy:"This session is running and could not be stopped. Try again later.",deleteErrorNotFound:"The session does not exist or was already deleted.",deleteErrorResolve:"Could not identify the session to delete. Please try again.",deleteErrorGeneric:"Delete failed: {message}"};function Mo(e){e.effect(()=>e.locale.register(De,{zh:Ro,en:Po}),"dsh-web-mobile: dictionaries"),e.effect(()=>{for(let o of document.querySelectorAll('style[data-plugin-css="dsh-web-mobile/mobile.css"]'))o.remove();let a=document.createElement("style");return a.dataset.plugin="dsh-web-mobile",a.dataset.pluginCss="dsh-web-mobile/mobile.css",a.textContent=ao,document.head.appendChild(a),setTimeout(()=>{a.isConnected&&document.head.appendChild(a)},0),()=>{a.remove()}},"dsh-web-mobile: styles"),e.effect(()=>{let a=window.matchMedia(ge),o='[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"])',n=(u,w)=>{for(let[y,x]of Object.entries(w))u.style.setProperty(y,x,"important")},r=(u,w)=>{for(let y of w)u.style.removeProperty(y)},d=["flex-wrap","align-items","gap"],f=["flex","max-width","min-width"],p=["white-space","overflow","text-overflow","max-width"],c=()=>{document.querySelectorAll(o).forEach(u=>{r(u,d);let w=u.children[0];w&&r(w,f),u.querySelectorAll(':scope > button, :scope > [class*="owner"], :scope > [class*="grow"]').forEach(b=>{r(b,["order"])});let y=u.querySelector('[class*="spec"]'),x=u.querySelector('[class*="nm"]');y&&r(y,p),x&&r(x,p)})},i=()=>{document.querySelector('[data-dsh-market-root], [role="dialog"]')!==null&&document.querySelectorAll(o).forEach(u=>{n(u,{"flex-wrap":"wrap","align-items":"center",gap:"4px 10px"});let w=u.children[0];w&&n(w,{flex:"1 1 100%","max-width":"100%","min-width":"0"});let y=u.querySelector('[class*="spec"]'),x=u.querySelector('[class*="nm"]');y&&n(y,{"white-space":"nowrap",overflow:"hidden","text-overflow":"ellipsis","max-width":"100%"}),x&&n(x,{"white-space":"nowrap",overflow:"hidden","text-overflow":"ellipsis","max-width":"100%"})})},s=()=>{c(),a.matches&&i()};s();let h=Lo(u=>window.requestAnimationFrame(u),u=>window.cancelAnimationFrame(u)),g=new MutationObserver(()=>{a.matches&&h.schedule(()=>{a.matches&&i()})});return g.observe(document.documentElement,{childList:!0,subtree:!0}),a.addEventListener("change",s),()=>{h.cancel(),g.disconnect(),a.removeEventListener("change",s),c()}},"dsh-web-mobile: installed-list-inline-styles");let t=So(e.layout);e.effect(()=>{let a=[Ga(),Ka(e),$a(e,t)];return()=>{for(let o of a)o()}},"dsh-web-mobile: reconciler infrastructure"),Ua(e),Co(e,t.exit),so(e),Ha(e,Je),ro(e),lo(e),mo(e),uo(e),fo(e),vo(e),yo(e),Va(e),pa(e),Ao(e),e.slots.inject("conversation.session.header.actions",()=>e.slots.register({name:"conversation.session.header.actions",id:"mobile-nav-toggle",order:10,locale:De,inject:()=>({toggleSidebar:()=>e.layout.toggleSidebar()})},Xa)),e.slots.inject("sidebar.footer.action",()=>e.slots.register({name:"sidebar.footer.action",id:"mobile-nav-session-log",order:5,locale:De,inject:()=>({downloadSessionLog:a=>e.sessionLogDownload.download(a)})},Za)),e.slots.inject("conversation.input.left",()=>e.slots.register({name:"conversation.input.left",id:"mobile-nav-file-upload",order:10,locale:De,inject:()=>({})},Ya))}var ur=["添加工作区","添加工作区…","Add workspace","Add workspace…"],Oo='[role="tab"], [role="treeitem"], [role="menuitem"], [role="menu"]';function Io(e){let t=(e??"").trim();return t.length<3||t.length>320||/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(t)&&!/^file:\/\//i.test(t)?!1:!!(/^(\/|~\/|\.\.?\/|[A-Za-z]:\\)/.test(t)||/\/[\w.\-]+\.\w{1,12}$/.test(t))}async function fr(e){try{if(navigator.clipboard?.writeText)return await navigator.clipboard.writeText(e),!0}catch{}try{let t=document.createElement("textarea");t.value=e,t.style.position="fixed",t.style.top="-9999px",t.style.opacity="0",document.body.appendChild(t),t.focus(),t.select();let a=document.execCommand("copy");return t.remove(),a}catch{return!1}}function zo(e,t){let a=(b,O)=>{let E=t(b);if(O!==void 0)for(let[v,S]of Object.entries(O))E=E.split(`{${v}}`).join(String(S));return E},o=null,n=null,r=b=>{o===null&&(o=document.createElement("div"),o.setAttribute("data-mobile-nav","file-guard-toast"),Object.assign(o.style,{position:"fixed",left:"50%",bottom:"calc(64px + var(--dshp-kb, 0px))",transform:"translateX(-50%)",maxWidth:"84vw",zIndex:"9999",padding:"10px 14px",borderRadius:"10px",background:"rgba(20,22,28,.92)",color:"#fff",fontSize:"13px",lineHeight:"1.4",textAlign:"center",fontFamily:"inherit",boxShadow:"0 4px 16px rgba(0,0,0,.28)",pointerEvents:"none",opacity:"0",transition:"opacity .18s ease"}),document.body.appendChild(o)),o.textContent=b,requestAnimationFrame(()=>{o!==null&&(o.style.opacity="1")}),n!==null&&window.clearTimeout(n),n=window.setTimeout(()=>{o!==null&&(o.style.opacity="0")},2600)},d=null,f=b=>{document.activeElement?.blur(),d?.remove();let E=b.length>65536?`${b.slice(0,65536)}
-${t("fileTruncated")}`:b,v=document.createElement("div");v.setAttribute("data-mobile-nav","file-guard-fallback"),Object.assign(v.style,{position:"fixed",left:"max(8px, env(safe-area-inset-left, 0px))",right:"max(8px, env(safe-area-inset-right, 0px))",bottom:"calc(16px + env(safe-area-inset-bottom, 0px) + var(--dshp-kb, 0px))",maxHeight:"45vh",overflow:"auto",zIndex:"10000",padding:"10px 12px",borderRadius:"10px",background:"rgba(20,22,28,.96)",color:"#eee",boxShadow:"0 6px 24px rgba(0,0,0,.4)",WebkitOverflowScrolling:"touch"});let S=document.createElement("div");Object.assign(S.style,{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px",color:"#9aa0a8",marginBottom:"6px"});let _=document.createElement("span");_.textContent=t("fileFallbackTitle");let C=document.createElement("button");C.type="button",C.textContent=t("fileFallbackClose"),Object.assign(C.style,{border:"1px solid #444a52",background:"transparent",color:"#eee",borderRadius:"6px",padding:"2px 10px",fontSize:"12px",cursor:"pointer"}),C.addEventListener("click",()=>{v.remove()});let M=document.createElement("pre");M.textContent=E,Object.assign(M.style,{margin:"0",whiteSpace:"pre-wrap",wordBreak:"break-all",userSelect:"text",WebkitUserSelect:"text",fontSize:"12px",lineHeight:"1.5",fontFamily:"inherit"}),S.append(_,C),v.append(S,M),document.body.appendChild(v),d=v},p=b=>{let O=b.target;if(O===null)return;let E=O.closest("button, a");E!==null&&E.closest("[data-phase]")!==null&&E.closest(Oo)===null&&Io(E.textContent)&&(b.preventDefault(),b.stopImmediatePropagation(),r(t("fileGuardMsg")))};document.addEventListener("click",p,!0);let c=(b=document)=>{let O=b.querySelectorAll("button, a");(b instanceof Element&&b.matches("button, a")?[b,...O]:O).forEach(v=>{if(v.getAttribute("data-mobile-nav-copy")==="1"||v.closest("[data-phase]")===null||v.closest(Oo)!==null)return;let S=(v.textContent??"").trim();if(!Io(S))return;v.setAttribute("data-mobile-nav-copy","1");let _=document.createElement("button");_.type="button",_.setAttribute("data-mobile-nav","copy-file"),_.textContent=t("fileCopy"),_.addEventListener("click",async C=>{C.preventDefault(),C.stopPropagation();let M=(v.textContent??"").trim().replace(/^file:\/\//i,"");_.disabled=!0,_.textContent="…";try{let R=await e(M);if(!R?.ok){r(R?.error?.message??t("fileCopyFailed"));return}let z=R.value?.content??"",N=R.value?.size??z.length;if(N>2097152){r(a("fileTooLarge",{size:(N/(1024*1024)).toFixed(1)}));return}if(await fr(z)){let F=Math.max(1,Math.round(N/1024));r(a("fileCopyDone",{kb:F}))}else r(t("fileCopyFailedFallback")),f(z)}catch(R){r(R instanceof Error?R.message:t("fileCopyFailed"))}finally{_.disabled=!1,_.textContent=t("fileCopy")}}),v.parentElement?.insertBefore(_,v.nextSibling)})},i=new Map,s='[role="menuitem"],[role="option"],li,button,a',h=b=>{let O=(b.getAttribute("aria-label")||""||b.textContent||"").trim();if(ur.includes(O)){let E=b;i.has(b)||i.set(b,E.style.display),E.style.display="none",b.setAttribute("data-mobile-nav-hide","add-workspace")}},g=b=>{b instanceof Element&&b.matches(s)&&h(b),b.querySelectorAll(s).forEach(h)},u=new Set,w=0,y=()=>{w=0;for(let b of u)b.isConnected&&(c(b),g(b));u.clear()};c(),g(document);let x=new MutationObserver(b=>{for(let O of b){if(O.type==="characterData"){let E=O.target.parentElement;E!==null&&u.add(E);continue}O.addedNodes.forEach(E=>{E.nodeType===1?u.add(E):E.nodeType===3&&E.parentElement!==null&&u.add(E.parentElement)})}u.size>0&&w===0&&(w=requestAnimationFrame(y))});return x.observe(document.body,{childList:!0,subtree:!0,characterData:!0}),()=>{document.removeEventListener("click",p,!0),x.disconnect(),w!==0&&cancelAnimationFrame(w),u.clear(),n!==null&&window.clearTimeout(n),o?.remove(),o=null,d?.remove(),d=null,document.querySelectorAll('[data-mobile-nav="copy-file"]').forEach(b=>b.remove()),document.querySelectorAll('[data-mobile-nav-copy="1"]').forEach(b=>b.removeAttribute("data-mobile-nav-copy")),document.querySelectorAll('[data-mobile-nav-hide="add-workspace"]').forEach(b=>{let O=b,E=i.get(b);E!==void 0?O.style.display=E:O.style.removeProperty("display"),i.delete(b),b.removeAttribute("data-mobile-nav-hide")}),i.clear()}}var tt="dsh-pocket.layout";function Ho({urlValue:e,stored:t,narrowMatch:a}){let o=String(e??"").trim().toLowerCase();return o==="desktop"?"desktop":o==="mobile"?"mobile":t==="desktop"||t==="mobile"?t:a?"mobile":"desktop"}function No(e){try{if(typeof localStorage>"u")return"";if(e==null)return br();let t=String(e).trim().toLowerCase();try{t==="desktop"||t==="mobile"?localStorage.setItem(tt,t):(t==="auto"||t==="")&&localStorage.removeItem(tt)}catch{}let a=localStorage.getItem(tt);return a==="desktop"||a==="mobile"?a:""}catch{return""}}function br(){try{if(typeof localStorage>"u")return"";let e=localStorage.getItem(tt);return e==="desktop"||e==="mobile"?e:""}catch{return""}}var Fe="pocket",Nt={section:"手机访问",title:"📱 手机访问",subtitle:"手机扫码打开的就是电脑上的这个界面，实时同步",developer:"开发者：大哈",starAsk:"⭐ 顺手留颗 Star，大哈能高兴一整天",starCta:"好，这就去 Star",restarted:"🔄 已重启",ok:"知道了",bgHint:"进程在后台运行（不挂终端）。如需停止：{cmd}",updatedRestart:"✅ 已更新 v{ver}，重启生效",updateAutoRestarting:"✅ 已更新 v{ver}，正在自动重启…",updatedOk:"✅ 已更新 v{ver}",updateAvailable:"📦 新版本 v{ver}",updating:"更新中…",updateTo:"更新到 v{ver}",restartingNow:"正在重启生效…",restarting:"重启中…",restartNow:"🔄 重启 dsh web 生效",updatingDetail:"⏳ 更新中（通常 1-2 分钟）· 已等待 {s} 秒",restartingDetail:"⏳ 正在重启生效（通常 10-30 秒）· 已等待 {s} 秒",updatedAutoDetail:"✅ 已更新，正在自动重启生效，请稍候刷新",updatedRestartDetail:"✅ 已更新，重启 dsh web 生效",updateFailed:"❌ 失败：{err}（手动更新：dsh plugin --profile web update dsh-pocket --latest -w）",versionRange:"当前 v{cur} → 最新 v{latest}",wanAccess:"公网访问",pinLabel:"访问密码",modeLabel:"地址模式",advAddress:"高级 · 手动选地址",wanOffHint:"开启后可从任何网络访问（每次开启需确认免责声明）",resetFactory:"🧹 恢复出厂设置",resetGo:"恢复",resetIntro:"设置搞出问题时的临时兜底：清空本机配置并重设随机密码（DSH 的会话、模型、插件配置不受影响）",resetTitle:"⚠️ 确认恢复出厂设置？",resetBody:`将清空并恢复默认：
+          <button type="button" data-mobile-nav="delete-confirm-no">${ke(t("deleteConfirmNo"))}</button>
+        </div>`,T.querySelector('[data-mobile-nav="delete-confirm-no"]')?.addEventListener("click",c),f.addEventListener("click",P=>{P.target===f&&c()});let M=P=>{P.key==="Escape"&&c()};document.addEventListener("keydown",M,!0),r=M,g.appendChild(f),f.appendChild(T),i={backdrop:f,card:T}},y=new Set,A=m=>{if(m.querySelector(`[${Pr}]`)!==null)return;let g=m.querySelector('[role="menuitem"]'),f=g?.parentElement??null,T=m.querySelector('[class*="_viewport"]');if(g===null||f===null||T===null)return;let M=f.cloneNode(!0),P=M.querySelector('[role="menuitem"]');if(P===null)return;let z=P.querySelector('[class*="_itemIcon"]');z!==null&&(z.innerHTML=Or,z.style.color=sa);let W=P.querySelector('[class*="_itemLabel"]');W!==null?(W.textContent=t("deleteSession"),W.style.color=sa):P.firstElementChild===null&&(P.textContent=t("deleteSession"),P.style.color=sa),P.setAttribute("data-mobile-nav","session-delete"),P.addEventListener("click",D=>{D.preventDefault(),D.stopPropagation();let q=o;q?.button.click();try{if(q===null){x(t("deleteErrorResolve"));return}let X=q.sessionId;if(X===null){x(t("deleteErrorResolve"));return}d(X,q.title)}catch(X){console.error("[dsh-web-mobile] session delete failed:",X),x(t("deleteErrorGeneric",{message:X instanceof Error?X.message:String(X)}))}}),T.appendChild(M),y.add(M)},C=()=>{for(let g of y)g.isConnected||y.delete(g);let m=a("session.new");for(let g of document.querySelectorAll('[role="menu"]'))l(g)&&(o!==null&&o.title===m||A(g))},E=()=>{n===0&&(n=requestAnimationFrame(()=>{n=0,C()}))},b=m=>e.sessions.list.getSnapshot().byId[m]!==void 0,w=m=>{let g=[...m.querySelectorAll("button")],f=g.find(M=>{let P=M.getAttribute("aria-label")??"";return/session actions/i.test(P)});return f!==void 0?f:g.find(M=>{let P=M.getAttribute("aria-label")??"";return!/archive session|pin session/i.test(P)})??null},k=m=>{if(!(m instanceof Element))return;let g=m.closest('[class*="_sessionRow"]');if(g===null)return;let f=w(g);if(f===null)return;let T=g.querySelector('[class*="_title"]')?.textContent?.trim()??"",M=p(g);o={button:f,title:T,sessionId:M},E()},_=m=>k(m.target),R=m=>k(m.target);document.addEventListener("click",_,!0),document.addEventListener("contextmenu",R,!0);let S=m=>{if(o===null)return!1;for(let g of m.removedNodes)if(g instanceof Element&&(g.matches('[role="menu"]')||g.querySelector('[role="menu"]')!==null))return!0;return!1},F=new MutationObserver(m=>{let g=!1;for(let f of m){if(f.type!=="childList")continue;let T=f.target;if(T===document.body){E();break}if(g||(g=S(f)),T instanceof HTMLElement&&(T.matches('[role="menu"]')||T.closest('[role="menu"]')!==null)){E();break}}g&&o!==null&&![...document.querySelectorAll('[role="menu"]')].some(l)&&(o=null)});return F.observe(document.body,{childList:!0,subtree:!0}),C(),()=>{document.removeEventListener("click",_,!0),document.removeEventListener("contextmenu",R,!0),F.disconnect(),n!==0&&cancelAnimationFrame(n),c();for(let m of y)m.remove();y.clear(),o=null}},st)}var Ir="[data-composer-card]",la="[data-composer-input]",Fr='button, [role="button"], [role="option"], [role="menuitem"], [role="combobox"], [aria-haspopup], select, a[href], label, input',de="data-mobile-nav-focus-shadow";function an(e){O(e,"dsh-web-mobile: composer keyboard guard",()=>{let t=Re(navigator,typeof CSS<"u"&&typeof CSS.supports=="function"?CSS.supports.bind(CSS):null),a=typeof matchMedia=="function"&&matchMedia("(pointer: coarse)").matches;if(!t&&!a)return;let o=0,n=()=>{window.clearTimeout(o),o=0;let s=document.querySelector(`[${de}]`);if(s===null)return;s.removeAttribute(de);let p=s;Object.prototype.hasOwnProperty.call(s,"focus")&&delete p.focus},i=s=>{let p=s.target;if(!(p instanceof Element)||typeof p.closest!="function")return;let h=p.closest(Ir);if(h===null)return;let l=h.querySelector(la);if(l===null)return;if(p.closest(la)!==null){n();return}let c=p.closest(Fr);if(c===null||!h.contains(c)){n();return}n(),l.setAttribute(de,""),Object.defineProperty(l,"focus",{configurable:!0,writable:!0,value:function(){}}),window.clearTimeout(o),o=window.setTimeout(n,700)},r=s=>{if(o===0)return;let p=s.target;p instanceof HTMLElement&&p.closest(la)!==null&&p.blur()};return document.addEventListener("pointerdown",i,!0),document.addEventListener("touchstart",i,!0),document.addEventListener("mousedown",i,!0),document.addEventListener("focusin",r,!0),()=>{document.removeEventListener("pointerdown",i,!0),document.removeEventListener("touchstart",i,!0),document.removeEventListener("mousedown",i,!0),document.removeEventListener("focusin",r,!0),n()}})}var Hr=24;function Nr(e){let{seatBottom:t,viewportHeight:a,scale:o,scrollY:n,offsetTop:i}=e;if(!Number.isFinite(t)||!Number.isFinite(a)||!Number.isFinite(o)||Math.abs(o-1)>.01||!Number.isFinite(n)||!Number.isFinite(i)||Math.abs(n-i)>Hr)return 0;let r=t-a;return r>0?r:0}var on='[data-mobile-nav="frame"] [class*="_composerSeat"]',nn="[data-composer-input]";function rn(e){O(e,"dsh-web-mobile: composer keyboard lift",()=>{if(!Re(navigator,typeof CSS<"u"&&typeof CSS.supports=="function"?CSS.supports.bind(CSS):null))return;let t=window.visualViewport;if(!t)return;let a=null,o=0,n=0,i=()=>{if(n=0,a===null||!a.isConnected)return;let l=Nr({seatBottom:a.getBoundingClientRect().bottom+o,viewportHeight:t.height,scale:t.scale,scrollY:window.scrollY,offsetTop:t.offsetTop});o=l,a.style.transform=l>0?`translateY(${-l}px)`:""},r=()=>{n===0&&(n=requestAnimationFrame(i))},s=()=>{t.removeEventListener("resize",r),t.removeEventListener("scroll",r),window.removeEventListener("scroll",r),n!==0&&(cancelAnimationFrame(n),n=0),a!==null&&(a.style.transform=""),a=null,o=0},p=l=>{let c=l.target;if(!(c instanceof Element)||c.closest(nn)===null)return;s();let d=document.querySelector(on);d!==null&&(a=d,t.addEventListener("resize",r),t.addEventListener("scroll",r),window.addEventListener("scroll",r,{passive:!0}),r())},h=l=>{let c=l.target;if(!(c instanceof Element)||c.closest(nn)===null)return;let d=l.relatedTarget;d instanceof Element&&d.closest(on)!==null||s()};return document.addEventListener("focusin",p,!0),document.addEventListener("focusout",h,!0),()=>{document.removeEventListener("focusin",p,!0),document.removeEventListener("focusout",h,!0),s()}})}var da='[class*="_add"]',zr="[data-trigger-menu]",ln="[data-composer-input]",Dr=e=>{let t=e.getBoundingClientRect();return t.width>0&&t.height>0&&e.getClientRects().length>0},ca=()=>{for(let e of document.querySelectorAll(zr))if(Dr(e))return e;return null},dn=()=>{let e=document.querySelector(ln);return e instanceof HTMLElement?e:null},sn=()=>{let e=dn();e!==null&&document.activeElement===e&&e.blur()},Br=()=>{let e=dn();e!==null&&e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",code:"Escape",keyCode:27,which:27,bubbles:!0,cancelable:!0}))};function cn(e){O(e,"dsh-web-mobile: composer plus toggle",()=>{let t=!1,a=[],o=()=>{for(let p of a)window.clearTimeout(p);a=[]},n=p=>{let h=p.target;t=h instanceof Element&&h.closest(da)!==null&&ca()!==null},i=p=>{let h=p.target;h instanceof Element&&h.closest(da)!==null&&sn()},r=p=>{let h=t;t=!1;let l=p.target;if(!(!(l instanceof Element)||l.closest(da)===null)){h&&ca()!==null&&Br(),o();for(let c of[120,320,640])a.push(window.setTimeout(()=>{ca()!==null&&sn()},c))}},s=p=>{let h=p.target;h instanceof Element&&h.closest(ln)!==null&&o()};return document.addEventListener("pointerdown",i,!0),document.addEventListener("pointerdown",s,!0),document.addEventListener("click",n,!0),document.addEventListener("click",r,!1),()=>{o(),document.removeEventListener("pointerdown",i,!0),document.removeEventListener("pointerdown",s,!0),document.removeEventListener("click",n,!0),document.removeEventListener("click",r,!1)}})}var Wr='[class*="heroWorkspaceRow"] > button[aria-haspopup="menu"]',qr='[role="menu"]';function pn(e){O(e,"dsh-web-mobile: workspace chip toggle",()=>{let t=null,a=i=>i instanceof Element?i.closest(Wr):null,o=i=>{t=null;let r=a(i.target);r!==null&&r.getAttribute("aria-expanded")==="true"&&document.querySelector(qr)!==null&&(t=r)},n=i=>{let r=t;t=null,!(r===null||a(i.target)!==r)&&i.stopPropagation()};return document.addEventListener("pointerdown",o,!0),document.addEventListener("click",n,!0),()=>{t=null,document.removeEventListener("pointerdown",o,!0),document.removeEventListener("click",n,!0)}})}var jr="[data-team-action]",Vr='[data-team-action] > button[aria-haspopup="dialog"]',Kr="[data-team-panel]";function hn(e){O(e,"dsh-web-mobile: team chip toggle",()=>{let t=null,a=i=>i instanceof Element?i.closest(Vr):null,o=i=>{t=null;let r=a(i.target);r!==null&&r.getAttribute("aria-expanded")==="true"&&document.querySelector(jr)!==null&&document.querySelector(Kr)!==null&&(t=r)},n=i=>{let r=t;t=null,!(r===null||a(i.target)!==r)&&(document.body.dispatchEvent(new PointerEvent("pointerdown",{bubbles:!0,cancelable:!0})),i.stopPropagation())};return document.addEventListener("pointerdown",o,!0),document.addEventListener("click",n,!0),()=>{t=null,document.removeEventListener("pointerdown",o,!0),document.removeEventListener("click",n,!0)}},st)}var un='[class*="_7KE1Ra_trigger"]',mn='[class*="_7KE1Ra_menu"]',Ur="[data-composer-card]",wt=8,fn=[0,60,200];function bn(e){O(e,"dsh-web-mobile: model menu anchor",()=>{let t=0,a=null,o=null,n=[],i=null,r=null,s=null,p=null,h=()=>{let S=p;p=null,S!==null&&S.el.style.left===S.value&&(S.el.style.left=S.original)},l=S=>{if(S===null)return null;let F=o?.get(S);if(F!==void 0)return F;let m=S.getBoundingClientRect(),g=m.width>0&&m.height>0?m:null;return o?.set(S,g),g},c=()=>{for(let S of document.querySelectorAll(mn))if(l(S)!==null)return S;return null},d=S=>{let F=l(S);if(F===null)return;let m=F.width,g=document.documentElement.clientWidth,f=Math.max(wt,g-m-wt),T=l(r),M=l(s),P=T===null?null:T.right-m,z;if(P!==null&&P>=wt&&P<=f)z=P;else if(M!==null)z=M.left+(M.width-m)/2;else return;let W=`${Math.round(Math.min(Math.max(z,wt),f))}px`;p!==null&&p.el!==S&&h(),p===null?p={el:S,value:W,original:S.style.left}:p.value=W,S.style.left!==W&&(S.style.left=W)},x=()=>{i=c(),r=i===null?null:document.querySelector(un),s=i===null?null:document.querySelector(Ur),i!==null&&d(i)},y=()=>{if(i!==null){if(l(i)===null){h(),i=null,r=null,s=null;return}d(i)}},A=S=>{a=S,t===0&&(t=window.requestAnimationFrame(()=>{t=0;let F=a;a=null,o=new Map;try{F!==null&&F()}finally{o=null}}))},C=()=>{A(x);for(let S of fn)n.push(window.setTimeout(()=>A(x),S));for(;n.length>fn.length*2;){let S=n.shift();S!==void 0&&window.clearTimeout(S)}},E=S=>{let F=S.target;return F instanceof Element?F.closest(un)!==null||F.closest(mn)!==null:!1},b=S=>{E(S)&&C()},w=S=>{E(S)&&C()},k=S=>{E(S)&&C()},_=S=>{E(S)&&C()},R=()=>{A(y)};return document.addEventListener("pointerdown",b,!0),document.addEventListener("keydown",w,!0),document.addEventListener("focusin",k,!0),document.addEventListener("click",_,!0),window.addEventListener("resize",R),document.addEventListener("scroll",R,!0),()=>{document.removeEventListener("pointerdown",b,!0),document.removeEventListener("keydown",w,!0),document.removeEventListener("focusin",k,!0),document.removeEventListener("click",_,!0),window.removeEventListener("resize",R),document.removeEventListener("scroll",R,!0),t!==0&&window.cancelAnimationFrame(t),a=null,o=null;for(let S of n)window.clearTimeout(S);n.length=0,h(),i=null,r=null,s=null}})}var vt=new Set,xt=null;function yt(e){if(xt===null){let a=HTMLInputElement.prototype,o=Object.getOwnPropertyDescriptor(a,"focus"),n=a.focus;if(typeof n!="function"||o?.configurable===!1||!o&&!Object.isExtensible(a))return()=>{};let i=function(s){for(let p of vt)if(p.shouldSkip(this))return;n.call(this,s)};try{Object.defineProperty(a,"focus",{configurable:!0,writable:!0,enumerable:o?.enumerable??!1,value:i})}catch{return()=>{}}xt=()=>{if(Object.getOwnPropertyDescriptor(a,"focus")?.value===i)try{o?Object.defineProperty(a,"focus",o):delete a.focus}catch{}}}let t={shouldSkip:e};return vt.add(t),()=>{if(vt.delete(t)&&vt.size===0){let a=xt;xt=null,a?.()}}}var gn='[data-shortcut-modal="shortcuts"] [data-modal-autofocus]';function wn(e){O(e,"dsh-web-mobile: shortcut modal keyboard guard",()=>{let t=new WeakSet(document.querySelectorAll(gn)),a=new WeakSet,o=yt(n=>{if(n.matches(gn)){if(!t.has(n)&&n.hasAttribute("data-dsh-automatic-focus")){if(!a.has(n)){a.add(n),Promise.resolve().then(()=>t.add(n));let i=n.closest('[role="dialog"][aria-modal="true"]');i!==null&&!i.contains(document.activeElement)&&i.focus({preventScroll:!0})}return!0}t.add(n)}return!1});return()=>o()})}var Gr='[data-menu-material], [class*="_7KE1Ra_menu"]',$r='[data-menu-material] input[role="searchbox"], input[role="searchbox"][aria-controls$="-models"]',Xr=2e3;function vn(e){O(e,"dsh-web-mobile: model menu keyboard guard",()=>{let t=null,a=0,o=()=>{t===null&&(t=yt(r=>r.matches($r)))},n=()=>{t?.(),t=null},i=()=>{o(),window.clearTimeout(a),a=window.setTimeout(()=>{document.querySelector(Gr)===null&&n()},Xr)};return document.addEventListener("pointerdown",i,!0),()=>{document.removeEventListener("pointerdown",i,!0),window.clearTimeout(a),n()}})}function xn(e){return e.insideOpen||e.onInteractive?"ignore":"open"}var Yr="li[data-plugin-package], li[data-plugin-row], li[data-plugin-item]",Zr='button[class*="_cardOpen"], button[class*="_rowOpen"]',Qr='button, a, input, select, textarea, [role="switch"], [role="button"], [role="tab"], [contenteditable="true"]';function yn(e){O(e,"dsh-web-mobile: plugin card tap",()=>{let t=a=>{let o=a.target;if(!(o instanceof Element))return;let n=o.closest(Yr);if(n===null)return;let i=n.querySelector(Zr);!(i instanceof HTMLButtonElement)||xn({insideOpen:i.contains(o),onInteractive:o.closest(Qr)!==null})==="ignore"||(a.preventDefault(),i.click())};return document.addEventListener("click",t,!0),()=>document.removeEventListener("click",t,!0)})}function kn(e,t){let a=0,o=!1;return{schedule(n){o||(o=!0,a=e(()=>{o=!1,n()}))},cancel(){o&&(t(a),o=!1)}}}function En(e){e.effect(()=>{let t=window.matchMedia(me),a='[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"])',o={"white-space":"nowrap",overflow:"hidden","text-overflow":"ellipsis","max-width":"100%"},n=[{pick:E=>E,props:{"flex-wrap":"wrap","align-items":"center",gap:"4px 10px"}},{pick:E=>E.children[0]??null,props:{flex:"1 1 100%","max-width":"100%","min-width":"0"}},{pick:E=>E.querySelector('[class*="spec"]'),props:o},{pick:E=>E.querySelector('[class*="nm"]'),props:o}],i=new WeakMap,r=(E,b)=>{let w=i.get(E);w===void 0&&i.set(E,w=new Map);for(let[k,_]of Object.entries(b)){let R="important",S=E.style.getPropertyValue(k),F=E.style.getPropertyPriority(k);if(S===_&&F===R)continue;let m=w.get(k),g=m!==void 0&&m.value===S&&m.priority===F;w.set(k,g?{...m,value:_,priority:R}:{value:_,priority:R,before:S,beforePriority:F}),E.style.setProperty(k,_,R)}},s=E=>{let b=i.get(E);if(b!==void 0){for(let[w,k]of b)b.delete(w),!(E.style.getPropertyValue(w)!==k.value||E.style.getPropertyPriority(w)!==k.priority)&&(k.before===""?E.style.removeProperty(w):E.style.setProperty(w,k.before,k.beforePriority));b.size===0&&i.delete(E)}},p=()=>{document.querySelectorAll(a).forEach(E=>{for(let b of n){let w=b.pick(E);w&&s(w)}})},h=null,l='[data-dsh-market-root], [role="dialog"]',c="[data-dsh-market-root]",d=()=>{let E=h;if(E!==null&&E.isConnected)return E;let b=document.querySelector(l);return b===null?(h=null,null):(h=b.matches(c)?b:document.querySelector(c)??b,h)},x=()=>{let E=d();if(E===null)return;let b=E.querySelectorAll(a);b.length===0&&!E.matches(c)&&(b=document.querySelectorAll(a)),b.forEach(w=>{for(let k of n){let _=k.pick(w);_&&r(_,k.props)}})},y=()=>{p(),t.matches&&x()};y();let A=kn(E=>window.requestAnimationFrame(E),E=>window.cancelAnimationFrame(E)),C=new MutationObserver((E=[])=>{let b=E.length===0;for(let w of E)if((w.target instanceof Element?w.target:w.target.parentElement)?.closest("[data-chat-flow]")==null){b=!0;break}b&&t.matches&&A.schedule(()=>{t.matches&&x()})});return C.observe(document.documentElement,{childList:!0,subtree:!0}),t.addEventListener("change",y),()=>{A.cancel(),C.disconnect(),t.removeEventListener("change",y),p(),h=null}},"dsh-web-mobile: installed-list-inline-styles")}var Jr=800,kt="[data-composer-input]";function Tn(e){O(e,"dsh-web-mobile: session focus guard",()=>{let t=e.sessions.list,a=Q(t.getSnapshot()),o=0,n=!1,i=()=>{window.clearTimeout(o),o=0,n=!1;let d=document.querySelector(`[${de}]`);if(d===null)return;d.removeAttribute(de);let x=d;Object.prototype.hasOwnProperty.call(d,"focus")&&delete x.focus},r=d=>{d.hasAttribute(de)||(d.setAttribute(de,""),Object.defineProperty(d,"focus",{configurable:!0,writable:!0,value:function(){}}))},s=()=>{i(),n=!0;let d=document.querySelector(kt);d!==null&&r(d),o=window.setTimeout(i,Jr)},p=new MutationObserver(()=>{if(!n)return;let d=document.querySelector(kt);d!==null&&r(d)}),h=d=>{if(!n)return;let x=d.target;x instanceof Element&&x.closest(kt)!==null&&i()},l=d=>{if(!n)return;let x=d.target;x instanceof HTMLElement&&x.closest(kt)!==null&&x.blur()},c=t.subscribe(()=>{let d=Q(t.getSnapshot());d!==a&&(a=d,s())});return p.observe(document.documentElement,{childList:!0,subtree:!0}),document.addEventListener("pointerdown",h,!0),document.addEventListener("focusin",l,!0),()=>{c(),p.disconnect(),document.removeEventListener("pointerdown",h,!0),document.removeEventListener("focusin",l,!0),i()}})}var pa="llm-pi-ai",_n=Object.freeze({off:null,low:"low",medium:"medium",high:"high",max:"max"}),ha="auto",Sn=15e3;function Cn(e,t){return new Promise((a,o)=>{let n=setTimeout(()=>{o(new Error(`settings remote did not answer within ${t}ms`))},t);e.then(i=>{clearTimeout(n),a(i)},i=>{clearTimeout(n),o(i instanceof Error?i:new Error(String(i)))})})}function B(e){return typeof e=="object"&&e!==null&&!Array.isArray(e)}function De(e){return B(e)&&e.reasoningEfforts!==void 0}function An(e,t){let a=B(e)?e.supportsReasoningEffort:void 0;if(typeof a=="boolean")return a;let o=B(t)?t.supportsReasoningEffort:void 0;return typeof o=="boolean"?o:void 0}function Ln(e,t,a,o){if(!B(e)||De(e)||De(t))return ha;let n=An(e.compat,B(a)?a.compat:void 0),i=An(B(t)?t.compat:void 0,B(o)?o.compat:void 0);return n===!1||i===!1?ha:"fill"}function es(e,t){let a=[],o=0,n=0;if(!B(t)||!B(t.providers))return{ops:a,filled:o,auto:n};let i=B(e)&&B(e.providers)?e.providers:{};for(let[r,s]of Object.entries(t.providers)){if(!B(s))continue;let p=B(i[r])?i[r]:void 0;if(Array.isArray(s.models)){let h=s.models,l=p!==void 0&&Array.isArray(p.models)?p.models:[],c=0,d=[];for(let[x,y]of h.entries()){let A=l[x];if(Ln(y,A,s,p)==="fill"&&B(y)){d.push({...y,reasoningEfforts:{..._n}}),c+=1;continue}d.push(y),B(y)&&!De(y)&&!De(A)&&(n+=1)}c>0&&(a.push({op:"set",path:["providers",r,"models"],value:d}),o+=c);continue}}for(let[r,s]of Object.entries(t.providers)){if(!B(s)||!B(s.modelOverrides))continue;let p=B(i[r])?i[r]:void 0,h=p!==void 0&&B(p.modelOverrides)?p.modelOverrides:void 0;for(let[l,c]of Object.entries(s.modelOverrides)){let d=h?.[l];if(Ln(c,d,s,p)!=="fill"){B(c)&&!De(c)&&!De(d)&&(n+=1);continue}a.push({op:"set",path:["providers",r,"modelOverrides",l,"reasoningEfforts"],value:{..._n}}),o+=1}}return{ops:a,filled:o,auto:n}}function ts(e){let t=e.get?.("remote.settings");if(!B(t))return;let a=t.describe,o=t.mutate;if(!(typeof a!="function"||typeof o!="function"))return t}function as(e){let t;try{t=e.get?.("remote")}catch{return}if(B(t)&&typeof t.$on=="function")return t}function Rn(e){O(e,"dsh-web-mobile: reasoning level defaults",()=>{let t=e,a=!1,o=!1,n=h=>{t.logger?.warn?.(h)},i=()=>{if(o||a)return;let h=ts(t);h!==void 0&&(a=!0,(async()=>{try{let l=await Cn(h.describe(),Sn);if(o||l?.ok!==!0)return;let c=B(l.value)?l.value.namespaces:void 0;if(!Array.isArray(c))return;let d=c.find(C=>B(C)&&C.ns===pa);if(d===void 0)return;let x=es(d.value,d.user);if(x.ops.length===0)return;let y=typeof d.revision=="number"?d.revision:void 0;if(o)return;(await Cn(h.mutate(pa,x.ops,y),Sn))?.ok!==!0&&n("dsh-web-mobile: the host refused the reasoning-level fill")}catch(l){n(`dsh-web-mobile: reasoning-level fill failed: ${l instanceof Error?l.message:String(l)}`)}finally{a=!1}})())},r=setTimeout(i,2e3),s=setInterval(i,1e4);i();let p;try{p=as(t)?.$on?.("settings/document-updated",(...h)=>{(h.length===0||h[0]===pa)&&i()})}catch(h){n(`dsh-web-mobile: reasoning-level document event unavailable: ${h instanceof Error?h.message:String(h)}`)}return()=>{o=!0,clearTimeout(r),clearInterval(s),typeof p=="function"&&p()}})}var os="[data-composer-input]";function ns(e){if(!e.isTrusted||e.defaultPrevented||e.inputType!=="insertText")return!1;let t=e.data;return typeof t!="string"||t===`
+`||t==="\r"?!1:t.includes(`
+`)||t.includes("\r")}function is(e){if(typeof DataTransfer!="function"||typeof ClipboardEvent!="function")return null;try{let t=new DataTransfer;t.setData("text/plain",e);let a=new ClipboardEvent("paste",{clipboardData:t,bubbles:!0,cancelable:!0});return a.clipboardData?.getData("text/plain")!==e?null:a}catch{return null}}function Mn(e){O(e,"dsh-web-mobile: composer paste guard",()=>{let t=a=>{if(!(a instanceof InputEvent)||!ns(a))return;let o=a.target;if(!(o instanceof Element))return;let n=o.closest(os);if(n===null)return;let i=is(a.data??"");i!==null&&(a.preventDefault(),a.stopPropagation(),n.dispatchEvent(i))};return document.addEventListener("beforeinput",t,!0),()=>{document.removeEventListener("beforeinput",t,!0)}})}var rs='[data-mobile-nav="file-upload"]',ss="[data-composer-card]",ls="input[type=file]",Ee=null;function ds(e){return e==="image"?"image/*":""}function cs(e){return typeof e?.pickFile=="function"?e.pickFile.bind(e):void 0}function On(e){return Array.isArray(e)?e.filter(t=>typeof File<"u"&&t instanceof File):[]}function ps(e,t){return t?"fallback":e==null?"cancelled":Array.isArray(e)?e.length===0?"cancelled":On(e).length>0?"files":"fallback":"fallback"}function ua(){let e=document.querySelector(ss);return e===null?null:e.querySelector(ls)}function hs(e,t){if(t===null)return!1;try{let a=new DataTransfer;for(let o of e)a.items.add(o);t.files=a.files}catch{return!1}return t.dispatchEvent(new Event("change",{bubbles:!0})),!0}var us='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true" width="20" height="20"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="7.2" cy="8" r="1.4" fill="currentColor"/><path d="M4.2 14.6l3.6-3.4 2.6 2.4 2.3-2.3 3.1 3.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',ms='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true" width="20" height="20"><path d="M12.6 3.2H6.4A1.9 1.9 0 0 0 4.5 5.1v9.8a1.9 1.9 0 0 0 1.9 1.9h7.2a1.9 1.9 0 0 0 1.9-1.9V6.6l-2.9-3.4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12.4 3.4v3.3h3.1" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';function ma(e,t=ua()){if(t===null)return;let a=ds(e),o=t.hasAttribute("accept"),n=t.getAttribute("accept");a!==""&&t.setAttribute("accept",a);try{t.click()}finally{a!==""&&(o?t.setAttribute("accept",n??""):t.removeAttribute("accept"))}}async function fs(e,t){let a=window.DSHA,o=cs(a);if(o===void 0){ma("file");return}let n=ua(),i=t?.()??null,r=null,s=!1;try{r=await o({accept:[],multiple:!0,title:e("fileUploadAttachment")})}catch{s=!0}if(n===null||ua()!==n||i!==null&&(t?.()??null)!==i)return;let p=ps(r,s);p!=="cancelled"&&(p==="files"&&hs(On(r),n)||ma("file",n))}var Pn=8,Je=8;function bs(e,t,a){let o=e.top-Pn-t.height;o<a.top+Je&&(o=Math.min(e.bottom+Pn,a.bottom-t.height-Je));let n=Math.max(a.left+Je,Math.min(e.left,a.right-t.width-Je));return{top:Math.round(Math.max(a.top+Je,o)),left:Math.round(n)}}function gs(){let e=window.visualViewport;return e!=null?{top:e.offsetTop,bottom:e.offsetTop+e.height,left:e.offsetLeft,right:e.offsetLeft+e.width}:{top:0,bottom:window.innerHeight,left:0,right:window.innerWidth}}function ws(e,t,a){Ee?.(),Ee=null;let o=document.createElement("div");o.dataset.mobileNav="file-picker-backdrop";let n=document.createElement("div");n.dataset.mobileNav="file-picker",n.setAttribute("role","dialog"),n.setAttribute("aria-modal","true"),n.setAttribute("aria-label",e("fileUploadAttachment"));let i=[{kind:"image",icon:us,label:e("fileUploadImage")},{kind:"file",icon:ms,label:e("fileUploadAttachment")}],r=[],s=()=>{Ee===s&&(Ee=null);for(let w of r.splice(0))w();o.remove()};Ee=s;let p=w=>{w.key==="Escape"&&s()};for(let w of i){let k=document.createElement("button");k.type="button",k.dataset.mobileNav="file-picker-option",k.dataset.kind=w.kind;let _=document.createElement("span");_.dataset.mobileNav="file-picker-icon",_.innerHTML=w.icon;let R=document.createElement("span");R.textContent=w.label,k.append(_,R),k.addEventListener("click",()=>{s(),w.kind==="file"?fs(e,a):ma(w.kind)}),n.append(k)}o.addEventListener("click",w=>{w.target===o&&s()}),document.addEventListener("keydown",p,!0),r.push(()=>document.removeEventListener("keydown",p,!0)),o.append(n),document.body.append(o),n.style.visibility="hidden";let h=!1,l=()=>{h||(h=!0,n.style.visibility="")},c="",d=0,x=window.setTimeout(l,400);r.push(()=>window.clearTimeout(x));let y=()=>{if(!t.isConnected){s();return}let w=t.getBoundingClientRect(),k=n.getBoundingClientRect(),_=bs(w,k,gs()),R=`${_.top}px`,S=`${_.left}px`;n.style.top!==R&&(n.style.top=R),n.style.left!==S&&(n.style.left=S);let F=`${_.top}:${_.left}`;F===c?d+=1:(c=F,d=0),d>=2&&l()};y();let A=!0,C=()=>{A||y()};window.addEventListener("resize",C),window.addEventListener("orientationchange",C),window.visualViewport?.addEventListener("resize",C),window.visualViewport?.addEventListener("scroll",C),r.push(()=>window.removeEventListener("resize",C)),r.push(()=>window.removeEventListener("orientationchange",C)),r.push(()=>window.visualViewport?.removeEventListener("resize",C)),r.push(()=>window.visualViewport?.removeEventListener("scroll",C));let E=0,b=requestAnimationFrame(function w(){if(y(),!n.isConnected){A=!1;return}++E<12?b=requestAnimationFrame(w):(A=!1,l())});r.push(()=>cancelAnimationFrame(b))}function In(e){O(e,"dsh-web-mobile: composer file picker",()=>{let t=e.locale.bind(J),a=()=>Q(e.sessions.list.getSnapshot())??null,o=n=>{let i=n.target;if(!(i instanceof Element))return;let r=i.closest(rs);r===null||r.hasAttribute("disabled")||(n.preventDefault(),n.stopPropagation(),ws(t,r,a))};return document.addEventListener("click",o,!0),()=>{document.removeEventListener("click",o,!0),Ee?.(),Ee=null,document.querySelector('[data-mobile-nav="file-picker-backdrop"]')?.remove()}})}var Et="mobile-nav-attachments";function Be(e){return typeof e=="object"&&e!==null}function Fn(e){return Be(e)?(Array.isArray(e.attachmentIds)?e.attachmentIds:Array.isArray(e.imageIds)?e.imageIds:[]).filter(a=>typeof a=="string"):[]}function Hn(e,t){if(!Array.isArray(e))return[];let a=[];for(let o of e){if(!Be(o)||typeof o.id!="string")continue;let n=o.kind==="image"||o.kind==="file"?o.kind:void 0;if(n===void 0)continue;let i=Be(o.file)?o.file:void 0,r=typeof i?.name=="string"?i.name:"",s=typeof i?.size=="number"&&Number.isFinite(i.size)?i.size:void 0,p=Be(t)&&Be(t[o.id])?t[o.id]:void 0,h=p?.status==="uploading"||p?.status==="ready"||p?.status==="error"?p.status:void 0;a.push({id:o.id,kind:n,name:r,...s===void 0?{}:{bytes:s},...n==="file"&&h!==void 0?{status:h}:{}})}return a}function vs(e){if(e<1024)return`${e} B`;let t=["KB","MB","GB"],a=e/1024,o=0;for(;a>=1024&&o<t.length-1;)a/=1024,o+=1;return`${a>=10?Math.round(a):Math.round(a*10)/10} ${t[o]}`}function xs(e){let t=new Map;for(let a of e)t.set(a.name,(t.get(a.name)??0)+1);return e.map((a,o)=>({v:1,id:a.id,kind:a.kind,name:a.name,ordinal:o+1,ambiguous:a.name===""||(t.get(a.name)??0)>1}))}function Nn(e,t){return e.name===""?t.unnamed(e.ordinal):e.name}function ys(e,t,a){if(a||t.includes("/"))return!1;let o=t.trim().toLowerCase();return o===""||e.toLowerCase().includes(o)}function zn(e,t,a,o){let n=t.trim().toLowerCase(),i=[];for(let[r,s]of xs(e).entries()){let p=e[r];if(p===void 0)continue;let h=Nn(s,o);if(!ys(h,t,a))continue;let l=[p.kind==="image"?o.kindImage:o.kindFile];p.bytes!==void 0&&l.push(vs(p.bytes)),p.status==="uploading"?l.push(o.uploading):p.status==="error"&&l.push(o.failed),i.push({rank:n!==""&&h.toLowerCase().startsWith(n)?0:1,index:r,row:{name:h,description:l.join(" · "),icon:"file",section:o.section,value:JSON.stringify(s)}})}return i.sort((r,s)=>r.rank-s.rank||r.index-s.index),i.map(r=>r.row)}function Dn(e){if(typeof e!="string")return;let t;try{t=JSON.parse(e)}catch{return}if(!Be(t)||t.v!==1)return;let{id:a,kind:o,name:n,ordinal:i,ambiguous:r}=t;if(!(typeof a!="string"||o!=="file"&&o!=="image"||typeof n!="string")&&!(typeof i!="number"||!Number.isInteger(i)||i<1||typeof r!="boolean"))return{v:1,id:a,kind:o,name:n,ordinal:i,ambiguous:r}}function ks(e,t){return`@${t.mention}:${e.name===""?`#${e.ordinal}`:e.name}`}function fa(e,t){let a=Dn(e);if(a!==void 0)return{source:Et,ref:JSON.stringify(a),label:Nn(a,t),appearance:"file",clipboardText:ks(a,t)}}function Bn(e){let t=Dn(e);if(t===void 0)throw new Error(`${Et}: unrecognized attachment reference`);let a=t.kind==="image"?"Image":"File",o=t.name===""?a:`${a} ${JSON.stringify(t.name)}`;return t.ambiguous?`[attachment #${t.ordinal}: ${o}]`:`[attachment: ${o}]`}var Wn="pocketMobileNav.attachments",Ts={section:"本次附件","kind.file":"文件","kind.image":"图片","status.uploading":"上传中","status.failed":"上传失败",unnamed:"附件 {n}",mention:"附件"},_s={section:"Attachments in this message","kind.file":"File","kind.image":"Image","status.uploading":"Uploading","status.failed":"Upload failed",unnamed:"Attachment {n}",mention:"attachment"};function Ss(e,t){let a=e.get("sessions"),o=e.get("conversation"),n=a?.scope?.(t);if(n===void 0||o?.input?.for===void 0)return[];let i=Fn(o.input.for(n)?.state?.getSnapshot());if(i.length===0)return[];let r=typeof o.resolveDraftAttachments=="function"?o.resolveDraftAttachments(i):typeof o.draftImages=="function"?o.draftImages(i):void 0;return Hn(r,o.fileUploads?.getSnapshot())}function ba(e){let t=e.locale.bind(Wn);return{section:t("section"),kindFile:t("kind.file"),kindImage:t("kind.image"),uploading:t("status.uploading"),failed:t("status.failed"),unnamed:a=>t("unnamed",{n:a}),mention:t("mention")}}function Cs(e){return{trigger:"@",name:Et,order:-10,showGroupTitle:!1,candidates(t,a){if(a.signal.aborted)return Promise.resolve([]);try{return Promise.resolve(zn(Ss(e,t.sessionId),a.query,a.drilled===!0,ba(e)))}catch{return Promise.resolve([])}},onPick({candidate:t}){let a=fa(t.value,ba(e));return a===void 0?void 0:{insert:a}},codec:{clipboardText:t=>fa(t,ba(e))?.clipboardText??"",serialize:t=>{try{return Promise.resolve(Bn(t))}catch(a){return Promise.reject(a)}}}}}function qn(e){e.effect(()=>e.locale.register(Wn,{zh:Ts,en:_s}),"dsh-web-mobile: attachment mention dictionaries"),e.inject(["inputTriggers"],t=>{O(t,"dsh-web-mobile: attachment mention source",()=>{let a=t.get("inputTriggers");if(typeof a?.registerSource=="function")return a.registerSource(Cs(t))})})}var Tt="pocketMobileNavFileShare",jn={share:"分享",shareFile:"分享「{name}」",downloadFile:"下载「{name}」",sharing:"正在准备文件…",downloadedUnsupported:"当前环境不支持直接分享；已开始下载，请在系统保存位置确认",downloadedTooLarge:"文件超过 50 MB；已开始下载，请在系统保存位置确认",downloadedShareFailed:"分享未能完成；已开始下载，请在系统保存位置确认",errorTooLarge:"文件太大（超过 200 MB），无法在手机端分享或下载",errorNotFound:"文件不存在或已被移动",errorGeneric:"分享失败：{message}"},Vn={share:"Share",shareFile:'Share "{name}"',downloadFile:'Download "{name}"',sharing:"Preparing file…",downloadedUnsupported:"Direct sharing is unavailable here; a download has started — confirm it at the location your system shows",downloadedTooLarge:"The file is over 50 MB; a download has started — confirm it at the location your system shows",downloadedShareFailed:"Sharing did not finish; a download has started — confirm it at the location your system shows",errorTooLarge:"The file is too large (over 200 MB) to share or download on mobile",errorNotFound:"The file no longer exists or was moved",errorGeneric:"Share failed: {message}"};var U=require("react"),Ms=Na(require("@deepseek-ai/dsh-client-ui-primitives"),1);var ne=class extends Error{code;constructor(t,a){super(a),this.code=t,this.name="FileShareError"}};function As(e){let t=e.code??"";return t==="workspace-file/too-large"?new ne("too-large",e.message??t):t==="workspace-file/not-found"||t==="workspace-file/not-regular-file"?new ne("not-found",e.message??t):new ne("read-failed",e.message??(t||"read failed"))}async function Kn(e,t,a,o=1048576,n=209715200){let i=[],r=0;for(;;){a.throwIfAborted();let s=await e(t,{offset:r,length:o},a);if(a.throwIfAborted(),!s.ok)throw As(s.error);let{data:p,eof:h,bytes:l}=s.value;if(l!==void 0&&l>n)throw new ne("too-large",`${t}: ${l} bytes exceed the ${n} byte share cap`);if(i.push(new Uint8Array(p)),r+=p.length,r>n)throw new ne("too-large",`${t}: more than ${n} bytes`);if(h||p.length===0)break}return{parts:i,size:r}}function Ls(e){return typeof e=="object"&&e!==null&&e.name==="AbortError"}function _t(e){return e.share!==void 0&&e.canShare!==void 0}async function Un(e,t){if(e.size>(t.shareMax??52428800))return t.download(e),{kind:"downloaded",reason:"too-large"};let a=t.share;if(a===void 0)return t.download(e),{kind:"downloaded",reason:"unsupported"};let o=!1;try{o=t.canShare?.({files:[e]})===!0}catch{o=!1}if(!o)return t.download(e),{kind:"downloaded",reason:"unsupported"};try{return await a({files:[e],title:e.name}),{kind:"shared"}}catch(n){return Ls(n)?{kind:"cancelled"}:(t.download(e),{kind:"downloaded",reason:"share-failed"})}}var Rs={txt:"text/plain",log:"text/plain",md:"text/markdown",markdown:"text/markdown",csv:"text/csv",tsv:"text/tab-separated-values",json:"application/json",xml:"application/xml",yaml:"text/yaml",yml:"text/yaml",html:"text/html",htm:"text/html",css:"text/css",js:"text/javascript",mjs:"text/javascript",ts:"text/plain",tsx:"text/plain",py:"text/plain",sh:"text/plain",svg:"image/svg+xml",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",bmp:"image/bmp",heic:"image/heic",avif:"image/avif",mp3:"audio/mpeg",wav:"audio/wav",m4a:"audio/mp4",ogg:"audio/ogg",mp4:"video/mp4",mov:"video/quicktime",webm:"video/webm",pdf:"application/pdf",zip:"application/zip",gz:"application/gzip",tar:"application/x-tar",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation"};function St(e){return e.split(/[/\\]+/).filter(Boolean).at(-1)??e}function Gn(e){let t=e.lastIndexOf(".");return t<=0?"application/octet-stream":Rs[e.slice(t+1).toLowerCase()]??"application/octet-stream"}var At=Ms,$n=["IconShareOutlineRegular","IconShareOutline16"].map(e=>At[e]).find(e=>typeof e=="function"),Xn=["IconWarningOutlineRegular","IconWarningOutline16"].map(e=>At[e]).find(e=>typeof e=="function"),ga=typeof At.Toast=="function"?At.Toast:void 0,Yn='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5v8.5M8 1.5 5 4.5M8 1.5l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 7H4a1.5 1.5 0 0 0-1.5 1.5v4A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5v-4A1.5 1.5 0 0 0 12 7h-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',Zn='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5v8.5M8 10 5 7M8 10l3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12.5H4A1.5 1.5 0 0 0 2.5 14v.5h11V14A1.5 1.5 0 0 0 12 12.5h-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';function Ps(){return React.createElement("span",{"aria-hidden":"true",dangerouslySetInnerHTML:{__html:Zn}})}function Os(){return $n!==void 0?React.createElement($n,{size:16}):React.createElement("span",{"aria-hidden":"true",dangerouslySetInnerHTML:{__html:Yn}})}function Is(e){document.querySelector('[data-mobile-nav="file-share-toast"]')?.remove();let t=document.createElement("div");t.dataset.mobileNav="file-share-toast",t.setAttribute("role","status"),t.textContent=e,document.body.appendChild(t),setTimeout(()=>t.remove(),3e3)}function Qn(e,t){return _t(Lt())?e("shareFile",{name:t}):e("downloadFile",{name:t})}function Fs(e,t){return e.kind!=="downloaded"?null:e.reason==="too-large"?t("downloadedTooLarge"):e.reason==="share-failed"?t("downloadedShareFailed"):t("downloadedUnsupported")}function Hs(e,t){if(e instanceof ne){if(e.code==="too-large")return t("errorTooLarge");if(e.code==="not-found")return t("errorNotFound")}return t("errorGeneric",{message:e instanceof Error?e.message:String(e)})}function Ns(e){let t=URL.createObjectURL(e),a=document.createElement("a");a.href=t,a.download=e.name,a.rel="noopener",a.style.display="none",document.body.appendChild(a),a.click(),a.remove(),setTimeout(()=>URL.revokeObjectURL(t),3e4)}function Lt(){let e=navigator,t=window.DSHA;return{canShare:typeof t?.canShareFile=="function"?a=>a.files.length===1&&t.canShareFile(a.files[0]):typeof e.canShare=="function"?a=>e.canShare(a):void 0,share:typeof t?.shareFile=="function"?a=>t.shareFile(a.files[0]):typeof e.share=="function"?a=>e.share(a):void 0,download:Ns}}function Jn(e,t,a){let[o,n]=(0,U.useState)(null),[i,r]=(0,U.useState)(null),s=(0,U.useRef)(null),p=(0,U.useRef)(0),h=(0,U.useRef)({sessionId:e,readFileRange:t,t:a});h.current={sessionId:e,readFileRange:t,t:a},(0,U.useEffect)(()=>()=>s.current?.abort(),[]);let l=(0,U.useCallback)(x=>{if(ga===void 0){Is(x);return}p.current+=1,r({seq:p.current,text:x})},[]),c=(0,U.useCallback)(x=>{if(s.current!==null)return;let y=new AbortController;s.current=y,n(x);let{sessionId:A,readFileRange:C,t:E}=h.current;(async()=>{let{parts:w}=await Kn((F,m,g)=>C(A,F,m,g),x,y.signal),k=St(x),_=new File(w,k,{type:Gn(k)}),R=await Un(_,Lt()),S=Fs(R,E);S!==null&&l(S)})().catch(w=>{y.signal.aborted||(console.warn("[dsh-web-mobile] file share failed:",w),l(Hs(w,E)))}).finally(()=>{s.current===y&&(s.current=null),y.signal.aborted||n(null)})},[l]),d=i===null||ga===void 0?null:React.createElement(ga,{key:i.seq,text:i.text,...Xn===void 0?{}:{icon:React.createElement(zs,null)},onDone:()=>r(null)});return{busyPath:o,share:c,toast:d}}function zs(){let e=Xn;return e===void 0?null:React.createElement(e,null)}function ei({absolutePath:e,sessionId:t,readFileRange:a,t:o}){let{busyPath:n,share:i,toast:r}=Jn(t,a,o),s=n!==null;return React.createElement(React.Fragment,null,React.createElement("button",{type:"button","data-mobile-nav":"file-share-preview","aria-label":s?o("sharing"):Qn(o,St(e)),"aria-busy":s,disabled:s,onClick:()=>i(e)},_t(Lt())?React.createElement(Os,null):React.createElement(Ps,null)),r)}var Ct="file-share-row";function ti({sessionId:e,readFileRange:t,t:a}){let{busyPath:o,share:n,toast:i}=Jn(e,t,a),r=(0,U.useRef)(null),s=(0,U.useRef)({busyPath:o,share:n,t:a});s.current={busyPath:o,share:n,t:a};let p=(0,U.useRef)(null);return(0,U.useEffect)(()=>{let l=(r.current?.closest('[data-files-state="tree"]')??null)?.querySelector("[data-files-body]")??null;if(l===null)return;let c=C=>{C.preventDefault(),C.stopPropagation();let b=C.currentTarget.parentElement?.getAttribute("data-files-path");b&&s.current.share(b)},d=()=>{let{busyPath:C,t:E}=s.current;for(let b of l.querySelectorAll(`[data-mobile-nav="${Ct}"]`))b.parentElement?.getAttribute("data-files-entry")!=="file"&&b.remove();for(let b of l.querySelectorAll('li[data-files-entry="file"]')){let w=b.querySelector(`:scope > [data-mobile-nav="${Ct}"]`);w===null&&(w=document.createElement("button"),w.type="button",w.dataset.mobileNav=Ct,w.innerHTML=_t(Lt())?Yn:Zn,w.addEventListener("click",c),b.appendChild(w));let k=b.getAttribute("data-files-path")??"",_=C!==null&&C===k,R=_?E("sharing"):Qn(E,St(k)),S=C!==null;w.getAttribute("aria-label")!==R&&w.setAttribute("aria-label",R),w.disabled!==S&&(w.disabled=S),_?w.setAttribute("aria-busy","true"):w.removeAttribute("aria-busy")}};p.current=d;let x=0,y=()=>{x===0&&(x=requestAnimationFrame(()=>{x=0,d()}))},A=new MutationObserver(y);return A.observe(l,{childList:!0,subtree:!0}),d(),()=>{A.disconnect(),x!==0&&cancelAnimationFrame(x),p.current=null;for(let C of l.querySelectorAll(`[data-mobile-nav="${Ct}"]`))C.removeEventListener("click",c),C.remove()}},[]),(0,U.useEffect)(()=>{p.current?.()},[o,a]),React.createElement(React.Fragment,null,React.createElement("span",{hidden:!0,"data-mobile-nav":"file-share-anchor",ref:r}),i)}function ai(e){e.inject(["slots","locale","remote","remote.workspaceFiles"],t=>{t.effect(()=>t.locale.register(Tt,{zh:jn,en:Vn}),"dsh-web-mobile: file-share dictionaries");let a=t.remote,o=()=>({readFileRange:(n,i,r,s)=>a.workspaceFiles.readBytes(n,i,{range:r},s)});O(t,"dsh-web-mobile: file share",()=>{let n=[t.slots.inject("sidebar.right.tab.document.actions",()=>t.slots.register({name:"sidebar.right.tab.document.actions",id:"mobile-nav-file-share",order:100,locale:Tt,inject:o},ei)),t.slots.inject("sidebar.right.tab.files.actions",()=>t.slots.register({name:"sidebar.right.tab.files.actions",id:"mobile-nav-file-share-rows",order:100,locale:Tt,inject:o},ti))];return()=>{for(let i of n)i()}})})}function oi(e){if(typeof e!="object"||e===null)return null;let t=e.selectPanel;return typeof t!="function"?null:()=>{t.call(e,null)}}var Ds='[class*="panelRow"][aria-current="page"]',va=!1,wa=null;function xa(){return document.querySelector(Ds)!==null}function ni(){return!va&&xa()}var ii="data-mobile-panel-exit",Bs=2e3,Ws="panel-ghost",qs=280,js='[data-mobile-nav="frame"] [class*="_centerCol"] > * > *';function ri(e){let t=oi(e),a=t!==null,o=!1,n=!1,i=null,r=0,s=null,p=null,h=null,l=Symbol("panel-exit");function c(){let w=N();if(w===null)return[];let k=[];for(let _ of w.querySelectorAll('[class*="_centerCol"]')){let R=_.firstElementChild?.firstElementChild;if(R instanceof HTMLElement)for(let S of R.getAnimations())S.playState!=="idle"&&k.push(S)}return k}function d(){if(o){if(i!==null&&(window.clearTimeout(i),i=null),r!==0&&(cancelAnimationFrame(r),r=0),wa===l){let w=N();w!==null&&w.removeAttribute(ii),va=!1,wa=null}o=!1}}function x(){p!==null&&(window.clearTimeout(p),p=null);let w=s;s=null,w!==null&&(h!==null&&w.removeEventListener("animationend",h,!0),h=null,w.remove())}function y(w){if(n||!o)return;let k=c();if(k.length===0){if(w<2){r=requestAnimationFrame(()=>{r=0,y(w+1)});return}d();return}let _=0;for(let R of k){let S=R.effect?.getTiming(),F=typeof S?.delay=="number"?S.delay:0,m=typeof S?.duration=="number"?S.duration:0,g=typeof S?.iterations=="number"?S.iterations:1;_=Math.max(_,F+m*g),R.finished.then(()=>d(),()=>d())}i=window.setTimeout(d,Math.min(Bs,Math.max(250,_+200)))}function A(){if(!xa())return null;let w=document.querySelector(js);return w instanceof HTMLElement?w:null}function C(w){x();let k=document.createElement("div");return k.dataset.mobileNav=Ws,k.setAttribute("aria-hidden","true"),k.append(w.cloneNode(!0)),document.body.append(k),k}let E=()=>{if(n||!a||o)return;o=!0,va=!0,wa=l;let w=N();w!==null&&w.setAttribute(ii,"");let k=A();s=k===null?null:C(k);try{t()}finally{if(r=requestAnimationFrame(()=>{r=0,y(0)}),s!==null){let _=s;h=R=>{R.animationName==="dsh-web-mobile-panel-ghost-out"&&x()},_.addEventListener("animationend",h,!0),p=window.setTimeout(x,qs+120)}}};function b(){n=!0,d(),x()}return{exit:E,supported:a,panelOpen:xa,task:Vs(E,a),dispose:b}}function Vs(e,t){let a=!1,o=!1,n=!1,i=null;function r(){n=!1,i!==null&&(window.clearTimeout(i),i=null)}function s(){n=!0,i!==null&&window.clearTimeout(i),i=window.setTimeout(r,1200);try{history.back()}catch{r()}}function p(){if(n){r();return}a&&(a=!1,ni()&&e())}function h(){o||(window.addEventListener("popstate",p),o=!0)}function l(){o&&(window.removeEventListener("popstate",p),o=!1)}return{name:"panel-back-exit",scopes:["*"],ensure:()=>{if(t){if(h(),ni()){if(a)return;a=!0;try{history.pushState({mobilePanelExit:!0},"")}catch{a=!1}return}a&&(a=!1,s())}},dispose:()=>{l(),r(),a&&(a=!1,s())}}}function si(e,t){O(e,"dsh-web-mobile: panel row returns to conversation",()=>{let a=o=>{let n=o.target;if(!(n instanceof Element)||typeof n.closest!="function")return;let i=n.closest('[class*="panelRow"]');i!==null&&i.getAttribute("aria-current")==="page"&&(o.preventDefault(),o.stopPropagation(),t())};return document.addEventListener("click",a,!0),()=>document.removeEventListener("click",a,!0)})}var Ks=/[?,]dsh-web-mobile\/client\.js/;function Us(e){if(typeof e!="string"||e==="")return null;try{let t=new URL(e,"http://x").searchParams.get("rev");return t===null||t===""?null:t}catch{return null}}function Gs(){for(let e of document.head.querySelectorAll('script[src], link[rel="preload"]')){let t=e.getAttribute("src")??e.getAttribute("href");if(t!==null&&Ks.test(t))return Us(t)}return null}function li(e){e.effect(()=>{let t=new URLSearchParams(location.search);if(!t.has("mobile-nav-debug"))return()=>{};let a=[],o=C=>a.push(`ERR ${C.message.slice(0,120)}`),n=C=>a.push(`REJ ${String(C.reason).slice(0,120)}`);window.addEventListener("error",o),window.addEventListener("unhandledrejection",n);let i=document.createElement("div");i.style.cssText=["position:fixed","top:40px","right:6px","z-index:2147483000","background:rgba(0,0,0,.82)","color:#fff","font:11px/1.5 ui-monospace,monospace","padding:8px 10px","border-radius:8px","max-width:94vw","max-height:70vh","overflow:auto","white-space:pre-wrap","pointer-events:none"].join(";");let r=()=>{let C=_=>!!document.querySelector(_),E=_=>{let R=document.querySelector(_);return R===null?"absent":getComputedStyle(R).visibility},b=document.querySelector('[data-mobile-nav="frame"]'),w=()=>{let _=document.querySelector("[data-sidebar-right-panel]");if(_===null)return"absent";let R=_.getBoundingClientRect();return`${_.getAttribute("data-sidebar-right-panel")} pad ${getComputedStyle(_).paddingTop} rect ${Math.round(R.top)},${Math.round(R.left)} ${Math.round(R.width)}x${Math.round(R.height)}`};return[`build rev ${Gs()??"?"} (diag chips)`,`URL ${location.pathname}${location.search}`,`W ${innerWidth} x ${innerHeight} dpr ${devicePixelRatio}`,`mq≤1023 ${matchMedia(me).matches}  mq≥1024 ${matchMedia(to).matches}`,`safeTop framePad ${b===null?"n/a":getComputedStyle(b).paddingTop}  rightPanel ${w()}`,`css ${C('style[data-plugin-css*="mobile"]')}  frame ${!!b}`,`previewCol ${E("[data-aionui-preview-col]")}  explorerCol ${E("[data-aionui-explorer-col]")}`,`previewOpen ${b?.hasAttribute("data-aionui-preview-open")??"?"}  explorerOpen ${b?.hasAttribute("data-aionui-explorer-open")??"?"}  previewFull ${b?.hasAttribute("data-mobile-preview-full")??"?"}`,`header ${E("[data-phase] header")}  composer ${C("textarea, [data-composer-input]")}`,`genui cards ${document.querySelectorAll("[data-genui]").length}  panel ${C("[data-genui-panel]")}`,`phase ${document.querySelector("[data-phase]")?.getAttribute("data-phase")??"?"}`,`errs ${a.slice(-5).join(" | ")||"none"}`].join(`
+`)},s=()=>{i.textContent=r()};s();let p=0,h=()=>{p===0&&(p=requestAnimationFrame(()=>{p=0,s()}))},l=new MutationObserver(C=>{for(let E of C)if(!(E.target===i||i.contains(E.target))){h();return}});l.observe(document.body,{childList:!0,subtree:!0,attributes:!0});let c=setInterval(s,1500);document.body.appendChild(i);let d=C=>{let E=document.querySelector(C);if(E===null)return"absent";let b=E.getBoundingClientRect();return`${Math.round(b.x)},${Math.round(b.y)} ${Math.round(b.width)}x${Math.round(b.height)}`},x=()=>[r(),`rects toggle ${d('[data-mobile-nav="toggle"]')} files ${d('[data-mobile-nav="files"]')} header ${d("[data-phase] header")} titleCluster ${d('[class*="_titleCluster"]')}`,`chips crea ${d('[class*="SVAs4q_"]')} team ${d("[data-team-action]")} model ${d('[class*="_7KE1Ra_trigger"]')} crumbs ${d('[class*="_crumbs"]')} crumbCurrent ${d('[class*="_crumbCurrent"]')}`,`ua ${navigator.userAgent}`,`screen ${screen.width}x${screen.height} standalone ${matchMedia("(display-mode: standalone)").matches}`,`vv ${visualViewport===null?"n/a":`${Math.round(visualViewport.width)}x${Math.round(visualViewport.height)}@${Math.round(visualViewport.offsetTop)}`}`].join(`
+`),y=t.get("beacon")||"http://127.0.0.1:3199/diag",A=setInterval(()=>{fetch(y,{method:"POST",mode:"no-cors",body:x()}).catch(()=>{})},2e3);return()=>{window.removeEventListener("error",o),window.removeEventListener("unhandledrejection",n),l.disconnect(),clearInterval(c),clearInterval(A),i.remove()}},"dsh-web-mobile: debug badge")}var di=1e4,ya=window,Rt=ya.__dshaMobileScrollState instanceof WeakMap?ya.__dshaMobileScrollState:ya.__dshaMobileScrollState=new WeakMap;function ci(){return[...document.querySelectorAll('[data-mobile-nav="frame"] [class*="scrollBody"]')]}function $s(){for(let e of ci())e.scrollTop>0?Rt.set(e,{top:e.scrollTop,savedAt:Date.now(),url:location.href}):Rt.delete(e)}function Xs(){for(let e of ci()){let t=Rt.get(e);Rt.delete(e),!(!t||Date.now()-t.savedAt>di||t.url!==location.href)&&requestAnimationFrame(()=>{e.isConnected&&t.url===location.href&&Date.now()-t.savedAt<=di&&e.scrollTop===0&&(e.scrollTop=t.top)})}}function pi(e){e.effect(()=>e.locale.register(J,{zh:lo,en:co}),"dsh-web-mobile: dictionaries"),e.effect(()=>{for(let o of document.querySelectorAll('style[data-plugin-css="dsh-web-mobile/mobile.css"]'))o.remove();let a=document.createElement("style");return a.dataset.plugin="dsh-web-mobile",a.dataset.pluginCss="dsh-web-mobile/mobile.css",a.textContent=eo,document.head.appendChild(a),setTimeout(()=>{a.isConnected&&document.head.appendChild(a)},0),Xs(),()=>{$s(),a.remove()}},"dsh-web-mobile: styles"),En(e);let t=ri(e.layout);e.effect(()=>{let a=[Xo(),Wo(e),qo(e,t),()=>t.dispose()];return()=>{for(let o of a)o()}},"dsh-web-mobile: reconciler infrastructure"),Zo(e),Bo(e),si(e,t.exit),tn(e),zo(e,it),en(e),an(e),rn(e),cn(e),pn(e),hn(e),bn(e),wn(e),vn(e),yn(e),Tn(e),Rn(e),Mn(e),In(e),qn(e),Yo(e),po(e),ai(e),li(e),e.slots.inject("conversation.session.header.actions",()=>e.slots.register({name:"conversation.session.header.actions",id:"mobile-nav-toggle",order:10,locale:J,inject:()=>({toggleSidebar:()=>e.layout.toggleSidebar()})},Va)),e.slots.inject("sidebar.footer.action",()=>e.slots.register({name:"sidebar.footer.action",id:"mobile-nav-session-log",order:5,locale:J,inject:()=>({downloadSessionLog:a=>e.sessionLogDownload.download(a)})},$a)),e.slots.inject("conversation.input.left",()=>e.slots.register({name:"conversation.input.left",id:"mobile-nav-file-upload",order:10,locale:J,inject:()=>({})},Xa))}var Ys=["添加工作区","添加工作区…","Add workspace","Add workspace…"],hi='[role="tab"], [role="treeitem"], [role="menuitem"], [role="menu"]';function ui(e){let t=(e??"").trim();return t.length<3||t.length>320||/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(t)&&!/^file:\/\//i.test(t)?!1:!!(/^(\/|~\/|\.\.?\/|[A-Za-z]:\\)/.test(t)||/\/[\w.\-]+\.\w{1,12}$/.test(t))}async function Zs(e){try{if(navigator.clipboard?.writeText)return await navigator.clipboard.writeText(e),!0}catch{}try{let t=document.createElement("textarea");t.value=e,t.style.position="fixed",t.style.top="-9999px",t.style.opacity="0",document.body.appendChild(t),t.focus(),t.select();let a=document.execCommand("copy");return t.remove(),a}catch{return!1}}function mi(e,t){let a=(b,w)=>{let k=t(b);if(w!==void 0)for(let[_,R]of Object.entries(w))k=k.split(`{${_}}`).join(String(R));return k},o=null,n=null,i=b=>{o===null&&(o=document.createElement("div"),o.setAttribute("data-mobile-nav","file-guard-toast"),Object.assign(o.style,{position:"fixed",left:"50%",bottom:"calc(64px + var(--dshp-kb, 0px))",transform:"translateX(-50%)",maxWidth:"84vw",zIndex:"9999",padding:"10px 14px",borderRadius:"10px",background:"rgba(20,22,28,.92)",color:"#fff",fontSize:"13px",lineHeight:"1.4",textAlign:"center",fontFamily:"inherit",boxShadow:"0 4px 16px rgba(0,0,0,.28)",pointerEvents:"none",opacity:"0",transition:"opacity .18s ease"}),document.body.appendChild(o)),o.textContent=b,requestAnimationFrame(()=>{o!==null&&(o.style.opacity="1")}),n!==null&&window.clearTimeout(n),n=window.setTimeout(()=>{o!==null&&(o.style.opacity="0")},2600)},r=null,s=b=>{document.activeElement?.blur(),r?.remove();let k=b.length>65536?`${b.slice(0,65536)}
+${t("fileTruncated")}`:b,_=document.createElement("div");_.setAttribute("data-mobile-nav","file-guard-fallback"),Object.assign(_.style,{position:"fixed",left:"max(8px, env(safe-area-inset-left, 0px))",right:"max(8px, env(safe-area-inset-right, 0px))",bottom:"calc(16px + env(safe-area-inset-bottom, 0px) + var(--dshp-kb, 0px))",maxHeight:"45vh",overflow:"auto",zIndex:"10000",padding:"10px 12px",borderRadius:"10px",background:"rgba(20,22,28,.96)",color:"#eee",boxShadow:"0 6px 24px rgba(0,0,0,.4)",WebkitOverflowScrolling:"touch"});let R=document.createElement("div");Object.assign(R.style,{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px",color:"#9aa0a8",marginBottom:"6px"});let S=document.createElement("span");S.textContent=t("fileFallbackTitle");let F=document.createElement("button");F.type="button",F.textContent=t("fileFallbackClose"),Object.assign(F.style,{border:"1px solid #444a52",background:"transparent",color:"#eee",borderRadius:"6px",padding:"2px 10px",fontSize:"12px",cursor:"pointer"}),F.addEventListener("click",()=>{_.remove()});let m=document.createElement("pre");m.textContent=k,Object.assign(m.style,{margin:"0",whiteSpace:"pre-wrap",wordBreak:"break-all",userSelect:"text",WebkitUserSelect:"text",fontSize:"12px",lineHeight:"1.5",fontFamily:"inherit"}),R.append(S,F),_.append(R,m),document.body.appendChild(_),r=_},p=b=>{let w=b.target;if(w===null)return;let k=w.closest("button, a");k!==null&&k.closest("[data-phase]")!==null&&k.closest(hi)===null&&ui(k.textContent)&&(b.preventDefault(),b.stopImmediatePropagation(),i(t("fileGuardMsg")))};document.addEventListener("click",p,!0);let h=(b=document)=>{let w=b.querySelectorAll("button, a");(b instanceof Element&&b.matches("button, a")?[b,...w]:w).forEach(_=>{if(_.getAttribute("data-mobile-nav-copy")==="1"||_.closest("[data-phase]")===null||_.closest(hi)!==null)return;let R=(_.textContent??"").trim();if(!ui(R))return;_.setAttribute("data-mobile-nav-copy","1");let S=document.createElement("button");S.type="button",S.setAttribute("data-mobile-nav","copy-file"),S.textContent=t("fileCopy"),S.addEventListener("click",async F=>{F.preventDefault(),F.stopPropagation();let m=(_.textContent??"").trim().replace(/^file:\/\//i,"");S.disabled=!0,S.textContent="…";try{let g=await e(m);if(!g?.ok){i(g?.error?.message??t("fileCopyFailed"));return}let f=g.value?.content??"",T=g.value?.size??f.length;if(T>2097152){i(a("fileTooLarge",{size:(T/(1024*1024)).toFixed(1)}));return}if(await Zs(f)){let P=Math.max(1,Math.round(T/1024));i(a("fileCopyDone",{kb:P}))}else i(t("fileCopyFailedFallback")),s(f)}catch(g){i(g instanceof Error?g.message:t("fileCopyFailed"))}finally{S.disabled=!1,S.textContent=t("fileCopy")}}),_.parentElement?.insertBefore(S,_.nextSibling)})},l=new Map,c='[role="menuitem"],[role="option"],li,button,a',d=b=>{let w=(b.getAttribute("aria-label")||""||b.textContent||"").trim();if(Ys.includes(w)){let k=b;l.has(b)||l.set(b,k.style.display),k.style.display="none",b.setAttribute("data-mobile-nav-hide","add-workspace")}},x=b=>{b instanceof Element&&b.matches(c)&&d(b),b.querySelectorAll(c).forEach(d)},y=new Set,A=0,C=()=>{A=0;for(let b of y)b.isConnected&&(h(b),x(b));y.clear()};h(),x(document);let E=new MutationObserver(b=>{for(let w of b){if(w.type==="characterData"){let k=w.target.parentElement;k!==null&&y.add(k);continue}w.addedNodes.forEach(k=>{k.nodeType===1?y.add(k):k.nodeType===3&&k.parentElement!==null&&y.add(k.parentElement)})}y.size>0&&A===0&&(A=requestAnimationFrame(C))});return E.observe(document.body,{childList:!0,subtree:!0,characterData:!0}),()=>{document.removeEventListener("click",p,!0),E.disconnect(),A!==0&&cancelAnimationFrame(A),y.clear(),n!==null&&window.clearTimeout(n),o?.remove(),o=null,r?.remove(),r=null,document.querySelectorAll('[data-mobile-nav="copy-file"]').forEach(b=>b.remove()),document.querySelectorAll('[data-mobile-nav-copy="1"]').forEach(b=>b.removeAttribute("data-mobile-nav-copy")),document.querySelectorAll('[data-mobile-nav-hide="add-workspace"]').forEach(b=>{let w=b,k=l.get(b);k!==void 0?w.style.display=k:w.style.removeProperty("display"),l.delete(b),b.removeAttribute("data-mobile-nav-hide")}),l.clear()}}var Mt="dsh-pocket.layout";function fi({urlValue:e,stored:t,narrowMatch:a}){let o=String(e??"").trim().toLowerCase();return o==="desktop"?"desktop":o==="mobile"?"mobile":t==="desktop"||t==="mobile"?t:a?"mobile":"desktop"}function bi(e){try{if(typeof localStorage>"u")return"";if(e==null)return Qs();let t=String(e).trim().toLowerCase();try{t==="desktop"||t==="mobile"?localStorage.setItem(Mt,t):(t==="auto"||t==="")&&localStorage.removeItem(Mt)}catch{}let a=localStorage.getItem(Mt);return a==="desktop"||a==="mobile"?a:""}catch{return""}}function Qs(){try{if(typeof localStorage>"u")return"";let e=localStorage.getItem(Mt);return e==="desktop"||e==="mobile"?e:""}catch{return""}}var et="pocket",ka={section:"手机访问",title:"📱 手机访问",subtitle:"手机扫码打开的就是电脑上的这个界面，实时同步",developer:"开发者：大哈",starAsk:"⭐ 顺手留颗 Star，大哈能高兴一整天",starCta:"好，这就去 Star",restarted:"🔄 已重启",ok:"知道了",bgHint:"进程在后台运行（不挂终端）。如需停止：{cmd}",updatedRestart:"✅ 已更新 v{ver}，重启生效",updateAutoRestarting:"✅ 已更新 v{ver}，正在自动重启…",updatedOk:"✅ 已更新 v{ver}",updateAvailable:"📦 新版本 v{ver}",updating:"更新中…",updateTo:"更新到 v{ver}",restartingNow:"正在重启生效…",restarting:"重启中…",restartNow:"🔄 重启 dsh web 生效",updatingDetail:"⏳ 更新中（通常 1-2 分钟）· 已等待 {s} 秒",restartingDetail:"⏳ 正在重启生效（通常 10-30 秒）· 已等待 {s} 秒",updatedAutoDetail:"✅ 已更新，正在自动重启生效，请稍候刷新",updatedRestartDetail:"✅ 已更新，重启 dsh web 生效",updateFailed:"❌ 失败：{err}（手动更新：dsh plugin --profile web update dsh-pocket --latest -w）",versionRange:"当前 v{cur} → 最新 v{latest}",wanAccess:"公网访问",pinLabel:"访问密码",modeLabel:"地址模式",advAddress:"高级 · 手动选地址",wanOffHint:"开启后可从任何网络访问（每次开启需确认免责声明）",resetFactory:"🧹 恢复出厂设置",resetGo:"恢复",resetIntro:"设置搞出问题时的临时兜底：清空本机配置并重设随机密码（DSH 的会话、模型、插件配置不受影响）",resetTitle:"⚠️ 确认恢复出厂设置？",resetBody:`将清空并恢复默认：
 ① 开关：局域网访问=开、访问密码=开、手机端右边栏=开、局域网地址=自动
 ② 公网：模式回到随机域名，清空 Tunnel Token 与固定域名，并关闭正在运行的公网
 ③ 密码：公网和局域网都换成新的随机 8 位密码（旧密码立即作废，手机需重新输入）
 
-DSH 自身的会话、模型、插件配置不受影响；此操作不可撤销。`,resetConfirm:"确认恢复",resetDone:"✅ 已恢复出厂设置：设置已清空，密码已换新（手机需重新输入）",resetFailed:"❌ 恢复失败，请重试",lanTitle:"📶 局域网（同一 WiFi）",lanHint:"手机连接同一 WiFi 后扫码即可打开",lanAccess:"局域网访问",lanDisabledHint:"🔒 局域网访问已关闭：手机扫码/链接均不可用（公网不受影响）。点「开」恢复。",lanToggleTitleOff:"关闭局域网访问",lanToggleBodyOff:"关闭后，同一 WiFi 下的手机将无法扫码访问（局域网二维码/链接立即失效）。公网访问不受影响。确定关闭？",lanToggleTitleOn:"开启局域网访问",lanToggleBodyOn:"开启后，同一 WiFi 的手机扫码即可访问（默认需输入局域网密码）。确定开启？",confirm:"确定",lanAddress:"局域网地址",lanAddressAuto:"自动（推荐）",lanPin:"局域网访问密码",on:"开",off:"关",lanPinValue:"🔐 访问密码：{pin}（手机打开需输入；与公网密码分开）",lanPinCustomValue:"🔐 访问密码：{pin}（自定义；手机打开需输入）",refresh:"刷新",customize:"自定义",customizing:"新密码（8–64 位，英文字母或数字）：",save:"保存",cancel:"取消",pinInvalid:"密码必须是 8–64 位英文字母或数字",pinCustomHint:"自定义后开启公网不再自动换新",lanPinOff:"🔓 密码已关闭：扫码直连，无需密码（仅同一局域网设备可访问；公网仍要密码）",lanStarting:"代理未就绪…",mobileRightbar:"手机端右边栏",mobileRightbarHint:"显示原生右边栏入口；普通手机可按需关闭，折叠屏展开后使用更方便",wanTitle:"🌐 公网（人在外面）",wanHint:"任何网络扫码即用（URL 每次重启自动换新）",wanPin:"🔐 访问密码：{pin}（每次开启公网变新；手机打开链接需输入此密码）",wanPinCustom:"🔐 访问密码：{pin}（自定义，开启公网不再自动换新）",wanEphemeralWarn:"⚠️ 公网链接仅在本次开启期间有效：关闭或重启后失效，并可能被他人复用为陌生网站。请勿收藏，每次从本页扫「当前」二维码。需要固定不变的地址请用下方「固定域名」。",stopTunnel:"关闭公网",enable:"开启公网访问",opening:"开启中…",tunnelMode:"公网模式：",modeQuick:"随机域名（默认）",modeNamed:"固定域名",namedSummary:"固定域名：{host} · Token {token}",namedTokenSet:"已配置",namedTokenMissing:"未配置",namedEdit:"修改",namedHostnameLabel:"固定域名：",namedTokenLabel:"Tunnel Token（留空 = 保持不变）：",namedHow:"在 Cloudflare Zero Trust → Networks → Tunnels 创建隧道并复制 Token；把域名的 Service 指向 http://127.0.0.1:3081（代理端口）。地址固定，重启不再变化。",namedSecurity:"固定域名长期暴露在公网、更易被扫描，建议同时设置自定义强密码（本模式公网密码默认不随重启轮换）。",namedNeedCfg:"请先填写固定域名与 Tunnel Token",namedRunningHint:"固定域名（Cloudflare 命名隧道）——地址不随重启变化",namedTakeEffect:"已保存固定域名配置——需关闭并重新开启公网访问后生效",disclaimerTitle:"⚠️ 安全免责声明",disclaimerBody:"开启公网 = 把本机 DSH（能执行代码）暴露到互联网。任何人拿到公网链接和密码，都能访问甚至操作你的电脑。请确认：① 使用自定义强密码或妥善保管自动密码；② 用完立即「关闭公网」；③ 公司/涉密网络请先确认合规。",disclaimerAgree:"我已知情，同意开启",disclaimerHint:"请勾选「我已知情」后再开启公网",downloading:"⏳ 下载 cloudflared（首次约 20-50MB，通常 1-2 分钟；之后秒开）· 已等待 {s} 秒",connecting:"⏳ 连接 Cloudflare 边缘（通常 5-30 秒）· 已等待 {s} 秒{suffix}",slowHint:" — 有点久？检查是否开着代理/VPN（Clash TUN 等）",error:"❌ 开启失败：{detail}（可重试；若是代理/VPN 问题见 README 排障）",unknownError:"未知错误",feedback:"有问题？欢迎到 GitHub Issues 反馈 🙏",fileGuardMsg:"手机上无法直接打开电脑上的文件",fileCopy:"复制",fileCopyDone:"已复制文件内容（{kb} KB）",fileCopyFailed:"复制失败",fileCopyFailedFallback:"复制失败，下方可长按选择",fileFallbackTitle:"复制失败，长按下方文本选择",fileFallbackClose:"关闭",fileTooLarge:"文件过大（{size}MB），已跳过复制",fileTruncated:"…已截断",copyLink:"复制链接",copied:"✅ 已复制地址",copyFailed:"复制失败，请长按地址手动复制",pinShow:"显示",pinHide:"隐藏"},Do={section:"Phone access",title:"📱 Phone access",subtitle:"The phone shows this exact screen, live",developer:"Developer: daha1216 (大哈)",starAsk:"⭐ Drop a Star if it helped — it makes daha1216’s day",starCta:"★ Star it on GitHub",restarted:"🔄 Restarted",ok:"Got it",bgHint:"Running in the background (not attached to a terminal). To stop: {cmd}",updatedRestart:"✅ Updated to v{ver} — restart to apply",updateAutoRestarting:"✅ Updated to v{ver} — auto-restarting…",updatedOk:"✅ Updated to v{ver}",updateAvailable:"📦 Update available: v{ver}",updating:"Updating…",updateTo:"Update to v{ver}",restartingNow:"Restarting to apply…",restarting:"Restarting…",restartNow:"🔄 Restart dsh web now",updatingDetail:"⏳ Updating (usually 1-2 min) · {s}s elapsed",restartingDetail:"⏳ Restarting to apply (usually 10-30s) · {s}s elapsed",updatedAutoDetail:"✅ Updated — auto-restarting in progress, refresh shortly",updatedRestartDetail:"✅ Updated — restart dsh web to apply",updateFailed:"❌ Failed: {err} (manual update: dsh plugin --profile web update dsh-pocket --latest -w)",versionRange:"Current v{cur} → latest v{latest}",wanAccess:"Public access",pinLabel:"Access PIN",modeLabel:"Address mode",advAddress:"Advanced · Pick address",wanOffHint:"Reachable from any network once enabled (a disclaimer is confirmed on each enable)",resetFactory:"🧹 Factory reset",resetGo:"Reset",resetIntro:"Temporary fallback when settings break: clear local config and re-roll random PINs (DSH sessions, models and plugin config are untouched)",resetTitle:"⚠️ Confirm factory reset?",resetBody:`This clears and restores defaults:
+DSH 自身的会话、模型、插件配置不受影响；此操作不可撤销。`,resetConfirm:"确认恢复",resetDone:"✅ 已恢复出厂设置：设置已清空，密码已换新（手机需重新输入）",resetFailed:"❌ 恢复失败，请重试",lanTitle:"📶 局域网（同一 WiFi）",lanHint:"手机连接同一 WiFi 后扫码即可打开",lanAccess:"局域网访问",lanDisabledHint:"🔒 局域网访问已关闭：手机扫码/链接均不可用（公网不受影响）。点「开」恢复。",lanToggleTitleOff:"关闭局域网访问",lanToggleBodyOff:"关闭后，同一 WiFi 下的手机将无法扫码访问（局域网二维码/链接立即失效）。公网访问不受影响。确定关闭？",lanToggleTitleOn:"开启局域网访问",lanToggleBodyOn:"开启后，同一 WiFi 的手机扫码即可访问（默认需输入局域网密码）。确定开启？",confirm:"确定",lanAddress:"局域网地址",lanAddressAuto:"自动（推荐）",lanPin:"局域网访问密码",on:"开",off:"关",lanPinValue:"🔐 访问密码：{pin}（手机打开需输入；与公网密码分开）",lanPinCustomValue:"🔐 访问密码：{pin}（自定义；手机打开需输入）",refresh:"刷新",customize:"自定义",customizing:"新密码（8–64 位，英文字母或数字）：",save:"保存",cancel:"取消",pinInvalid:"密码必须是 8–64 位英文字母或数字",pinCustomHint:"自定义后开启公网不再自动换新",lanPinOff:"🔓 密码已关闭：扫码直连，无需密码（仅同一局域网设备可访问；公网仍要密码）",lanStarting:"代理未就绪…",mobileRightbar:"手机端右边栏",mobileRightbarHint:"显示原生右边栏入口；普通手机可按需关闭，折叠屏展开后使用更方便",wanTitle:"🌐 公网（人在外面）",wanHint:"任何网络扫码即用（URL 每次重启自动换新）",wanPin:"🔐 访问密码：{pin}（每次开启公网变新；手机打开链接需输入此密码）",wanPinCustom:"🔐 访问密码：{pin}（自定义，开启公网不再自动换新）",wanEphemeralWarn:"⚠️ 公网链接仅在本次开启期间有效：关闭或重启后失效，并可能被他人复用为陌生网站。请勿收藏，每次从本页扫「当前」二维码。需要固定不变的地址请用下方「固定域名」。",stopTunnel:"关闭公网",enable:"开启公网访问",opening:"开启中…",tunnelMode:"公网模式：",modeQuick:"随机域名（默认）",modeNamed:"固定域名",namedSummary:"固定域名：{host} · Token {token}",namedTokenSet:"已配置",namedTokenMissing:"未配置",namedEdit:"修改",namedHostnameLabel:"固定域名：",namedTokenLabel:"Tunnel Token（留空 = 保持不变）：",namedHow:"在 Cloudflare Zero Trust → Networks → Tunnels 创建隧道并复制 Token；把域名的 Service 指向 http://127.0.0.1:3081（代理端口）。地址固定，重启不再变化。",namedSecurity:"固定域名长期暴露在公网、更易被扫描，建议同时设置自定义强密码（本模式公网密码默认不随重启轮换）。",namedNeedCfg:"请先填写固定域名与 Tunnel Token",namedRunningHint:"固定域名（Cloudflare 命名隧道）——地址不随重启变化",namedTakeEffect:"已保存固定域名配置——需关闭并重新开启公网访问后生效",disclaimerTitle:"⚠️ 安全免责声明",disclaimerBody:"开启公网 = 把本机 DSH（能执行代码）暴露到互联网。任何人拿到公网链接和密码，都能访问甚至操作你的电脑。请确认：① 使用自定义强密码或妥善保管自动密码；② 用完立即「关闭公网」；③ 公司/涉密网络请先确认合规。",disclaimerAgree:"我已知情，同意开启",disclaimerHint:"请勾选「我已知情」后再开启公网",downloading:"⏳ 下载 cloudflared（首次约 20-50MB，通常 1-2 分钟；之后秒开）· 已等待 {s} 秒",connecting:"⏳ 连接 Cloudflare 边缘（通常 5-30 秒）· 已等待 {s} 秒{suffix}",slowHint:" — 有点久？检查是否开着代理/VPN（Clash TUN 等）",error:"❌ 开启失败：{detail}（可重试；若是代理/VPN 问题见 README 排障）",unknownError:"未知错误",feedback:"有问题？欢迎到 GitHub Issues 反馈 🙏",fileGuardMsg:"手机上无法直接打开电脑上的文件",fileCopy:"复制",fileCopyDone:"已复制文件内容（{kb} KB）",fileCopyFailed:"复制失败",fileCopyFailedFallback:"复制失败，下方可长按选择",fileFallbackTitle:"复制失败，长按下方文本选择",fileFallbackClose:"关闭",fileTooLarge:"文件过大（{size}MB），已跳过复制",fileTruncated:"…已截断",copyLink:"复制链接",copied:"✅ 已复制地址",copyFailed:"复制失败，请长按地址手动复制",pinShow:"显示",pinHide:"隐藏"},gi={section:"Phone access",title:"📱 Phone access",subtitle:"The phone shows this exact screen, live",developer:"Developer: daha1216 (大哈)",starAsk:"⭐ Drop a Star if it helped — it makes daha1216’s day",starCta:"★ Star it on GitHub",restarted:"🔄 Restarted",ok:"Got it",bgHint:"Running in the background (not attached to a terminal). To stop: {cmd}",updatedRestart:"✅ Updated to v{ver} — restart to apply",updateAutoRestarting:"✅ Updated to v{ver} — auto-restarting…",updatedOk:"✅ Updated to v{ver}",updateAvailable:"📦 Update available: v{ver}",updating:"Updating…",updateTo:"Update to v{ver}",restartingNow:"Restarting to apply…",restarting:"Restarting…",restartNow:"🔄 Restart dsh web now",updatingDetail:"⏳ Updating (usually 1-2 min) · {s}s elapsed",restartingDetail:"⏳ Restarting to apply (usually 10-30s) · {s}s elapsed",updatedAutoDetail:"✅ Updated — auto-restarting in progress, refresh shortly",updatedRestartDetail:"✅ Updated — restart dsh web to apply",updateFailed:"❌ Failed: {err} (manual update: dsh plugin --profile web update dsh-pocket --latest -w)",versionRange:"Current v{cur} → latest v{latest}",wanAccess:"Public access",pinLabel:"Access PIN",modeLabel:"Address mode",advAddress:"Advanced · Pick address",wanOffHint:"Reachable from any network once enabled (a disclaimer is confirmed on each enable)",resetFactory:"🧹 Factory reset",resetGo:"Reset",resetIntro:"Temporary fallback when settings break: clear local config and re-roll random PINs (DSH sessions, models and plugin config are untouched)",resetTitle:"⚠️ Confirm factory reset?",resetBody:`This clears and restores defaults:
 ① Switches: LAN access on, access PIN on, mobile right sidebar on, LAN address auto
 ② Public: mode back to random URL, Tunnel Token and fixed domain cleared, and any running tunnel is stopped
 ③ PINs: both public and LAN become new random 8-character PINs (old ones stop working; the phone must re-enter)
 
-Your DSH sessions, models and plugin config are untouched. This cannot be undone.`,resetConfirm:"Reset",resetDone:"✅ Factory reset done: settings cleared and PINs re-rolled (re-enter the PIN on your phone)",resetFailed:"❌ Reset failed — please retry",lanTitle:"📶 LAN (same Wi-Fi)",lanHint:"Scan to open once your phone is on the same Wi-Fi",lanAccess:"LAN access",lanDisabledHint:'🔒 LAN access is off — the QR code and link are unavailable (public access is unaffected). Tap "On" to restore.',lanToggleTitleOff:"Turn off LAN access",lanToggleBodyOff:"Once off, phones on the same Wi-Fi can no longer scan to connect (the LAN QR code and link stop working immediately). Public access is unaffected. Turn it off?",lanToggleTitleOn:"Turn on LAN access",lanToggleBodyOn:"Once on, phones on the same Wi-Fi can scan to connect (a LAN PIN is required by default). Turn it on?",confirm:"Confirm",lanAddress:"LAN address",lanAddressAuto:"Auto (recommended)",lanPin:"LAN access PIN",on:"On",off:"Off",lanPinValue:"🔐 PIN: {pin} (required on the phone; separate from the public PIN)",lanPinCustomValue:"🔐 PIN: {pin} (custom; required on the phone)",refresh:"Refresh",customize:"Customize",customizing:"New PIN (8–64 chars, letters/digits): ",save:"Save",cancel:"Cancel",pinInvalid:"PIN must be 8–64 characters (letters and digits only)",pinCustomHint:"custom PINs are not rotated on tunnel start",lanPinOff:"🔓 PIN off — scan & go, no PIN (LAN devices only; public still requires PIN)",lanStarting:"Proxy starting…",mobileRightbar:"Mobile right sidebar",mobileRightbarHint:"Show the native right-sidebar entry; disable it for a compact phone header or keep it on for an unfolded display",wanTitle:"🌐 Anywhere (public)",wanHint:"Scan from any network (the URL changes on every restart)",wanPin:"🔐 PIN: {pin} (changes each time the tunnel is enabled; required on the phone)",wanPinCustom:"🔐 PIN: {pin} (custom — not rotated on tunnel start)",wanEphemeralWarn:'⚠️ The public link is valid only for this session: it stops working after you close or restart, and may be reused by someone else for an unrelated site. Do not bookmark it — scan the CURRENT QR code from this page each time. For a permanent address use "Fixed domain" below.',stopTunnel:"Stop",enable:"Enable anywhere",opening:"Enabling…",tunnelMode:"Mode:",modeQuick:"Random URL (default)",modeNamed:"Fixed domain",namedSummary:"Fixed domain: {host} · Token {token}",namedTokenSet:"configured",namedTokenMissing:"not set",namedEdit:"Edit",namedHostnameLabel:"Fixed domain:",namedTokenLabel:"Tunnel Token (blank = keep current):",namedHow:"Create a tunnel in Cloudflare Zero Trust → Networks → Tunnels and copy the token; point the hostname's Service at http://127.0.0.1:3081 (the proxy port). The URL stays fixed across restarts.",namedSecurity:"A fixed domain is long-lived and easier to scan — set a strong custom PIN too (the public PIN is not rotated on restart in this mode).",namedNeedCfg:"Set the fixed domain and Tunnel Token first",namedRunningHint:"Fixed domain (Cloudflare named tunnel) — the URL no longer changes on restart",namedTakeEffect:"Fixed-domain config saved — turn public access off and on again to take effect",disclaimerTitle:"⚠️ Security disclaimer",disclaimerBody:"Enabling public access exposes this computer’s DSH (which can execute code) to the internet. Anyone with the public link and PIN can reach — and operate — your computer. Please confirm: ① use a strong custom PIN or keep the auto-generated one safe; ② turn public access OFF as soon as you’re done; ③ on a corporate/classified network, confirm compliance first.",disclaimerAgree:"I understand and agree",disclaimerHint:'Check "I understand" before enabling public access',downloading:"⏳ Downloading cloudflared (first run ~20-50MB, usually 1-2 min; instant afterward) · {s}s elapsed",connecting:"⏳ Connecting to Cloudflare edge (usually 5-30s) · {s}s elapsed{suffix}",slowHint:" — taking long? Check for a proxy/VPN (e.g., Clash TUN)",error:"❌ Failed to enable: {detail} (you can retry; for proxy/VPN issues see the README)",unknownError:"unknown error",feedback:"🙏 Questions? Open an issue on GitHub",fileGuardMsg:"Cannot open a file stored on your computer directly from the phone",fileCopy:"Copy",fileCopyDone:"File content copied ({kb} KB)",fileCopyFailed:"Copy failed",fileCopyFailedFallback:"Copy failed — long-press below to select instead",fileFallbackTitle:"Copy failed — long-press the text below to select it",fileFallbackClose:"Close",fileTooLarge:"File too large ({size}MB), copy skipped",fileTruncated:"… truncated",copyLink:"Copy link",copied:"✅ Address copied",copyFailed:"Copy failed — long-press the address to copy it manually",pinShow:"Show",pinHide:"Hide"};var gr=`/* pocket 控件/门控样式：刻意不加媒体查询——mobileApply 启动时写入的
+Your DSH sessions, models and plugin config are untouched. This cannot be undone.`,resetConfirm:"Reset",resetDone:"✅ Factory reset done: settings cleared and PINs re-rolled (re-enter the PIN on your phone)",resetFailed:"❌ Reset failed — please retry",lanTitle:"📶 LAN (same Wi-Fi)",lanHint:"Scan to open once your phone is on the same Wi-Fi",lanAccess:"LAN access",lanDisabledHint:'🔒 LAN access is off — the QR code and link are unavailable (public access is unaffected). Tap "On" to restore.',lanToggleTitleOff:"Turn off LAN access",lanToggleBodyOff:"Once off, phones on the same Wi-Fi can no longer scan to connect (the LAN QR code and link stop working immediately). Public access is unaffected. Turn it off?",lanToggleTitleOn:"Turn on LAN access",lanToggleBodyOn:"Once on, phones on the same Wi-Fi can scan to connect (a LAN PIN is required by default). Turn it on?",confirm:"Confirm",lanAddress:"LAN address",lanAddressAuto:"Auto (recommended)",lanPin:"LAN access PIN",on:"On",off:"Off",lanPinValue:"🔐 PIN: {pin} (required on the phone; separate from the public PIN)",lanPinCustomValue:"🔐 PIN: {pin} (custom; required on the phone)",refresh:"Refresh",customize:"Customize",customizing:"New PIN (8–64 chars, letters/digits): ",save:"Save",cancel:"Cancel",pinInvalid:"PIN must be 8–64 characters (letters and digits only)",pinCustomHint:"custom PINs are not rotated on tunnel start",lanPinOff:"🔓 PIN off — scan & go, no PIN (LAN devices only; public still requires PIN)",lanStarting:"Proxy starting…",mobileRightbar:"Mobile right sidebar",mobileRightbarHint:"Show the native right-sidebar entry; disable it for a compact phone header or keep it on for an unfolded display",wanTitle:"🌐 Anywhere (public)",wanHint:"Scan from any network (the URL changes on every restart)",wanPin:"🔐 PIN: {pin} (changes each time the tunnel is enabled; required on the phone)",wanPinCustom:"🔐 PIN: {pin} (custom — not rotated on tunnel start)",wanEphemeralWarn:'⚠️ The public link is valid only for this session: it stops working after you close or restart, and may be reused by someone else for an unrelated site. Do not bookmark it — scan the CURRENT QR code from this page each time. For a permanent address use "Fixed domain" below.',stopTunnel:"Stop",enable:"Enable anywhere",opening:"Enabling…",tunnelMode:"Mode:",modeQuick:"Random URL (default)",modeNamed:"Fixed domain",namedSummary:"Fixed domain: {host} · Token {token}",namedTokenSet:"configured",namedTokenMissing:"not set",namedEdit:"Edit",namedHostnameLabel:"Fixed domain:",namedTokenLabel:"Tunnel Token (blank = keep current):",namedHow:"Create a tunnel in Cloudflare Zero Trust → Networks → Tunnels and copy the token; point the hostname's Service at http://127.0.0.1:3081 (the proxy port). The URL stays fixed across restarts.",namedSecurity:"A fixed domain is long-lived and easier to scan — set a strong custom PIN too (the public PIN is not rotated on restart in this mode).",namedNeedCfg:"Set the fixed domain and Tunnel Token first",namedRunningHint:"Fixed domain (Cloudflare named tunnel) — the URL no longer changes on restart",namedTakeEffect:"Fixed-domain config saved — turn public access off and on again to take effect",disclaimerTitle:"⚠️ Security disclaimer",disclaimerBody:"Enabling public access exposes this computer’s DSH (which can execute code) to the internet. Anyone with the public link and PIN can reach — and operate — your computer. Please confirm: ① use a strong custom PIN or keep the auto-generated one safe; ② turn public access OFF as soon as you’re done; ③ on a corporate/classified network, confirm compliance first.",disclaimerAgree:"I understand and agree",disclaimerHint:'Check "I understand" before enabling public access',downloading:"⏳ Downloading cloudflared (first run ~20-50MB, usually 1-2 min; instant afterward) · {s}s elapsed",connecting:"⏳ Connecting to Cloudflare edge (usually 5-30s) · {s}s elapsed{suffix}",slowHint:" — taking long? Check for a proxy/VPN (e.g., Clash TUN)",error:"❌ Failed to enable: {detail} (you can retry; for proxy/VPN issues see the README)",unknownError:"unknown error",feedback:"🙏 Questions? Open an issue on GitHub",fileGuardMsg:"Cannot open a file stored on your computer directly from the phone",fileCopy:"Copy",fileCopyDone:"File content copied ({kb} KB)",fileCopyFailed:"Copy failed",fileCopyFailedFallback:"Copy failed — long-press below to select instead",fileFallbackTitle:"Copy failed — long-press the text below to select it",fileFallbackClose:"Close",fileTooLarge:"File too large ({size}MB), copy skipped",fileTruncated:"… truncated",copyLink:"Copy link",copied:"✅ Address copied",copyFailed:"Copy failed — long-press the address to copy it manually",pinShow:"Show",pinHide:"Hide"};var Js=`/* pocket 控件/门控样式：刻意不加媒体查询——mobileApply 启动时写入的
      body[data-dsh-pocket-layout] 就是门（desktop 布局在写入之后才早退，选择器
      天然不命中；?dsh-layout=mobile 强制移动的宽桌面也依赖这些规则，宽度媒体
      反而会漏掉它）。 */
@@ -4630,7 +5839,7 @@ Your DSH sessions, models and plugin config are untouched. This cannot be undone
       min-height: 44px !important;
     }
   }
-}`;function Fo(e){let t=new URL(window.location.href).searchParams.get("dsh-layout"),a=t??"",o=window.matchMedia("(max-width: 1023px) and (pointer: coarse)"),n=No(t),r=Ho({urlValue:a,stored:n,narrowMatch:o.matches});if(document.body?.setAttribute("data-dsh-pocket-layout",r),r==="desktop")return;let d=o;r==="mobile"&&(d={matches:!0,addEventListener:()=>{},removeEventListener:()=>{}});let f=a.trim().toLowerCase();f==="desktop"||f==="mobile"||n==="desktop"||n==="mobile"||e.effect(()=>{let i=()=>{document.body?.setAttribute("data-dsh-pocket-layout",o.matches?"mobile":"desktop")};return o.addEventListener("change",i),()=>{o.removeEventListener("change",i)}},"dsh-pocket: auto layout attribute sync on breakpoint change");let c=(i,s)=>{e.effect(()=>{let h,g=()=>{h?.(),h=d.matches?s():void 0};return g(),d.addEventListener?.("change",g),()=>{d.removeEventListener?.("change",g),h?.()}},i)};Mo(e),e.effect(()=>{let i=!0,s=u=>{document.body?.setAttribute(Re,u?"on":"off")},h=u=>{s(u.detail?.enabled===!0)},g=async()=>{try{let u=await e.connection.rpc.call(Ae,B.status,{});i&&s(u?.ok===!0?u.value?.mobileRightbarEnabled!==!1:!0)}catch{i&&s(!0)}};return window.addEventListener(Pe,h),g(),()=>{i=!1,window.removeEventListener(Pe,h),document.body?.removeAttribute(Re)}},"dsh-mobile-nav: optional right sidebar"),c("dsh-pocket: mobile zoom lock",()=>{let i=0,s=()=>{i=window.visualViewport?.scale??0},h=u=>{let w=u.scale;i>0&&i*w<=i||u.preventDefault()},g=()=>{i=0};return document.addEventListener("gesturestart",s,{passive:!1}),document.addEventListener("gesturechange",h,{passive:!1}),document.addEventListener("gestureend",g,{passive:!1}),()=>{document.removeEventListener("gesturestart",s),document.removeEventListener("gesturechange",h),document.removeEventListener("gestureend",g)}}),c("dsh-pocket: explorer availability (issue #48)",()=>{let i=()=>document.querySelector('[data-mobile-nav="frame"]'),s=0,h=()=>{s=0;let y=document.querySelector("[data-aionui-explorer-col]")!==null?"1":"0",x=i();x!==null&&x.getAttribute("data-mobile-nav-explorer")!==y&&x.setAttribute("data-mobile-nav-explorer",y)};h();let g=window.setTimeout(h,1500),u=()=>{s===0&&(s=requestAnimationFrame(h))},w=new MutationObserver(y=>{for(let x of y){for(let b of x.addedNodes)if(b.nodeType!==3){u();return}for(let b of x.removedNodes)if(b.nodeType!==3){u();return}}});return w.observe(document.body,{childList:!0,subtree:!0}),()=>{window.clearTimeout(g),s!==0&&cancelAnimationFrame(s),w.disconnect(),i()?.removeAttribute("data-mobile-nav-explorer")}}),e.effect(()=>{let i=document.createElement("style");return i.dataset.plugin="dsh-pocket",i.dataset.pluginCss="dsh-pocket/mobile-extras.css",i.textContent=gr,document.head.appendChild(i),()=>{i.remove()}},"dsh-pocket: mobile extra styles (issue #17/#48)"),c("dsh-pocket: keyboard height css var (--dshp-kb)",()=>{let i=window.visualViewport;if(i==null)return()=>{};let s=document.documentElement,h=0,g="",u=()=>{h=0;let y=Math.max(0,window.innerHeight-i.height-i.offsetTop),x=Math.min(y,Math.round(window.innerHeight*.6)),b=`${Math.round(x)}px`;b!==g&&(g=b,s.style.setProperty("--dshp-kb",b),x>0?s.setAttribute("data-dshp-kb","open"):s.removeAttribute("data-dshp-kb"))},w=()=>{h===0&&(h=requestAnimationFrame(u))};return i.addEventListener("resize",w),i.addEventListener("scroll",w),u(),()=>{i.removeEventListener("resize",w),i.removeEventListener("scroll",w),h!==0&&cancelAnimationFrame(h),s.style.removeProperty("--dshp-kb"),s.removeAttribute("data-dshp-kb")}}),c("dsh-pocket: standalone viewport guard (scroll residue / short layout viewport)",()=>{let i=window.visualViewport;if(i==null)return()=>{};let s=document.documentElement,h=0,g=0,u=!1,w=null,y=0,x=new URLSearchParams(window.location.search).has("dshp-diag"),b=v=>{w===null&&(w=document.createElement("div"),w.dataset.dshPocketDiag="1",w.style.cssText="position:fixed;top:calc(env(safe-area-inset-top, 0px) + 2px);left:2px;z-index:2147483647;font:10px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.65);color:#4ade80;padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap",document.body.appendChild(w)),w.textContent=`ih=${window.innerHeight} vv=${Math.round(i.height)} off=${Math.round(i.offsetTop)} sc=${i.scale.toFixed(2)} sy=${window.scrollY}`,v&&(window.clearTimeout(y),y=window.setTimeout(()=>{w?.remove(),w=null},8e3))},O=()=>{h=0;let v=i.height>=window.innerHeight-8;Math.abs(i.scale-1)<.01&&i.height-window.innerHeight>8?(g===0&&(g=performance.now()),!u&&performance.now()-g>600&&(u=!0,s.style.setProperty("--dshp-frame-h",`${Math.round(i.height)}px`),s.setAttribute("data-dsh-pocket-full-height",""),b(!0))):(g=0,u&&(u=!1,s.style.removeProperty("--dshp-frame-h"),s.removeAttribute("data-dsh-pocket-full-height"))),!u&&v&&(window.scrollY>1||i.offsetTop>1)&&window.scrollTo(0,0),x&&b(!1)},E=()=>{h===0&&(h=requestAnimationFrame(O))};return i.addEventListener("resize",E),i.addEventListener("scroll",E),window.addEventListener("focusout",E),window.addEventListener("pageshow",E),O(),()=>{i.removeEventListener("resize",E),i.removeEventListener("scroll",E),window.removeEventListener("focusout",E),window.removeEventListener("pageshow",E),h!==0&&cancelAnimationFrame(h),window.clearTimeout(y),w?.remove(),s.style.removeProperty("--dshp-frame-h"),s.removeAttribute("data-dsh-pocket-full-height")}}),c("dsh-pocket: file open guard + copy button + hide add-workspace (issue #17)",()=>{let i=()=>{try{let u=(e.get?.("workspaces")??e.workspaces)?.list,w=Array.isArray(u)?u:u&&typeof u=="object"&&"value"in u?u.value:null;if(Array.isArray(w))for(let y of w){let x=y?.cwd??y?.root;if(typeof x=="string"&&x)return x}}catch{}return""},s=g=>e.connection.rpc.call(Ae,B.fileRead,{path:g,cwd:i()}),h=e.locale.bind(Fe);return zo(s,h)})}var wr="dsh-pocket",vr=["slots","connection","layout","locale","sessionLogDownload"];function Z(e,t,a){let o=e(t);if(a)for(let[n,r]of Object.entries(a))o=String(o).split(`{${n}}`).join(String(r));return o}var P={card:{background:"var(--dsw-alias-bg-layer-1,#fff)",border:"1px solid var(--dsw-alias-border-l2,#e5e7eb)",borderRadius:14,padding:"18px 20px",maxWidth:520},muted:{color:"var(--dsw-alias-label-tertiary,#8b93a1)",fontSize:12,lineHeight:1.5},primary:{font:"inherit",cursor:"pointer",border:"none",background:"var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary,#4f6ef7))",color:"var(--dsw-alias-label-primary-foreground, #fff)",height:36,padding:"0 16px",borderRadius:999,fontSize:13,fontWeight:500,display:"inline-flex",alignItems:"center",justifyContent:"center"},btn:{font:"inherit",cursor:"pointer",border:"1px solid var(--dsw-alias-button-ghost-active-border, var(--dsw-alias-border-l2,#d1d5db))",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-primary,inherit)",height:36,padding:"0 16px",borderRadius:999,fontSize:13,display:"inline-flex",alignItems:"center",justifyContent:"center"},mini:{font:"inherit",cursor:"pointer",border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-secondary,#6b7280)",height:26,padding:"0 10px",borderRadius:999,fontSize:12,display:"inline-flex",alignItems:"center",justifyContent:"center"},link:{font:"inherit",cursor:"pointer",border:"none",background:"none",padding:0,fontSize:12,color:"var(--dsw-alias-label-tertiary,#8b93a1)",textDecoration:"none"},warn:{color:"var(--dsw-alias-state-warn-primary,#b45309)",fontSize:12,lineHeight:1.5},mono:{fontFamily:"ui-monospace,Menlo,monospace",letterSpacing:.5}},Wo=e=>(0,l.createElement)("span",{style:{display:"inline-block",width:8,height:8,borderRadius:"50%",flexShrink:0,background:e?"var(--dsw-alias-state-success-primary,#10b981)":"var(--dsw-alias-border-l2,#d1d5db)"}},null);function Dt(e){let t=e!==!1;document.body?.setAttribute(Re,t?"on":"off"),window.dispatchEvent(new CustomEvent(Pe,{detail:{enabled:t}}))}async function xr(e){try{if(navigator.clipboard?.writeText)return await navigator.clipboard.writeText(e),!0}catch{}try{let t=document.createElement("textarea");t.value=e,t.style.cssText="position:fixed;top:0;left:0;opacity:0",document.body.appendChild(t),t.select();let a=document.execCommand("copy");return t.remove(),a===!0}catch{return!1}}function yr({rpcCall:e,t}){let[a,o]=(0,l.useState)(null),[n,r]=(0,l.useState)(!1),[d,f]=(0,l.useState)(null),[p,c]=(0,l.useState)(null),[i,s]=(0,l.useState)(!1),[h,g]=(0,l.useState)(null),[u,w]=(0,l.useState)(!1),[y,x]=(0,l.useState)(Date.now()),[b,O]=(0,l.useState)({});(0,l.useEffect)(()=>{let m=setInterval(()=>x(Date.now()),1e3);return()=>clearInterval(m)},[]);let E=m=>m?Math.max(0,Math.floor((Date.now()-m)/1e3)):0,v=async(m,T)=>{let L=await e(m,T);if(!L?.ok)throw new Error(L?.error?.message??"RPC failed");return L.value},S=async()=>{try{let m=await v(B.status,{});o(m),Dt(m.mobileRightbarEnabled),c(m.tunnelState??null),m.desktop&&w(!0),m.restartNotice&&(s(!0),g(null),sessionStorage.getItem("dshp-auto-reloaded")||(sessionStorage.setItem("dshp-auto-reloaded","1"),setTimeout(()=>{try{location.reload()}catch{}},2e3)))}catch{}};(0,l.useEffect)(()=>{S();let m=setInterval(S,3e3);return()=>clearInterval(m)},[]),(0,l.useEffect)(()=>{try{sessionStorage.removeItem("dshp-auto-reloaded")}catch{}},[]),(0,l.useEffect)(()=>{if(u)return;let m=!0,T=async()=>{try{let j=await v(B.version,{}),Zt=await(await fetch("https://registry.npmjs.org/dsh-pocket/latest",{cache:"no-store"})).json();if(!m)return;let lt=typeof Zt?.version=="string"?Zt.version:null;lt&&j.current&&dt(lt,j.current)>0?g({current:j.current,latest:lt,updating:!1,result:null}):j.current&&j.loaded&&dt(j.current,j.loaded)>0&&g({current:j.current,latest:j.current,updating:!1,result:"ok",updated:!0})}catch{}};T();let L=setInterval(T,300*1e3);return()=>{m=!1,clearInterval(L)}},[u]);let _=async()=>{g(m=>({...m,restarting:!0,startedAt:Date.now()}));try{await Promise.race([v(B.restart,{}),new Promise((m,T)=>setTimeout(()=>T(new Error("restart requested (no reply within 3s)")),3e3))]),g(m=>({...m,restarting:!0,result:"ok"}))}catch(m){let T=String(m?.message??"");if(/connection|socket|fetch|network|abort|cancelled|ECONN|disconnect|closed|timeout/i.test(T)){g(L=>({...L,restarting:!0,result:"ok"}));return}g(L=>({...L,restarting:!1,result:"fail",output:m.message}))}},C=async()=>{g(m=>({...m,updating:!0,result:null,startedAt:Date.now()}));try{let m=await v(B.update,{});g(T=>({...T,updating:!1,result:m.ok?"ok":"fail",autoRestart:m.autoRestart===!0,output:m.output??m.error}))}catch(m){g(T=>({...T,updating:!1,result:"fail",output:m.message}))}},[M,R]=(0,l.useState)(!1),[z,N]=(0,l.useState)(!1),U=async()=>{let m=a?.tunnelConfig;if(m?.mode==="named"&&(!m.hostname||!m.tokenSet)){f(t("namedNeedCfg"));return}r(!0),f(null),c({phase:"starting",detail:"正在开启…",startedAt:Date.now()});try{o(await v(B.tunnelStart,{disclaimer:!0}))}catch(T){f(T.message)}finally{r(!1)}},F=()=>{N(!1),R(!0)},G=()=>{z&&(R(!1),U())},ee=async()=>{try{o(await v(B.tunnelStop,{}))}catch{}},[H,W]=(0,l.useState)(null),K=async()=>{try{o(await v(B.tunnelSetConfig,{mode:"quick"}))}catch(m){f(m.message)}},$=async()=>{try{o(await v(B.tunnelSetConfig,{mode:"named",hostname:H?.hostname??"",token:H?.token||void 0})),W(null)}catch(m){W(T=>({...T,err:m.message}))}},[q,k]=(0,l.useState)(!1),A=async()=>{k(!1),r(!0),f(null);try{let m=await v(B.pocketReset,{confirm:!0});o(m),Dt(m.mobileRightbarEnabled),W(null),re(null),Xt(!1),O({}),it(t("resetDone"))}catch(m){f(m.message),it(t("resetFailed"))}finally{r(!1)}},X=async()=>{try{let m=await v(B.lanTokenRefresh,{});o(T=>({...T,lanToken:m.lanToken}))}catch{}},Se=async m=>{try{let T=await v(B.lanAuthSetEnabled,{on:m});o(L=>({...L,lanAuthEnabled:T.lanAuthEnabled}))}catch{}},Ce=async m=>{try{let L=(await v(B.mobileRightbarSetEnabled,{on:m})).mobileRightbarEnabled===!0;o(j=>({...j,mobileRightbarEnabled:L})),Dt(L)}catch(T){f(T.message)}},[Y,at]=(0,l.useState)(null),qo=m=>at(m),Bo=async()=>{let m=Y;if(at(null),m!==null)try{let T=await v(B.lanSetEnabled,{on:m});o(L=>({...L,lanEnabled:T.lanEnabled}))}catch(T){f(T.message)}},jo=async m=>{try{o(await v(B.lanSetOverride,{ip:m}))}catch(T){f(T.message)}},[ve,re]=(0,l.useState)(null),Ft=async m=>{try{let T=await v(B.pinSetCustom,{which:m,value:ve?.value??""});o(L=>({...L,accessToken:m==="public"?T.pin:L.accessToken,lanToken:m==="lan"?T.pin:L.lanToken,publicPinCustom:m==="public"?!0:L.publicPinCustom,lanPinCustom:m==="lan"?!0:L.lanPinCustom})),re(null)}catch(T){re(L=>({...L,err:T.message}))}},Wt=a?.lanUrl,ie=a?.tunnelUrl,ot=p?.phase??"idle",qt=["downloading","starting","registering"].includes(ot),Go=p?.detail??"",nt=p?.startedAt??null,se=a?.tunnelConfig??{mode:"quick",hostname:"",tokenSet:!1},xe=se.mode==="named",te=xe||H!==null,Le=m=>{let T=String(m??""),L=T.indexOf(" | ");return L<0?T:(t("ok")===Nt.ok?T.slice(0,L):T.slice(L+3)).trim()},[Bt,jt]=(0,l.useState)(null),rt=(0,l.useRef)(null),it=m=>{jt(m),clearTimeout(rt.current),rt.current=setTimeout(()=>jt(null),2600)};(0,l.useEffect)(()=>()=>clearTimeout(rt.current),[]);let We=(m,T,L)=>(0,l.createElement)("button",{role:"switch","aria-checked":!!m,disabled:L===!0,style:{flexShrink:0,width:40,height:22,borderRadius:11,border:"none",padding:0,position:"relative",cursor:L===!0?"default":"pointer",font:"inherit",opacity:L===!0?.55:1,background:m?"var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary,#4f6ef7))":"var(--dsw-alias-border-l2,#d1d5db)",transition:"background .15s ease"},onClick:L===!0?void 0:T},(0,l.createElement)("span",{style:{position:"absolute",top:2,left:m?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 2px rgba(0,0,0,.18)",transition:"left .15s ease"}})),qe=(m,T,L,j)=>(0,l.createElement)("section",{style:{marginTop:20},"data-dshp-section":j??""},(0,l.createElement)("div",{style:{display:"flex",alignItems:"center",gap:8}},m?(0,l.createElement)("span",{style:{fontWeight:600,fontSize:13,flex:1,minWidth:0,display:"inline-flex",alignItems:"center",gap:6}},m):(0,l.createElement)("span",{style:{flex:1}},null),T??null),L??null),ye=(m,T,L)=>(0,l.createElement)("div",{style:{borderTop:"1px solid var(--dsw-alias-border-l2,#eceef2)",paddingTop:10,marginTop:10}},(0,l.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}},(0,l.createElement)("span",{style:{fontSize:13}},m),T),L??null),Gt=(m,T,L)=>(0,l.createElement)("div",{style:{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap",background:"var(--dsw-alias-bg-layer-2,#f3f4f6)",borderRadius:12,padding:12,marginTop:10}},(0,l.createElement)("div",{style:{flexShrink:0,padding:6,background:"#fff",borderRadius:10,border:"1px solid var(--dsw-alias-border-l2,#e5e7eb)"}},(0,l.createElement)("img",{src:m,alt:"QR",style:{width:128,height:128,display:"block",borderRadius:2}})),(0,l.createElement)("div",{style:{flex:"1 1 170px",minWidth:170}},(0,l.createElement)("div",{style:{...P.mono,fontSize:12,wordBreak:"break-all",color:"var(--dsw-alias-label-primary,inherit)",lineHeight:1.6}},T),(0,l.createElement)("div",{style:{...P.muted,fontSize:11,marginTop:6}},L),(0,l.createElement)("button",{style:{...P.mini,marginTop:8},onClick:async()=>it(await xr(T)?t("copied"):t("copyFailed"))},t("copyLink")))),ke=(m,T,L)=>(0,l.createElement)("div",{style:{display:"flex",gap:8,alignItems:"flex-start",fontSize:12,lineHeight:1.6,borderRadius:10,padding:"8px 10px",marginTop:10,background:"var(--dsw-alias-bg-layer-2,#f3f4f6)",borderLeft:`3px solid ${m==="error"?"var(--dsw-alias-state-error-primary,#dc2626)":m==="info"?"var(--dsw-alias-brand-primary,#4f6ef7)":"var(--dsw-alias-state-warn-primary,#b45309)"}`,color:m==="error"?"var(--dsw-alias-state-error-primary,#dc2626)":m==="warn"?"var(--dsw-alias-state-warn-primary,#b45309)":"var(--dsw-alias-label-secondary,#6b7280)",...L}},T),Kt=(m,T,L)=>(0,l.createElement)("div",{style:{marginTop:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},(0,l.createElement)("span",{style:{...P.mono,fontSize:13},"data-dshp-pin":m},b[m]?T:"••••••••"),(0,l.createElement)("button",{style:{...P.link,padding:"2px 0"},onClick:()=>O(j=>({...j,[m]:!j[m]}))},b[m]?t("pinHide"):t("pinShow")),...L??[]),Vt=m=>(0,l.createElement)("div",{style:{marginTop:8,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)",lineHeight:1.5}},t("customizing"),(0,l.createElement)("input",{style:{width:130,margin:"0 6px",padding:"4px 8px",fontSize:14,letterSpacing:1,textAlign:"center",border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none"},type:"password",minLength:8,maxLength:64,value:ve?.value??"",autoFocus:!0,onChange:T=>re(L=>({...L,value:T.target.value.replace(/[^a-zA-Z0-9]/g,""),err:null})),onKeyDown:T=>{T.key==="Enter"&&Ft(m),T.key==="Escape"&&re(null)}}),(0,l.createElement)("button",{style:P.mini,onClick:()=>Ft(m)},t("save")),(0,l.createElement)("button",{style:P.mini,onClick:()=>re(null)},t("cancel")),ve?.err?(0,l.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",marginTop:4}},Le(ve.err)):null),Ut=m=>(0,l.createElement)("button",{style:P.mini,onClick:()=>re({which:m,value:"",err:null})},t("customize")),Ko=(0,l.createElement)("div",{style:{display:"inline-flex",background:"var(--dsw-alias-bg-layer-2,#eef0f4)",borderRadius:9,padding:2,gap:2}},(0,l.createElement)("button",{style:{font:"inherit",cursor:"pointer",border:"none",height:26,padding:"0 12px",borderRadius:7,fontSize:12,background:te?"transparent":"var(--dsw-alias-bg-layer-1,#fff)",color:te?"var(--dsw-alias-label-tertiary,#8b93a1)":"var(--dsw-alias-label-primary,inherit)",fontWeight:te?400:600,boxShadow:te?"none":"0 1px 3px rgba(0,0,0,.10)"},onClick:xe?K:H?()=>W(null):void 0},t("modeQuick")),(0,l.createElement)("button",{style:{font:"inherit",cursor:"pointer",border:"none",height:26,padding:"0 12px",borderRadius:7,fontSize:12,background:te?"var(--dsw-alias-bg-layer-1,#fff)":"transparent",color:te?"var(--dsw-alias-label-primary,inherit)":"var(--dsw-alias-label-tertiary,#8b93a1)",fontWeight:te?600:400,boxShadow:te?"0 1px 3px rgba(0,0,0,.10)":"none"},onClick:()=>W(H?null:{hostname:se.hostname??"",token:"",err:null})},t("modeNamed"))),st=({title:m,tone:T="warn",children:L,actions:j})=>(0,l.createElement)("div",{style:{position:"fixed",inset:0,zIndex:1e4,background:"rgba(15,17,21,.45)",backdropFilter:"blur(3px)",WebkitBackdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}},(0,l.createElement)("div",{style:{background:"var(--dsw-alias-bg-layer-1,#fff)",borderRadius:14,maxWidth:420,width:"100%",padding:"20px 22px",boxShadow:"0 12px 40px rgba(0,0,0,.22)"}},(0,l.createElement)("div",{style:{fontWeight:600,fontSize:15,marginBottom:10,color:T==="danger"?"var(--dsw-alias-state-error-primary,#dc2626)":T==="brand"?"var(--dsw-alias-brand-primary,#4f6ef7)":"var(--dsw-alias-state-warn-primary,#b45309)"}},m),L,(0,l.createElement)("div",{style:{display:"flex",gap:8,marginTop:18,justifyContent:"flex-end"}},j))),[$t,Xt]=(0,l.useState)(!1);return(0,l.createElement)("div",{style:P.card,"data-dshp-ui":"v2"},(0,l.createElement)("div",null,(0,l.createElement)("div",{style:{fontWeight:600,fontSize:14}},t("title")),(0,l.createElement)("div",{style:{...P.muted,marginTop:2}},t("subtitle"))),!u&&i?ke("info",(0,l.createElement)("div",{style:{flex:1,minWidth:0}},(0,l.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},(0,l.createElement)("span",{style:{fontWeight:600}},t("restarted")),(0,l.createElement)("button",{style:P.mini,onClick:()=>s(!1)},t("ok"))),(0,l.createElement)("div",{style:{color:"var(--dsw-alias-label-tertiary,#8b93a1)",wordBreak:"break-all"}},Z(t,"bgHint",{cmd:a?.killHint??`lsof -ti :${a?.dshPort??3080} | xargs kill -9`}))),{marginTop:14}):null,!u&&h?ke("warn",(0,l.createElement)("div",{style:{flex:1,minWidth:0}},(0,l.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}},(0,l.createElement)("span",{style:{fontWeight:600}},h.updated?Z(t,"updatedRestart",{ver:h.current}):h.result==="ok"?h.autoRestart?Z(t,"updateAutoRestarting",{ver:h.latest}):Z(t,"updatedOk",{ver:h.latest}):Z(t,"updateAvailable",{ver:h.latest})),h.result!=="ok"?(0,l.createElement)("button",{style:P.primary,onClick:C,disabled:h.updating},h.updating?t("updating"):Z(t,"updateTo",{ver:h.latest})):h.autoRestart?(0,l.createElement)("button",{style:P.btn,disabled:!0},t("restartingNow")):(0,l.createElement)("button",{style:P.primary,onClick:_,disabled:h.restarting},h.restarting?t("restarting"):t("restartNow"))),(0,l.createElement)("div",{style:{color:"var(--dsw-alias-label-tertiary,#8b93a1)"}},h.updating?Z(t,"updatingDetail",{s:E(h.startedAt)}):h.restarting?Z(t,"restartingDetail",{s:E(h.startedAt)}):h.result==="ok"?h.autoRestart?t("updatedAutoDetail"):t("updatedRestartDetail"):h.result==="fail"?Z(t,"updateFailed",{err:Le(h.output)||t("unknownError")}):Z(t,"versionRange",{cur:h.current,latest:h.latest}))),{marginTop:14}):null,qe((0,l.createElement)("span",null,Wo(a?.lanEnabled!==!1),t("lanAccess")),We(a?.lanEnabled!==!1,()=>qo(a?.lanEnabled===!1)),a?.lanEnabled===!1?ke("warn",t("lanDisabledHint")):Wt?(0,l.createElement)("div",null,Gt(a.lanQr,Wt,t("lanHint")),ye(t("lanPin"),We(a?.lanAuthEnabled!==!1,()=>Se(a?.lanAuthEnabled===!1)),a?.lanAuthEnabled===!1?(0,l.createElement)("div",{style:{...P.muted,marginTop:6}},t("lanPinOff")):ve?.which==="lan"?Vt("lan"):(0,l.createElement)("div",null,Kt("lan",a.lanToken,[(0,l.createElement)("button",{style:P.mini,onClick:X},t("refresh")),Ut("lan")]),a?.lanPinCustom?(0,l.createElement)("div",{style:{...P.warn,fontSize:11,marginTop:4}},t("pinCustomHint")):null)),ye(t("advAddress"),(0,l.createElement)("button",{style:{...P.link,font:"inherit"},onClick:()=>Xt(m=>!m)},(a?.lanIpOverride||t("lanAddressAuto"))+($t?" ‹":" ›")),$t?(0,l.createElement)("div",{style:{marginTop:8}},(0,l.createElement)("label",{style:{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)"}},t("lanAddress"),(0,l.createElement)("select",{value:a?.lanIpOverride||"",onChange:m=>jo(m.target.value),style:{font:"inherit",height:30,padding:"0 8px",borderRadius:8,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-primary,inherit)"}},(0,l.createElement)("option",{value:""},t("lanAddressAuto")),(a?.lanCandidates||[]).map(m=>(0,l.createElement)("option",{key:m,value:m},m))))):null)):(0,l.createElement)("div",{style:{...P.muted,marginTop:8}},t("lanStarting")),"lan"),qe((0,l.createElement)("span",null,Wo(!!ie),t("wanAccess")),We(!!ie,()=>ie?ee():F(),qt),(0,l.createElement)("div",null,qt?ke("info",(0,l.createElement)("span",null,ot==="downloading"?Z(t,"downloading",{s:E(nt)}):Z(t,"connecting",{s:E(nt),suffix:E(nt)>30?t("slowHint"):""}))):ot==="error"?ke("error",Z(t,"error",{detail:Le(Go)||t("unknownError")})):!ie&&!u?(0,l.createElement)("div",{style:{...P.muted,marginTop:8}},t("wanOffHint")):null,ie?(0,l.createElement)("div",null,Gt(a.tunnelQr,ie,t(xe?"namedRunningHint":"wanHint")),ke("warn",t("wanEphemeralWarn")),ye(t("modeLabel"),Ko,(0,l.createElement)("div",{style:{marginTop:6}},xe&&/trycloudflare\.com/i.test(ie??"")?(0,l.createElement)("div",{style:P.warn},t("namedTakeEffect")):null,xe&&!H?(0,l.createElement)("div",{style:{...P.muted}},Z(t,"namedSummary",{host:se.hostname||"—",token:se.tokenSet?t("namedTokenSet"):t("namedTokenMissing")}),(0,l.createElement)("button",{style:{...P.mini,marginLeft:8},onClick:()=>W({hostname:se.hostname??"",token:"",err:null})},t("namedEdit")),(0,l.createElement)("div",{style:{...P.muted,marginTop:4}},t("namedHow")),!se.tokenSet||!se.hostname?(0,l.createElement)("div",{style:{marginTop:2,color:"var(--dsw-alias-state-error-primary,#dc2626)"}},t("namedNeedCfg")):null):null,H?(0,l.createElement)("div",{style:{marginTop:6,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)",lineHeight:1.6}},(0,l.createElement)("div",null,t("namedHostnameLabel"),(0,l.createElement)("input",{style:{margin:"4px 0 0 6px",padding:"4px 8px",fontSize:13,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none",width:200},placeholder:"pocket.example.com",value:H.hostname??"",autoFocus:!0,onChange:m=>W(T=>({...T,hostname:m.target.value.trim(),err:null})),onKeyDown:m=>{m.key==="Enter"&&$(),m.key==="Escape"&&W(null)}})),(0,l.createElement)("div",{style:{marginTop:6}},t("namedTokenLabel"),(0,l.createElement)("input",{style:{margin:"4px 0 0 6px",padding:"4px 8px",fontSize:13,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none",width:240,...P.mono},type:"password",value:H.token??"",onChange:m=>W(T=>({...T,token:m.target.value.trim(),err:null})),onKeyDown:m=>{m.key==="Enter"&&$(),m.key==="Escape"&&W(null)}})),(0,l.createElement)("div",{style:{marginTop:8,display:"flex",gap:8}},(0,l.createElement)("button",{style:P.mini,onClick:$},t("save")),(0,l.createElement)("button",{style:P.mini,onClick:()=>W(null)},t("cancel"))),(0,l.createElement)("div",{style:{...P.muted,marginTop:6}},t("namedHow")),(0,l.createElement)("div",{style:{marginTop:2,fontSize:11,color:"var(--dsw-alias-state-warn-primary,#b45309)",lineHeight:1.5}},t("namedSecurity")),H.err?(0,l.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",marginTop:4}},Le(H.err)):null):null)),a.accessToken?ye(t("pinLabel"),null,ve?.which==="public"?Vt("public"):(0,l.createElement)("div",null,Kt("public",a.accessToken,[Ut("public")]),(0,l.createElement)("div",{style:{marginTop:4}},a?.publicPinCustom?(0,l.createElement)("div",{style:{...P.warn,fontSize:11}},t("pinCustomHint")):null,xe?(0,l.createElement)("div",{style:{...P.warn,fontSize:11}},t("namedSecurity")):null))):null):null),"wan"),qe(null,null,ye(t("mobileRightbar"),We(a?.mobileRightbarEnabled!==!1,()=>Ce(a?.mobileRightbarEnabled===!1)),(0,l.createElement)("div",{style:{...P.muted,marginTop:6}},t("mobileRightbarHint"))),"prefs"),d?(0,l.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",fontSize:12,marginTop:12}},`❌ ${Le(d)}`):null,qe(null,null,ye(t("resetFactory"),(0,l.createElement)("button",{style:{...P.mini,color:"var(--dsw-alias-state-error-primary,#dc2626)"},onClick:()=>k(!0)},t("resetGo")),(0,l.createElement)("div",{style:{...P.muted,fontSize:11,marginTop:4}},t("resetIntro"))),"reset"),(0,l.createElement)("div",{style:{marginTop:20,paddingTop:12,borderTop:"1px solid var(--dsw-alias-border-l2,#eceef2)",display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",fontSize:11,color:"var(--dsw-alias-label-tertiary,#8b93a1)"}},(0,l.createElement)("span",null,t("developer")),(0,l.createElement)("span",null,"·"),(0,l.createElement)("a",{href:"https://github.com/daha1216/dsh-pocket",target:"_blank",rel:"noreferrer",title:t("starAsk"),style:{color:"inherit",textDecoration:"none",borderBottom:"1px dashed currentColor"}},t("starCta")),(0,l.createElement)("span",null,"·"),(0,l.createElement)("a",{href:"https://github.com/daha1216/dsh-pocket/issues",target:"_blank",rel:"noreferrer",style:{color:"inherit",textDecoration:"none",borderBottom:"1px dashed currentColor"}},t("feedback"))),q?st({title:t("resetTitle"),tone:"danger",children:(0,l.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)",whiteSpace:"pre-line"}},t("resetBody")),actions:[(0,l.createElement)("button",{style:{...P.btn,height:32,padding:"0 16px"},onClick:()=>k(!1)},t("cancel")),(0,l.createElement)("button",{style:{...P.primary,height:32,padding:"0 16px",background:"var(--dsw-alias-state-error-primary,#dc2626)"},onClick:A},t("resetConfirm"))]}):null,Bt?(0,l.createElement)("div",{style:{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%, -50%)",zIndex:10001,maxWidth:300,background:"rgba(17,24,39,.92)",color:"#fff",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,lineHeight:1.5,textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,.22)"}},Bt):null,Y!==null?st({title:t(Y?"lanToggleTitleOn":"lanToggleTitleOff"),tone:Y?"brand":"warn",children:(0,l.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)"}},t(Y?"lanToggleBodyOn":"lanToggleBodyOff")),actions:[(0,l.createElement)("button",{style:{...P.btn,height:32,padding:"0 16px"},onClick:()=>at(null)},t("cancel")),(0,l.createElement)("button",{style:{...P.primary,height:32,padding:"0 16px"},onClick:Bo},t("confirm"))]}):null,M?st({title:t("disclaimerTitle"),tone:"warn",children:(0,l.createElement)("div",null,(0,l.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)"}},t("disclaimerBody")),(0,l.createElement)("label",{style:{display:"flex",alignItems:"center",gap:8,marginTop:14,fontSize:13,cursor:"pointer"}},(0,l.createElement)("input",{type:"checkbox",checked:z,onChange:m=>N(m.target.checked),style:{width:16,height:16}}),t("disclaimerAgree")),z?null:(0,l.createElement)("div",{style:{marginTop:8,fontSize:12,color:"var(--dsw-alias-state-error-primary,#dc2626)"}},t("disclaimerHint"))),actions:[(0,l.createElement)("button",{style:{...P.btn,height:32,padding:"0 16px"},onClick:()=>R(!1)},t("cancel")),(0,l.createElement)("button",{style:{...P.primary,height:32,padding:"0 16px",opacity:z?1:.5},disabled:!z,onClick:G},t("disclaimerAgree"))]}):null)}function kr(e){if(e?.connection)try{Object.defineProperty(e.connection,"isLoopback",{value:!0,writable:!0,configurable:!0})}catch{try{e.connection.isLoopback=!0}catch{}}let t=e.locale.bind(Fe);e.effect(()=>e.locale.register(Fe,{zh:Nt,en:Do}),"dsh-pocket: pocket locale dictionaries"),Fo(e);let a=(o,n,r)=>e.connection.rpc.call(Ae,o,n,r);e.slots.inject("settings.section",()=>e.slots.register({name:"settings.section",id:"pocket",order:1,label:()=>t("section"),inject:()=>({rpcCall:a,t})},yr))}
+}`;function wi(e){let t=new URL(window.location.href).searchParams.get("dsh-layout"),a=t??"",o=window.matchMedia("(max-width: 1023px) and (pointer: coarse)"),n=bi(t),i=fi({urlValue:a,stored:n,narrowMatch:o.matches});if(document.body?.setAttribute("data-dsh-pocket-layout",i),i==="desktop")return;let r=o;i==="mobile"&&(r={matches:!0,addEventListener:()=>{},removeEventListener:()=>{}});let s=a.trim().toLowerCase();s==="desktop"||s==="mobile"||n==="desktop"||n==="mobile"||e.effect(()=>{let l=()=>{document.body?.setAttribute("data-dsh-pocket-layout",o.matches?"mobile":"desktop")};return o.addEventListener("change",l),()=>{o.removeEventListener("change",l)}},"dsh-pocket: auto layout attribute sync on breakpoint change");let h=(l,c)=>{e.effect(()=>{let d,x=()=>{d?.(),d=r.matches?c():void 0};return x(),r.addEventListener?.("change",x),()=>{r.removeEventListener?.("change",x),d?.()}},l)};pi(e),e.effect(()=>{let l=!0,c=y=>{document.body?.setAttribute(Ve,y?"on":"off")},d=y=>{c(y.detail?.enabled===!0)},x=async()=>{try{let y=await e.connection.rpc.call(je,j.status,{});l&&c(y?.ok===!0?y.value?.mobileRightbarEnabled!==!1:!0)}catch{l&&c(!0)}};return window.addEventListener(Ke,d),x(),()=>{l=!1,window.removeEventListener(Ke,d),document.body?.removeAttribute(Ve)}},"dsh-mobile-nav: optional right sidebar"),h("dsh-pocket: mobile zoom lock",()=>{let l=0,c=()=>{l=window.visualViewport?.scale??0},d=y=>{let A=y.scale;l>0&&l*A<=l||y.preventDefault()},x=()=>{l=0};return document.addEventListener("gesturestart",c,{passive:!1}),document.addEventListener("gesturechange",d,{passive:!1}),document.addEventListener("gestureend",x,{passive:!1}),()=>{document.removeEventListener("gesturestart",c),document.removeEventListener("gesturechange",d),document.removeEventListener("gestureend",x)}}),h("dsh-pocket: explorer availability (issue #48)",()=>{let l=()=>document.querySelector('[data-mobile-nav="frame"]'),c=0,d=()=>{c=0;let C=document.querySelector("[data-aionui-explorer-col]")!==null?"1":"0",E=l();E!==null&&E.getAttribute("data-mobile-nav-explorer")!==C&&E.setAttribute("data-mobile-nav-explorer",C)};d();let x=window.setTimeout(d,1500),y=()=>{c===0&&(c=requestAnimationFrame(d))},A=new MutationObserver(C=>{for(let E of C){for(let b of E.addedNodes)if(b.nodeType!==3){y();return}for(let b of E.removedNodes)if(b.nodeType!==3){y();return}}});return A.observe(document.body,{childList:!0,subtree:!0}),()=>{window.clearTimeout(x),c!==0&&cancelAnimationFrame(c),A.disconnect(),l()?.removeAttribute("data-mobile-nav-explorer")}}),e.effect(()=>{let l=document.createElement("style");return l.dataset.plugin="dsh-pocket",l.dataset.pluginCss="dsh-pocket/mobile-extras.css",l.textContent=Js,document.head.appendChild(l),()=>{l.remove()}},"dsh-pocket: mobile extra styles (issue #17/#48)"),h("dsh-pocket: keyboard height css var (--dshp-kb)",()=>{let l=window.visualViewport;if(l==null)return()=>{};let c=document.documentElement,d=0,x="",y=()=>{d=0;let C=Math.max(0,window.innerHeight-l.height-l.offsetTop),E=Math.min(C,Math.round(window.innerHeight*.6)),b=`${Math.round(E)}px`;b!==x&&(x=b,c.style.setProperty("--dshp-kb",b),E>0?c.setAttribute("data-dshp-kb","open"):c.removeAttribute("data-dshp-kb"))},A=()=>{d===0&&(d=requestAnimationFrame(y))};return l.addEventListener("resize",A),l.addEventListener("scroll",A),y(),()=>{l.removeEventListener("resize",A),l.removeEventListener("scroll",A),d!==0&&cancelAnimationFrame(d),c.style.removeProperty("--dshp-kb"),c.removeAttribute("data-dshp-kb")}}),h("dsh-pocket: standalone viewport guard (scroll residue / short layout viewport)",()=>{let l=window.visualViewport;if(l==null)return()=>{};let c=document.documentElement,d=0,x=0,y=!1,A=null,C=0,E=new URLSearchParams(window.location.search).has("dshp-diag"),b=_=>{A===null&&(A=document.createElement("div"),A.dataset.dshPocketDiag="1",A.style.cssText="position:fixed;top:calc(env(safe-area-inset-top, 0px) + 2px);left:2px;z-index:2147483647;font:10px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.65);color:#4ade80;padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap",document.body.appendChild(A)),A.textContent=`ih=${window.innerHeight} vv=${Math.round(l.height)} off=${Math.round(l.offsetTop)} sc=${l.scale.toFixed(2)} sy=${window.scrollY}`,_&&(window.clearTimeout(C),C=window.setTimeout(()=>{A?.remove(),A=null},8e3))},w=()=>{d=0;let _=l.height>=window.innerHeight-8;Math.abs(l.scale-1)<.01&&l.height-window.innerHeight>8?(x===0&&(x=performance.now()),!y&&performance.now()-x>600&&(y=!0,c.style.setProperty("--dshp-frame-h",`${Math.round(l.height)}px`),c.setAttribute("data-dsh-pocket-full-height",""),b(!0))):(x=0,y&&(y=!1,c.style.removeProperty("--dshp-frame-h"),c.removeAttribute("data-dsh-pocket-full-height"))),!y&&_&&(window.scrollY>1||l.offsetTop>1)&&window.scrollTo(0,0),E&&b(!1)},k=()=>{d===0&&(d=requestAnimationFrame(w))};return l.addEventListener("resize",k),l.addEventListener("scroll",k),window.addEventListener("focusout",k),window.addEventListener("pageshow",k),w(),()=>{l.removeEventListener("resize",k),l.removeEventListener("scroll",k),window.removeEventListener("focusout",k),window.removeEventListener("pageshow",k),d!==0&&cancelAnimationFrame(d),window.clearTimeout(C),A?.remove(),c.style.removeProperty("--dshp-frame-h"),c.removeAttribute("data-dsh-pocket-full-height")}}),h("dsh-pocket: file open guard + copy button + hide add-workspace (issue #17)",()=>{let l=()=>{try{let y=(e.get?.("workspaces")??e.workspaces)?.list,A=Array.isArray(y)?y:y&&typeof y=="object"&&"value"in y?y.value:null;if(Array.isArray(A))for(let C of A){let E=C?.cwd??C?.root;if(typeof E=="string"&&E)return E}}catch{}return""},c=x=>e.connection.rpc.call(je,j.fileRead,{path:x,cwd:l()}),d=e.locale.bind(et);return mi(c,d)})}var el="dsh-pocket",tl=["slots","connection","layout","locale","sessionLogDownload"];function Y(e,t,a){let o=e(t);if(a)for(let[n,i]of Object.entries(a))o=String(o).split(`{${n}}`).join(String(i));return o}var H={card:{background:"var(--dsw-alias-bg-layer-1,#fff)",border:"1px solid var(--dsw-alias-border-l2,#e5e7eb)",borderRadius:14,padding:"18px 20px",maxWidth:520},muted:{color:"var(--dsw-alias-label-tertiary,#8b93a1)",fontSize:12,lineHeight:1.5},primary:{font:"inherit",cursor:"pointer",border:"none",background:"var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary,#4f6ef7))",color:"var(--dsw-alias-label-primary-foreground, #fff)",height:36,padding:"0 16px",borderRadius:999,fontSize:13,fontWeight:500,display:"inline-flex",alignItems:"center",justifyContent:"center"},btn:{font:"inherit",cursor:"pointer",border:"1px solid var(--dsw-alias-button-ghost-active-border, var(--dsw-alias-border-l2,#d1d5db))",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-primary,inherit)",height:36,padding:"0 16px",borderRadius:999,fontSize:13,display:"inline-flex",alignItems:"center",justifyContent:"center"},mini:{font:"inherit",cursor:"pointer",border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-secondary,#6b7280)",height:26,padding:"0 10px",borderRadius:999,fontSize:12,display:"inline-flex",alignItems:"center",justifyContent:"center"},link:{font:"inherit",cursor:"pointer",border:"none",background:"none",padding:0,fontSize:12,color:"var(--dsw-alias-label-tertiary,#8b93a1)",textDecoration:"none"},warn:{color:"var(--dsw-alias-state-warn-primary,#b45309)",fontSize:12,lineHeight:1.5},mono:{fontFamily:"ui-monospace,Menlo,monospace",letterSpacing:.5}},vi=e=>(0,u.createElement)("span",{style:{display:"inline-block",width:8,height:8,borderRadius:"50%",flexShrink:0,background:e?"var(--dsw-alias-state-success-primary,#10b981)":"var(--dsw-alias-border-l2,#d1d5db)"}},null);function Ea(e){let t=e!==!1;document.body?.setAttribute(Ve,t?"on":"off"),window.dispatchEvent(new CustomEvent(Ke,{detail:{enabled:t}}))}async function al(e){try{if(navigator.clipboard?.writeText)return await navigator.clipboard.writeText(e),!0}catch{}try{let t=document.createElement("textarea");t.value=e,t.style.cssText="position:fixed;top:0;left:0;opacity:0",document.body.appendChild(t),t.select();let a=document.execCommand("copy");return t.remove(),a===!0}catch{return!1}}function ol({rpcCall:e,t}){let[a,o]=(0,u.useState)(null),[n,i]=(0,u.useState)(!1),[r,s]=(0,u.useState)(null),[p,h]=(0,u.useState)(null),[l,c]=(0,u.useState)(!1),[d,x]=(0,u.useState)(null),[y,A]=(0,u.useState)(!1),[C,E]=(0,u.useState)(Date.now()),[b,w]=(0,u.useState)({});(0,u.useEffect)(()=>{let v=setInterval(()=>E(Date.now()),1e3);return()=>clearInterval(v)},[]);let k=v=>v?Math.max(0,Math.floor((Date.now()-v)/1e3)):0,_=async(v,L)=>{let I=await e(v,L);if(!I?.ok)throw new Error(I?.error?.message??"RPC failed");return I.value},R=async()=>{try{let v=await _(j.status,{});o(v),Ea(v.mobileRightbarEnabled),h(v.tunnelState??null),v.desktop&&A(!0),v.restartNotice&&(c(!0),x(null),sessionStorage.getItem("dshp-auto-reloaded")||(sessionStorage.setItem("dshp-auto-reloaded","1"),setTimeout(()=>{try{location.reload()}catch{}},2e3)))}catch{}};(0,u.useEffect)(()=>{R();let v=setInterval(R,3e3);return()=>clearInterval(v)},[]),(0,u.useEffect)(()=>{try{sessionStorage.removeItem("dshp-auto-reloaded")}catch{}},[]),(0,u.useEffect)(()=>{if(y)return;let v=!0,L=async()=>{try{let K=await _(j.version,{}),Fa=await(await fetch("https://registry.npmjs.org/dsh-pocket/latest",{cache:"no-store"})).json();if(!v)return;let Nt=typeof Fa?.version=="string"?Fa.version:null;Nt&&K.current&&zt(Nt,K.current)>0?x({current:K.current,latest:Nt,updating:!1,result:null}):K.current&&K.loaded&&zt(K.current,K.loaded)>0&&x({current:K.current,latest:K.current,updating:!1,result:"ok",updated:!0})}catch{}};L();let I=setInterval(L,300*1e3);return()=>{v=!1,clearInterval(I)}},[y]);let S=async()=>{x(v=>({...v,restarting:!0,startedAt:Date.now()}));try{await Promise.race([_(j.restart,{}),new Promise((v,L)=>setTimeout(()=>L(new Error("restart requested (no reply within 3s)")),3e3))]),x(v=>({...v,restarting:!0,result:"ok"}))}catch(v){let L=String(v?.message??"");if(/connection|socket|fetch|network|abort|cancelled|ECONN|disconnect|closed|timeout/i.test(L)){x(I=>({...I,restarting:!0,result:"ok"}));return}x(I=>({...I,restarting:!1,result:"fail",output:v.message}))}},F=async()=>{x(v=>({...v,updating:!0,result:null,startedAt:Date.now()}));try{let v=await _(j.update,{});x(L=>({...L,updating:!1,result:v.ok?"ok":"fail",autoRestart:v.autoRestart===!0,output:v.output??v.error}))}catch(v){x(L=>({...L,updating:!1,result:"fail",output:v.message}))}},[m,g]=(0,u.useState)(!1),[f,T]=(0,u.useState)(!1),M=async()=>{let v=a?.tunnelConfig;if(v?.mode==="named"&&(!v.hostname||!v.tokenSet)){s(t("namedNeedCfg"));return}i(!0),s(null),h({phase:"starting",detail:"正在开启…",startedAt:Date.now()});try{o(await _(j.tunnelStart,{disclaimer:!0}))}catch(L){s(L.message)}finally{i(!1)}},P=()=>{T(!1),g(!0)},z=()=>{f&&(g(!1),M())},W=async()=>{try{o(await _(j.tunnelStop,{}))}catch{}},[D,q]=(0,u.useState)(null),X=async()=>{try{o(await _(j.tunnelSetConfig,{mode:"quick"}))}catch(v){s(v.message)}},Z=async()=>{try{o(await _(j.tunnelSetConfig,{mode:"named",hostname:D?.hostname??"",token:D?.token||void 0})),q(null)}catch(v){q(L=>({...L,err:v.message}))}},[$,V]=(0,u.useState)(!1),Te=async()=>{V(!1),i(!0),s(null);try{let v=await _(j.pocketReset,{confirm:!0});o(v),Ea(v.mobileRightbarEnabled),q(null),pe(null),Ia(!1),w({}),Ft(t("resetDone"))}catch(v){s(v.message),Ft(t("resetFailed"))}finally{i(!1)}},_e=async()=>{try{let v=await _(j.lanTokenRefresh,{});o(L=>({...L,lanToken:v.lanToken}))}catch{}},te=async v=>{try{let L=await _(j.lanAuthSetEnabled,{on:v});o(I=>({...I,lanAuthEnabled:L.lanAuthEnabled}))}catch{}},ae=async v=>{try{let I=(await _(j.mobileRightbarSetEnabled,{on:v})).mobileRightbarEnabled===!0;o(K=>({...K,mobileRightbarEnabled:I})),Ea(I)}catch(L){s(L.message)}},[ce,We]=(0,u.useState)(null),xi=v=>We(v),yi=async()=>{let v=ce;if(We(null),v!==null)try{let L=await _(j.lanSetEnabled,{on:v});o(I=>({...I,lanEnabled:L.lanEnabled}))}catch(L){s(L.message)}},ki=async v=>{try{o(await _(j.lanSetOverride,{ip:v}))}catch(L){s(L.message)}},[Se,pe]=(0,u.useState)(null),Ta=async v=>{try{let L=await _(j.pinSetCustom,{which:v,value:Se?.value??""});o(I=>({...I,accessToken:v==="public"?L.pin:I.accessToken,lanToken:v==="lan"?L.pin:I.lanToken,publicPinCustom:v==="public"?!0:I.publicPinCustom,lanPinCustom:v==="lan"?!0:I.lanPinCustom})),pe(null)}catch(L){pe(I=>({...I,err:L.message}))}},_a=a?.lanUrl,he=a?.tunnelUrl,Pt=p?.phase??"idle",Sa=["downloading","starting","registering"].includes(Pt),Ei=p?.detail??"",Ot=p?.startedAt??null,ue=a?.tunnelConfig??{mode:"quick",hostname:"",tokenSet:!1},Ce=ue.mode==="named",ie=Ce||D!==null,qe=v=>{let L=String(v??""),I=L.indexOf(" | ");return I<0?L:(t("ok")===ka.ok?L.slice(0,I):L.slice(I+3)).trim()},[Ca,Aa]=(0,u.useState)(null),It=(0,u.useRef)(null),Ft=v=>{Aa(v),clearTimeout(It.current),It.current=setTimeout(()=>Aa(null),2600)};(0,u.useEffect)(()=>()=>clearTimeout(It.current),[]);let tt=(v,L,I)=>(0,u.createElement)("button",{role:"switch","aria-checked":!!v,disabled:I===!0,style:{flexShrink:0,width:40,height:22,borderRadius:11,border:"none",padding:0,position:"relative",cursor:I===!0?"default":"pointer",font:"inherit",opacity:I===!0?.55:1,background:v?"var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary,#4f6ef7))":"var(--dsw-alias-border-l2,#d1d5db)",transition:"background .15s ease"},onClick:I===!0?void 0:L},(0,u.createElement)("span",{style:{position:"absolute",top:2,left:v?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 2px rgba(0,0,0,.18)",transition:"left .15s ease"}})),at=(v,L,I,K)=>(0,u.createElement)("section",{style:{marginTop:20},"data-dshp-section":K??""},(0,u.createElement)("div",{style:{display:"flex",alignItems:"center",gap:8}},v?(0,u.createElement)("span",{style:{fontWeight:600,fontSize:13,flex:1,minWidth:0,display:"inline-flex",alignItems:"center",gap:6}},v):(0,u.createElement)("span",{style:{flex:1}},null),L??null),I??null),Ae=(v,L,I)=>(0,u.createElement)("div",{style:{borderTop:"1px solid var(--dsw-alias-border-l2,#eceef2)",paddingTop:10,marginTop:10}},(0,u.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}},(0,u.createElement)("span",{style:{fontSize:13}},v),L),I??null),La=(v,L,I)=>(0,u.createElement)("div",{style:{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap",background:"var(--dsw-alias-bg-layer-2,#f3f4f6)",borderRadius:12,padding:12,marginTop:10}},(0,u.createElement)("div",{style:{flexShrink:0,padding:6,background:"#fff",borderRadius:10,border:"1px solid var(--dsw-alias-border-l2,#e5e7eb)"}},(0,u.createElement)("img",{src:v,alt:"QR",style:{width:128,height:128,display:"block",borderRadius:2}})),(0,u.createElement)("div",{style:{flex:"1 1 170px",minWidth:170}},(0,u.createElement)("div",{style:{...H.mono,fontSize:12,wordBreak:"break-all",color:"var(--dsw-alias-label-primary,inherit)",lineHeight:1.6}},L),(0,u.createElement)("div",{style:{...H.muted,fontSize:11,marginTop:6}},I),(0,u.createElement)("button",{style:{...H.mini,marginTop:8},onClick:async()=>Ft(await al(L)?t("copied"):t("copyFailed"))},t("copyLink")))),Le=(v,L,I)=>(0,u.createElement)("div",{style:{display:"flex",gap:8,alignItems:"flex-start",fontSize:12,lineHeight:1.6,borderRadius:10,padding:"8px 10px",marginTop:10,background:"var(--dsw-alias-bg-layer-2,#f3f4f6)",borderLeft:`3px solid ${v==="error"?"var(--dsw-alias-state-error-primary,#dc2626)":v==="info"?"var(--dsw-alias-brand-primary,#4f6ef7)":"var(--dsw-alias-state-warn-primary,#b45309)"}`,color:v==="error"?"var(--dsw-alias-state-error-primary,#dc2626)":v==="warn"?"var(--dsw-alias-state-warn-primary,#b45309)":"var(--dsw-alias-label-secondary,#6b7280)",...I}},L),Ra=(v,L,I)=>(0,u.createElement)("div",{style:{marginTop:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},(0,u.createElement)("span",{style:{...H.mono,fontSize:13},"data-dshp-pin":v},b[v]?L:"••••••••"),(0,u.createElement)("button",{style:{...H.link,padding:"2px 0"},onClick:()=>w(K=>({...K,[v]:!K[v]}))},b[v]?t("pinHide"):t("pinShow")),...I??[]),Ma=v=>(0,u.createElement)("div",{style:{marginTop:8,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)",lineHeight:1.5}},t("customizing"),(0,u.createElement)("input",{style:{width:130,margin:"0 6px",padding:"4px 8px",fontSize:14,letterSpacing:1,textAlign:"center",border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none"},type:"password",minLength:8,maxLength:64,value:Se?.value??"",autoFocus:!0,onChange:L=>pe(I=>({...I,value:L.target.value.replace(/[^a-zA-Z0-9]/g,""),err:null})),onKeyDown:L=>{L.key==="Enter"&&Ta(v),L.key==="Escape"&&pe(null)}}),(0,u.createElement)("button",{style:H.mini,onClick:()=>Ta(v)},t("save")),(0,u.createElement)("button",{style:H.mini,onClick:()=>pe(null)},t("cancel")),Se?.err?(0,u.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",marginTop:4}},qe(Se.err)):null),Pa=v=>(0,u.createElement)("button",{style:H.mini,onClick:()=>pe({which:v,value:"",err:null})},t("customize")),Ti=(0,u.createElement)("div",{style:{display:"inline-flex",background:"var(--dsw-alias-bg-layer-2,#eef0f4)",borderRadius:9,padding:2,gap:2}},(0,u.createElement)("button",{style:{font:"inherit",cursor:"pointer",border:"none",height:26,padding:"0 12px",borderRadius:7,fontSize:12,background:ie?"transparent":"var(--dsw-alias-bg-layer-1,#fff)",color:ie?"var(--dsw-alias-label-tertiary,#8b93a1)":"var(--dsw-alias-label-primary,inherit)",fontWeight:ie?400:600,boxShadow:ie?"none":"0 1px 3px rgba(0,0,0,.10)"},onClick:Ce?X:D?()=>q(null):void 0},t("modeQuick")),(0,u.createElement)("button",{style:{font:"inherit",cursor:"pointer",border:"none",height:26,padding:"0 12px",borderRadius:7,fontSize:12,background:ie?"var(--dsw-alias-bg-layer-1,#fff)":"transparent",color:ie?"var(--dsw-alias-label-primary,inherit)":"var(--dsw-alias-label-tertiary,#8b93a1)",fontWeight:ie?600:400,boxShadow:ie?"0 1px 3px rgba(0,0,0,.10)":"none"},onClick:()=>q(D?null:{hostname:ue.hostname??"",token:"",err:null})},t("modeNamed"))),Ht=({title:v,tone:L="warn",children:I,actions:K})=>(0,u.createElement)("div",{style:{position:"fixed",inset:0,zIndex:1e4,background:"rgba(15,17,21,.45)",backdropFilter:"blur(3px)",WebkitBackdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}},(0,u.createElement)("div",{style:{background:"var(--dsw-alias-bg-layer-1,#fff)",borderRadius:14,maxWidth:420,width:"100%",padding:"20px 22px",boxShadow:"0 12px 40px rgba(0,0,0,.22)"}},(0,u.createElement)("div",{style:{fontWeight:600,fontSize:15,marginBottom:10,color:L==="danger"?"var(--dsw-alias-state-error-primary,#dc2626)":L==="brand"?"var(--dsw-alias-brand-primary,#4f6ef7)":"var(--dsw-alias-state-warn-primary,#b45309)"}},v),I,(0,u.createElement)("div",{style:{display:"flex",gap:8,marginTop:18,justifyContent:"flex-end"}},K))),[Oa,Ia]=(0,u.useState)(!1);return(0,u.createElement)("div",{style:H.card,"data-dshp-ui":"v2"},(0,u.createElement)("div",null,(0,u.createElement)("div",{style:{fontWeight:600,fontSize:14}},t("title")),(0,u.createElement)("div",{style:{...H.muted,marginTop:2}},t("subtitle"))),!y&&l?Le("info",(0,u.createElement)("div",{style:{flex:1,minWidth:0}},(0,u.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},(0,u.createElement)("span",{style:{fontWeight:600}},t("restarted")),(0,u.createElement)("button",{style:H.mini,onClick:()=>c(!1)},t("ok"))),(0,u.createElement)("div",{style:{color:"var(--dsw-alias-label-tertiary,#8b93a1)",wordBreak:"break-all"}},Y(t,"bgHint",{cmd:a?.killHint??`lsof -ti :${a?.dshPort??3080} | xargs kill -9`}))),{marginTop:14}):null,!y&&d?Le("warn",(0,u.createElement)("div",{style:{flex:1,minWidth:0}},(0,u.createElement)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}},(0,u.createElement)("span",{style:{fontWeight:600}},d.updated?Y(t,"updatedRestart",{ver:d.current}):d.result==="ok"?d.autoRestart?Y(t,"updateAutoRestarting",{ver:d.latest}):Y(t,"updatedOk",{ver:d.latest}):Y(t,"updateAvailable",{ver:d.latest})),d.result!=="ok"?(0,u.createElement)("button",{style:H.primary,onClick:F,disabled:d.updating},d.updating?t("updating"):Y(t,"updateTo",{ver:d.latest})):d.autoRestart?(0,u.createElement)("button",{style:H.btn,disabled:!0},t("restartingNow")):(0,u.createElement)("button",{style:H.primary,onClick:S,disabled:d.restarting},d.restarting?t("restarting"):t("restartNow"))),(0,u.createElement)("div",{style:{color:"var(--dsw-alias-label-tertiary,#8b93a1)"}},d.updating?Y(t,"updatingDetail",{s:k(d.startedAt)}):d.restarting?Y(t,"restartingDetail",{s:k(d.startedAt)}):d.result==="ok"?d.autoRestart?t("updatedAutoDetail"):t("updatedRestartDetail"):d.result==="fail"?Y(t,"updateFailed",{err:qe(d.output)||t("unknownError")}):Y(t,"versionRange",{cur:d.current,latest:d.latest}))),{marginTop:14}):null,at((0,u.createElement)("span",null,vi(a?.lanEnabled!==!1),t("lanAccess")),tt(a?.lanEnabled!==!1,()=>xi(a?.lanEnabled===!1)),a?.lanEnabled===!1?Le("warn",t("lanDisabledHint")):_a?(0,u.createElement)("div",null,La(a.lanQr,_a,t("lanHint")),Ae(t("lanPin"),tt(a?.lanAuthEnabled!==!1,()=>te(a?.lanAuthEnabled===!1)),a?.lanAuthEnabled===!1?(0,u.createElement)("div",{style:{...H.muted,marginTop:6}},t("lanPinOff")):Se?.which==="lan"?Ma("lan"):(0,u.createElement)("div",null,Ra("lan",a.lanToken,[(0,u.createElement)("button",{style:H.mini,onClick:_e},t("refresh")),Pa("lan")]),a?.lanPinCustom?(0,u.createElement)("div",{style:{...H.warn,fontSize:11,marginTop:4}},t("pinCustomHint")):null)),Ae(t("advAddress"),(0,u.createElement)("button",{style:{...H.link,font:"inherit"},onClick:()=>Ia(v=>!v)},(a?.lanIpOverride||t("lanAddressAuto"))+(Oa?" ‹":" ›")),Oa?(0,u.createElement)("div",{style:{marginTop:8}},(0,u.createElement)("label",{style:{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)"}},t("lanAddress"),(0,u.createElement)("select",{value:a?.lanIpOverride||"",onChange:v=>ki(v.target.value),style:{font:"inherit",height:30,padding:"0 8px",borderRadius:8,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",background:"var(--dsw-alias-bg-layer-1,#fff)",color:"var(--dsw-alias-label-primary,inherit)"}},(0,u.createElement)("option",{value:""},t("lanAddressAuto")),(a?.lanCandidates||[]).map(v=>(0,u.createElement)("option",{key:v,value:v},v))))):null)):(0,u.createElement)("div",{style:{...H.muted,marginTop:8}},t("lanStarting")),"lan"),at((0,u.createElement)("span",null,vi(!!he),t("wanAccess")),tt(!!he,()=>he?W():P(),Sa),(0,u.createElement)("div",null,Sa?Le("info",(0,u.createElement)("span",null,Pt==="downloading"?Y(t,"downloading",{s:k(Ot)}):Y(t,"connecting",{s:k(Ot),suffix:k(Ot)>30?t("slowHint"):""}))):Pt==="error"?Le("error",Y(t,"error",{detail:qe(Ei)||t("unknownError")})):!he&&!y?(0,u.createElement)("div",{style:{...H.muted,marginTop:8}},t("wanOffHint")):null,he?(0,u.createElement)("div",null,La(a.tunnelQr,he,t(Ce?"namedRunningHint":"wanHint")),Le("warn",t("wanEphemeralWarn")),Ae(t("modeLabel"),Ti,(0,u.createElement)("div",{style:{marginTop:6}},Ce&&/trycloudflare\.com/i.test(he??"")?(0,u.createElement)("div",{style:H.warn},t("namedTakeEffect")):null,Ce&&!D?(0,u.createElement)("div",{style:{...H.muted}},Y(t,"namedSummary",{host:ue.hostname||"—",token:ue.tokenSet?t("namedTokenSet"):t("namedTokenMissing")}),(0,u.createElement)("button",{style:{...H.mini,marginLeft:8},onClick:()=>q({hostname:ue.hostname??"",token:"",err:null})},t("namedEdit")),(0,u.createElement)("div",{style:{...H.muted,marginTop:4}},t("namedHow")),!ue.tokenSet||!ue.hostname?(0,u.createElement)("div",{style:{marginTop:2,color:"var(--dsw-alias-state-error-primary,#dc2626)"}},t("namedNeedCfg")):null):null,D?(0,u.createElement)("div",{style:{marginTop:6,fontSize:12,color:"var(--dsw-alias-label-secondary,#6b7280)",lineHeight:1.6}},(0,u.createElement)("div",null,t("namedHostnameLabel"),(0,u.createElement)("input",{style:{margin:"4px 0 0 6px",padding:"4px 8px",fontSize:13,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none",width:200},placeholder:"pocket.example.com",value:D.hostname??"",autoFocus:!0,onChange:v=>q(L=>({...L,hostname:v.target.value.trim(),err:null})),onKeyDown:v=>{v.key==="Enter"&&Z(),v.key==="Escape"&&q(null)}})),(0,u.createElement)("div",{style:{marginTop:6}},t("namedTokenLabel"),(0,u.createElement)("input",{style:{margin:"4px 0 0 6px",padding:"4px 8px",fontSize:13,border:"1px solid var(--dsw-alias-border-l2,#d1d5db)",borderRadius:6,outline:"none",width:240,...H.mono},type:"password",value:D.token??"",onChange:v=>q(L=>({...L,token:v.target.value.trim(),err:null})),onKeyDown:v=>{v.key==="Enter"&&Z(),v.key==="Escape"&&q(null)}})),(0,u.createElement)("div",{style:{marginTop:8,display:"flex",gap:8}},(0,u.createElement)("button",{style:H.mini,onClick:Z},t("save")),(0,u.createElement)("button",{style:H.mini,onClick:()=>q(null)},t("cancel"))),(0,u.createElement)("div",{style:{...H.muted,marginTop:6}},t("namedHow")),(0,u.createElement)("div",{style:{marginTop:2,fontSize:11,color:"var(--dsw-alias-state-warn-primary,#b45309)",lineHeight:1.5}},t("namedSecurity")),D.err?(0,u.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",marginTop:4}},qe(D.err)):null):null)),a.accessToken?Ae(t("pinLabel"),null,Se?.which==="public"?Ma("public"):(0,u.createElement)("div",null,Ra("public",a.accessToken,[Pa("public")]),(0,u.createElement)("div",{style:{marginTop:4}},a?.publicPinCustom?(0,u.createElement)("div",{style:{...H.warn,fontSize:11}},t("pinCustomHint")):null,Ce?(0,u.createElement)("div",{style:{...H.warn,fontSize:11}},t("namedSecurity")):null))):null):null),"wan"),at(null,null,Ae(t("mobileRightbar"),tt(a?.mobileRightbarEnabled!==!1,()=>ae(a?.mobileRightbarEnabled===!1)),(0,u.createElement)("div",{style:{...H.muted,marginTop:6}},t("mobileRightbarHint"))),"prefs"),r?(0,u.createElement)("div",{style:{color:"var(--dsw-alias-state-error-primary,#dc2626)",fontSize:12,marginTop:12}},`❌ ${qe(r)}`):null,at(null,null,Ae(t("resetFactory"),(0,u.createElement)("button",{style:{...H.mini,color:"var(--dsw-alias-state-error-primary,#dc2626)"},onClick:()=>V(!0)},t("resetGo")),(0,u.createElement)("div",{style:{...H.muted,fontSize:11,marginTop:4}},t("resetIntro"))),"reset"),(0,u.createElement)("div",{style:{marginTop:20,paddingTop:12,borderTop:"1px solid var(--dsw-alias-border-l2,#eceef2)",display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",fontSize:11,color:"var(--dsw-alias-label-tertiary,#8b93a1)"}},(0,u.createElement)("span",null,t("developer")),(0,u.createElement)("span",null,"·"),(0,u.createElement)("a",{href:"https://github.com/daha1216/dsh-pocket",target:"_blank",rel:"noreferrer",title:t("starAsk"),style:{color:"inherit",textDecoration:"none",borderBottom:"1px dashed currentColor"}},t("starCta")),(0,u.createElement)("span",null,"·"),(0,u.createElement)("a",{href:"https://github.com/daha1216/dsh-pocket/issues",target:"_blank",rel:"noreferrer",style:{color:"inherit",textDecoration:"none",borderBottom:"1px dashed currentColor"}},t("feedback"))),$?Ht({title:t("resetTitle"),tone:"danger",children:(0,u.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)",whiteSpace:"pre-line"}},t("resetBody")),actions:[(0,u.createElement)("button",{style:{...H.btn,height:32,padding:"0 16px"},onClick:()=>V(!1)},t("cancel")),(0,u.createElement)("button",{style:{...H.primary,height:32,padding:"0 16px",background:"var(--dsw-alias-state-error-primary,#dc2626)"},onClick:Te},t("resetConfirm"))]}):null,Ca?(0,u.createElement)("div",{style:{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%, -50%)",zIndex:10001,maxWidth:300,background:"rgba(17,24,39,.92)",color:"#fff",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,lineHeight:1.5,textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,.22)"}},Ca):null,ce!==null?Ht({title:t(ce?"lanToggleTitleOn":"lanToggleTitleOff"),tone:ce?"brand":"warn",children:(0,u.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)"}},t(ce?"lanToggleBodyOn":"lanToggleBodyOff")),actions:[(0,u.createElement)("button",{style:{...H.btn,height:32,padding:"0 16px"},onClick:()=>We(null)},t("cancel")),(0,u.createElement)("button",{style:{...H.primary,height:32,padding:"0 16px"},onClick:yi},t("confirm"))]}):null,m?Ht({title:t("disclaimerTitle"),tone:"warn",children:(0,u.createElement)("div",null,(0,u.createElement)("div",{style:{fontSize:13,lineHeight:1.7,color:"var(--dsw-alias-label-primary,inherit)"}},t("disclaimerBody")),(0,u.createElement)("label",{style:{display:"flex",alignItems:"center",gap:8,marginTop:14,fontSize:13,cursor:"pointer"}},(0,u.createElement)("input",{type:"checkbox",checked:f,onChange:v=>T(v.target.checked),style:{width:16,height:16}}),t("disclaimerAgree")),f?null:(0,u.createElement)("div",{style:{marginTop:8,fontSize:12,color:"var(--dsw-alias-state-error-primary,#dc2626)"}},t("disclaimerHint"))),actions:[(0,u.createElement)("button",{style:{...H.btn,height:32,padding:"0 16px"},onClick:()=>g(!1)},t("cancel")),(0,u.createElement)("button",{style:{...H.primary,height:32,padding:"0 16px",opacity:f?1:.5},disabled:!f,onClick:z},t("disclaimerAgree"))]}):null)}function nl(e){if(e?.connection)try{Object.defineProperty(e.connection,"isLoopback",{value:!0,writable:!0,configurable:!0})}catch{try{e.connection.isLoopback=!0}catch{}}let t=e.locale.bind(et);e.effect(()=>e.locale.register(et,{zh:ka,en:gi}),"dsh-pocket: pocket locale dictionaries"),wi(e);let a=(o,n,i)=>e.connection.rpc.call(je,o,n,i);e.slots.inject("settings.section",()=>e.slots.register({name:"settings.section",id:"pocket",order:1,label:()=>t("section"),inject:()=>({rpcCall:a,t})},ol))}
 
     return module.exports;
   }

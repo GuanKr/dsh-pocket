@@ -1,5 +1,14 @@
-/** `mobileNav` namespace dictionaries: drawer controls. */
-export const NS = 'mobileNav'
+/**
+ * Namespace id for the drawer-control dictionaries.
+ *
+ * Package-prefixed on purpose: the host's `locale.register` THROWS on a
+ * duplicate namespace (no merge, no override), and that throw fails the whole
+ * plugin fiber — a dead web boot on narrow screens. Downstream copies of this
+ * plugin keep our namespace, so a bare, generic name is a loaded gun:
+ * dsh-pocket embeds a copy of the mobile adaptation and still registers
+ * `pocketMobileNav` (issue #165).
+ */
+export const NS = 'pocketMobileNav'
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
@@ -10,6 +19,8 @@ export const zh = {
   'sessionLog': '导出会话日志',
   'files': '文件浏览',
   'fileUpload': '添加文件',
+  'fileUploadImage': '上传图片',
+  'fileUploadAttachment': '上传附件',
   'previewFullscreen': '全屏预览',
   'previewExitFullscreen': '退出全屏',
   'deleteSession': '删除会话',
@@ -33,6 +44,8 @@ export const en: Record<MobileNavKey, string> = {
   'sessionLog': 'Session log',
   'files': 'Files',
   'fileUpload': 'Add files',
+  'fileUploadImage': 'Upload image',
+  'fileUploadAttachment': 'Upload attachment',
   'previewFullscreen': 'Fullscreen preview',
   'previewExitFullscreen': 'Exit fullscreen',
   'deleteSession': 'Delete session',
@@ -47,5 +60,5 @@ export const en: Record<MobileNavKey, string> = {
   'deleteErrorGeneric': 'Delete failed: {message}',
 }
 
-/** Key domain of the `mobileNav` namespace (zh is the source of truth). */
+/** Key domain of the {@link NS} namespace (zh is the source of truth). */
 export type MobileNavKey = keyof typeof zh

@@ -77,6 +77,19 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     position: relative !important;
     grid-template-columns: minmax(0, 1fr) 0 0 !important;
     padding-top: env(safe-area-inset-top, 0px) !important;
+    /* Bottom safe area, symmetric with the top inset above. It MUST stay in
+       this rule: box-sizing: border-box is the pair that makes the padding eat
+       into the one-viewport height instead of adding scrollable overflow
+       (pitfalls §safe-area — padding without border-box pushes the composer
+       seat below the fold).
+       Why we have to own it: the third-party @linxin666 sheet (the same one
+       the grid-template-columns note above is about) ships this padding only
+       under (max-width: 768px), and the host ships none at all, so 769-1023px
+       touch devices had no bottom inset from either side and their content sat
+       in the system-bar band (issue #193). In the <=768px band that sheet's
+       declaration and this one are the same property with the same value, so
+       they do not stack. */
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 
   /* The sidebar column (first grid child) becomes a left drawer. The drawer
@@ -142,16 +155,33 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      the remaining 40px showed our own column background as a vertical strip
      along the right edge (measured: content right edge 280, column 320; the
      owner reported a white bar). The inner surface owns that band instead, so
-     the strip is filled by the drawer's real surface colour. */
+     the strip is filled by the drawer's real surface colour.
+     That scenario cannot recur as the layout stands: the column is
+     min(88vw, 280px), never wider than the 280px inner surface, so the
+     inequality that produced the band (column > surface) no longer holds at any
+     viewport width (measured 430/390/340/320 = flush at 280, 300 -> 264,
+     280 -> 246; a narrower column just crops the surface). The only change that
+     would bring it back is raising the column's upper bound past 280px, or the
+     host narrowing the inner surface below it. */
     /* The 40px band is a STACKING result, not a colour one: the drawer's inner
      surface is only 280px wide (host markup), while our column is 320px and
      carries z-index 1300 - so the column's own background paints OVER the
      surface's right 40px. Pixel-verified from a screenshot with the drawer open:
      x=10..270 rgb(249,250,251) (the surface) against x=285..315 rgb(255,255,255)
      (our white column). Repainting the column with the surface's own value makes
-     the seam invisible whatever the theme does; the surface underneath keeps its
-     own colour for the 280px it does cover. */
-    background: var(--dsw-alias-bg-surface, #f9fafb);
+     the seam invisible.
+     The value pinned here is the host's own drawer-fill token - the one
+     .pI_x6G_sidebarCol paints with: --dsw-specific-sidebar-fill, i.e.
+     --dsw-static-neutral-bluish-50 (#f9fafb) in light and
+     --dsw-static-neutral-bluish-900 (#1b1b1c) in dark. Pinning it, rather than
+     letting the host rule paint, keeps the band covered without depending on
+     cascade order. The fallback is deliberately the token's LIGHT value: if the
+     host ever renames this internal token the declaration degrades to today's
+     light behaviour instead of going unset, so it cannot get worse. Do not
+     "simplify" this back to --dsw-alias-bg-surface: that name is defined nowhere
+     in the host, which froze this rule on its fallback and painted the drawer
+     light in the dark theme (issue #192). */
+    background: var(--dsw-specific-sidebar-fill, #f9fafb);
     /* Drawer swipe gestures (edge swipe-in / content swipe-out, see
      docs/specs/2026-08-27-sidebar-swipe-gestures.md).
      One rule is load-bearing for the gesture layer: dropping pan-x on the
@@ -271,6 +301,18 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
 
+  /* Phone chrome keeps only the collapse control. Split visibility must not
+     depend on data-dockkit-split-blocked: DockLayout measures after each commit,
+     so conditional display can alternate blocked/allowed at the width threshold.
+     Hide the wrapper too, since a blocked split wrapper is a tab stop. */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-sidebar-right-panel] [data-dockkit-split-button],
+    [data-sidebar-right-panel] span:has(> [data-dockkit-split-button]),
+    [data-sidebar-right-panel] [data-sidebar-right-mode="push"] {
+      display: none !important;
+    }
+  }
+
   /* prefers-reduced-motion: the drawer's .28s slide is motion; drop it
      (audit S2 2026-08-27 — the old reduce block only covered the settings
      sheet and its mask). Same idiom as the animation:none blocks below. */
@@ -313,6 +355,65 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     width: 0;
     height: 0;
   }
+  /* ---------- selection-drag autoscroll ramp (2026-10-07 live-host probe) ----------
+     Report (Android): once the conversation chrome became unselectable, dragging
+     the selection handle up stopped grabbing the title bar, but the conversation
+     did not scroll WITH the finger - it teleported a few screens up instead.
+     Mechanism measured on the live host (390x844, touch-emulated, selection anchor
+     inside the message flow, pointer held 1.4s): Blink only starts autoscrolling a
+     selection drag once the pointer is within ~3px of the scrollport's top edge,
+     and the RATE grows with how far the pointer sits ABOVE that edge, saturating
+     fast - y=140/100 -> 0 px/s, y=70 -> 1018, y=50 -> 2225, y=30 -> 3329,
+     y=10 -> 3232 px/s. The conversation scrollport's top edge is the header's
+     bottom edge (y=67), so every finger position on the header is 17-57px "above
+     the list" and lands in the 2200-3300 px/s band: one 777px screen every ~0.23s,
+     which reads as dropped frames / a jump to somewhere else. The ramp is
+     geometric, not ours - from y>=100 nothing scrolls at all, so the speed is
+     decided by where the list's box starts.
+     Fix: extend the scrollport's box up under the header so a drag point over the
+     header is only a few px above the list edge. Measured with the box moved to
+     y=0: y=30 -> 0 px/s, y=10 -> 595 px/s. The visual position is unchanged by
+     construction - the box grows upward by H while padding-top: H pushes the
+     content back down, so an element at content offset X still paints at
+     H + X - scrollTop (live-host check: header [0,0,390,67] and the composer seat
+     [0,740,388,104] are identical before/after; only the box [0,67,388,777] ->
+     [0,0,388,844] and scrollHeight +H move).
+     H comes from --mobile-nav-header-h, written by the reconciler task
+     "header-metrics" (phone-chrome.ts) as the header's bottom edge measured from
+     the frame's top. It is 0px whenever the header is not measurable (hero / blank
+     header), which makes both declarations below a no-op - the layout fails open if
+     the host ever stops rendering a conversation header. Phone tier only: the
+     desktop header is an ordinary in-flow bar and there is no touch selection drag
+     to ramp. */
+  [data-mobile-nav="frame"] [data-phase] [class*="_scrollBody"] {
+    margin-top: calc(-1 * var(--mobile-nav-header-h, 0px)) !important;
+    padding-top: var(--mobile-nav-header-h, 0px) !important;
+  }
+  /* ---------- selection handle drag: keep the extent local (2026-10-07) ----------
+     The phone selection handle drag is a native (Android WebView
+     TouchSelectionController) gesture: each move hit-tests the handle position to
+     resolve the selection extent and then reveals that extent. With the bar
+     unselectable but still hit-testable it won that hit test, Blink walked FORWARD
+     in DOM order to the next selectable node - the flow's first item, the
+     "Load earlier" gate, measured on the live host - and revealed it: the viewport
+     teleported to the top of the conversation instead of extending by a line
+     (reported as "not scroll-selection, it jumps somewhere else"). Dropping the bar
+     out of the hit test for the duration of the selection lets the same point
+     resolve into the message the lifted box above now puts underneath it, so the
+     extent stays local and the scroll ramp stays gentle. 「pointer-events」 only -
+     no layout change, so nothing reflows while the finger is down. The marker is
+     set by installSelectionChromeYield (phone-chrome.ts) and only for selections
+     that live in the conversation (composer/drawer keep their chrome
+     interactive); header buttons remain reachable the moment the selection
+     collapses, which is also what a tap anywhere else does. */
+  html[data-mobile-nav-selecting] [data-mobile-nav="frame"] [data-phase] header {
+    pointer-events: none !important;
+  }
+  /* A transparent header was harmless while nothing could scroll underneath it;
+     with the box lifted it would show the messages through the title row
+     (headless screenshot 2026-10-07: message text bled across "Standard mode"
+     and the tab strip), so the header rule below now carries an opaque
+     background. */
   /* Message action rows (copy / run-time badges) can overflow the right
      edge on narrow screens — keep them inside the message width. */
   [data-phase] [class*="_actions"] {
@@ -421,14 +522,6 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     max-width: 100%;
   }
 
-  /* --- Composer bottom row on mobile ---
-     The official row contains two lanes: tools (plus + permission/mode
-     controls) and trailing (model + context + send). The previous rules made
-     the modes lane flex:none, so its full intrinsic width collided with the
-     model selector on narrow phones. Keep fixed hit targets fixed, but let
-     text-bearing controls shrink and ellipsize before they paint over the
-     trailing lane. */
-
   /* 底部安全区与输入框边距（pocket 补丁）：基础内边距 5px，另加 home indicator 的
      env(safe-area-inset-bottom)。viewport-fit=cover 下 frame 只垫了顶部 inset，
      输入座位若不垫底，stats 条会落进 home indicator 保留区。类名哈希代际不同时
@@ -439,6 +532,13 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  /* --- Composer bottom row on mobile ---
+     The official row contains two lanes: tools (plus + permission/mode
+     controls) and trailing (model + context + send). The previous rules made
+     the modes lane flex:none, so its full intrinsic width collided with the
+     model selector on narrow phones. Keep fixed hit targets fixed, but let
+     text-bearing controls shrink and ellipsize before they paint over the
+     trailing lane. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) {
     box-sizing: border-box;
     container-type: inline-size;
@@ -465,6 +565,15 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      fit. Main-session three-control form keeps single-row layout. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) {
     flex-wrap: wrap;
+  }
+  /* Issue #140: in that same dual-primary form the stop key and the send key
+     sit one 3px lane-gap apart — two same-shaped 34px pills where a mis-touch
+     on the left one interrupts the running reply. The 2026-09-23 「焊在一起」
+     3px decision keeps governing the main session's [model][send] cluster;
+     only this form (the one with two adjacent destructive-adjacent primaries)
+     gets +8px between the stop and the send key. Knob: margin-right. */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] > [class*="_primary"]:has(~ [class*="_primary"]) {
+    margin-right: 8px;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > :first-child {
     flex: 0 1 auto;
@@ -602,6 +711,36 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      effects/model-menu-anchor.ts centers the panel on the trigger and clamps it to the
      viewport. Do not re-add a CSS rule here without checking the portal parent. */
 
+  /* Phone reasoning-effort list is compact; the model catalog and the tablet stay
+     host-sized. Measured on the real host bundle (dsh-client-ui-model-selection
+     0.2.0-rc.2, 393x844, phone emulation): the effort pane renders 248px wide
+     (its own min-width is 240px) while its four levels need far less.
+     The two panes differ in the SHAPE of their radio list, and that difference is
+     the only reliable discriminator (measured, same run):
+       effort pane   DIV._surface_ri079_1._7KE1Ra_menu[role=menu]
+                       > DIV._material_ri079_21
+                       > button._7KE1Ra_option[role=menuitemradio]   <- DIRECT child
+       model pane    DIV._surface_ri079_1._7KE1Ra_menu[role=group]
+                       > DIV._material_ri079_21
+                       > DIV._7KE1Ra_groups.scrollable[role=menu]
+                           > SECTION._group_121p8_1[role=group] > button[role=menuitemradio]
+     The host sets 「role: pane === "model" ? "group" : "menu"」, so the effort pane is
+     the role=menu shell and its radios ARE direct children, while the catalog's sit
+     two levels deeper. Requiring both halves — role=menu AND a direct-child radio —
+     therefore selects the effort list and leaves the catalog at its host size.
+     Neither half is safe alone: dropping the role also matches the catalog's inner
+     _groups container, and matching radios as descendants selects the catalog shell.
+     (Measured with each variant: the group/descendant form hit the catalog only.)
+     「min-width: 0 !important」 is load-bearing: without it the host's own
+     min-width 240px keeps the pane at 240 no matter what width is set. */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [class*="_7KE1Ra_menu"][role="menu"]:has(> [role="menuitemradio"]) {
+      width: min(208px, calc(100vw - 32px)) !important;
+      min-width: 0 !important;
+      max-width: calc(100vw - 32px) !important;
+    }
+  }
+
   /* --- Fix composer row overflow at narrow widths (320px-360px) ---
      Force every direct child of the tools and trailing lanes to shrink,
      so they can fit within the available space without causing horizontal
@@ -626,7 +765,14 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      itself is shrinkable, so a squeezed root lets the trigger paint over
      the pinned send button. Keep the whole meter at its natural size; its
      trigger uses aria-haspopup="dialog", so the model-selector menu rules
-     (keyed on "menu") still do not apply. */
+     (keyed on "menu") still do not apply.
+     GENERATION NOTE (issue #140, 2026-09-29): 0.1.7-rc.2 moved the
+     ContextMeter out of this lane into the dock row under the card (next to
+     the TPS stats pills) — on rc.2 NONE of the trailing-lane meter rules in
+     this section match any more, and the trigger is back to its official
+     ~22px-tall box. They stay for the 0.1.5/0.1.6 generations where the
+     meter really rendered in the lane (structural anchors, inert elsewhere);
+     the rc.2+ hit-area repair lives in the dock-row section below. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] > [class*="_root"] {
     flex: none;
     min-width: 0;
@@ -711,12 +857,88 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [class*="_root"]:has(> [class*="_trigger"][aria-haspopup="dialog"]) {
     margin-left: auto;
   }
+
+  /* --- rc.2+ 的第二个失效面：子代理 composer 里环锚点回不到发送键左边（2026-10-12）---
+     上面那条「无模型胶囊时由 ContextMeter 当吸收器」的兜底，在 **0.1.7-rc.2+** 上
+     再也匹配不到：宿主已经把 ContextMeter 从 trailing 车道搬进卡片下方的 dock 行
+     （实测路径 … > [class*="_card"] > [class*="_root"] > [class*="_dock"] > span.JObwrW_root），
+     它不再是车道的子元素，「:has(> [class*=\"_trigger\"][aria-haspopup=\"dialog\"])」落空。
+     后果（headless 393×844 实测，主/子两视图同机对比）：子代理会话里模型胶囊整个不渲染，
+     「standardControls」塌成 0×0 且 margin-left:0，于是车道里唯一带 auto 的是发送键自己，
+     插件注入的环锚点 span[data-mobile-nav=\"stats-ring-reserve\"]（普通流内元素）被留在
+     车道左缘 —— 环 x=127，而主会话同一元素 x=310、发送键在 333：**188px 空档**，
+     用户看到的就是「上下文表跑到左边去了」。
+     修法与 #191 同源（同一根因族：rc.2 把 meter 搬走后，车道里的 auto 归属没人接管）：
+     没有模型胶囊时让**环锚点**顶替 meter 当吸收器，并把发送键的 auto 清零 ——
+     不清零的话两个 auto 会平分空隙，环同样回不到键边。
+     门控与上面那条兜底完全一致（车道里没有 aria-haspopup="menu"），所以主会话
+     （模型胶囊在场）零改动。 */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [data-mobile-nav="stats-ring-reserve"] {
+    /* !important 不可省：compat 层有一条 [data-mobile-nav="stats-ring-reserve"]
+       { margin: 0 2px 0 0 !important }。两条都 important 时先比特异性 —— 本选择器
+       远高于那条裸属性选择器，加 !important 就能赢；不加则被它压成 margin-left:0。
+       2026-10-12 受控实验实测：不加 → 环仍停在 x=127、发送键反被拉到 150（188px 空档
+       只是从「环与键之间」搬到「键的右侧」）；加 → 环 310 / 键 333，正是期望值。 */
+    margin-left: auto !important;
+  }
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:not(:has([class*="_trigger"][aria-haspopup="menu"])) > [class*="_primary"] {
+    margin-left: 0;
+  }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] > [class*="_primary"] {
     flex: none;
     margin-left: auto;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"]:has([class*="_trigger"][aria-haspopup="menu"], > [class*="_root"] > [class*="_trigger"][aria-haspopup="dialog"]) > [class*="_primary"] {
     margin-left: 0;
+  }
+  /* Issue #191 — the subagent running form (stop + send, both _primary) has
+     NEITHER of the zeroing rule's two gates: ModelSelect renders nothing in an
+     addressed subagent session (no aria-haspopup="menu" in the lane) and the
+     meter lives in the card's dock row since rc.2 (no _root > dialog trigger
+     in the lane either). Both primaries therefore keep the auto margin from the
+     rule above, and flex SPLITS the free space between the two auto margins —
+     the stop key lands mid-lane with a void on both sides of it.
+     Same recipe as the model-present case (:707-712): zero every auto so no
+     element competes for the slack, and let justify-content pin the whole
+     cluster right. Zeroing alone would hug the LEFT edge instead, so both
+     halves are required. Scoped to the dual-primary form, so the main
+     session's single-primary path keeps its auto untouched. */
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] {
+    justify-content: flex-end;
+  }
+  [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]):has([class*="_primary"] ~ [class*="_primary"]) > [class*="_trailing"] > [class*="_primary"] {
+    margin-left: 0;
+  }
+
+  /* --- ContextMeter hit area on 0.1.7-rc.2+ (issue #140) ---
+     The stats-line overlay parks the ring in the composer card's trailing
+     lane (right cluster next to the send key — a deliberate 2026-09-23
+     placement, kept per the reporter's confirmation at acceptance). The
+     official trigger is 16x20px, far under the touch minimum. Regrow the
+     hit area IN PLACE with a transparent ::after (the 📎 recipe).
+     2026-09-29 acceptance, final geometry (headless-measured): the ring
+     svg and its reserve are set to 18px (compat.css.ts — 16px was too
+     small to aim, 24px/20px too big, the reporter settled on 18px), the
+     width growth is absorbed by the lane's left slack so the key gaps
+     stay 6px/5px, and the hit box is a SYMMETRIC 26x26 square
+     (inset -4px) keeping the generous touch area around the smaller
+     ring — 2px/1px clearance to the model and send keys. The track is
+     deepened to 25% black (compat.css.ts) so the donut reads as a
+     meter, not a spinner.
+     Knobs: the svg/reserve size (compat.css.ts) and this inset; the box
+     must stay a square hugging the ring, its edges clamped by the two
+     neighbouring keys. The dock container owns only this one dialog
+     trigger (the TPS stats pills render plain text), so a scoped
+     aria-haspopup="dialog" anchor cannot cross-match anything; the DOM
+     ancestry (ring inside the dock container) is unchanged by the
+     overlay's absolute positioning. */
+  [data-phase] [class*="_dock"] [class*="_trigger"][aria-haspopup="dialog"] {
+    position: relative;
+  }
+  [data-phase] [class*="_dock"] [class*="_trigger"][aria-haspopup="dialog"]::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
   }
 
   /* --- Third-party model seats (issue #60: @hytime/dsh-thinking-effort) ---
@@ -731,28 +953,102 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      screen at 393px (reporter-measured: root x=106, panel left=-230; with our
      stylesheet disabled the root sat at x=339 and the panel at +3, which pins
      the blame on our injection). Both repairs anchor on the plugin's own
-     stable data-seat-* markers (identical across v0.2.3-v0.3.1) and leave the
+     stable data-seat-* markers (identical across v0.2.3-v0.3.7) and leave the
      official pill untouched:
      1. the seat root stretches across the trailing lane with its content
         pushed to the right edge, so the closed chip welds onto the
         [meter][send] cluster AND the grown root consumes all free space,
         which zeroes the meter fallback's margin-left:auto (flexible lengths
-        resolve before auto margins — no double void);
-     2. while the panel is open its anchor is re-centered on the stretched
-        root (the same left:50% + translateX recipe as the official menu
-        rule), so the panel hugs the composer's right side and the plugin's
-        own min(336px, 100vw - 32px) width keeps it inside the viewport at
-        every width. The reporter's rejected translateX attempt centered on
-        the UNFIXED zero-width root; centering only works once the root is
-        stretched. */
+        resolve before auto margins — no double void). The root is also made
+        position:static so the panel below anchors to the composer card
+        instead — the root is 0-width while the panel is open, so any
+        root-relative offset is meaningless;
+     2. while the panel is open its anchor is laid over the composer card
+        (left:0/right:0 against the card's padding box + an auto-margin
+        centre), so the panel is centred on the card, never rides the
+        collapsed root and never leaves the viewport.
+
+     ── 2026-10-04, thinking-effort 0.3.7: the old centring recipe had to go ──
+     Repair 2 used to be 'left:50%; right:auto; transform:translateX(-50%)'.
+     That recipe only worked while the plugin positioned nothing itself: a
+     mobile viewport left the panel hanging off whichever edge the collapsed
+     root sat near. 0.3.7 added its own narrow-screen clamp, which writes an
+     INLINE 'left' (390px phone, new chat: root x=122, inline left=-106px —
+     i.e. 16px, exactly the right place). Inline 'left' wins over the
+     stylesheet, so the recipe's 'left' became dead weight while its
+     'transform' kept firing, shifting the panel half its width further left:
+     x = 122 + (-106) + (-168) = -152px, off screen by 152px — the reproduced
+     bug. Two layers each half-applied. The fix keeps repair 1 (the stretch
+     is still what welds the closed chip onto the [meter][send] cluster) and
+     replaces repair 2 with the card-anchored recipe above; 'transform:none'
+     is what neutralises the stray translateX, and 'left:0' is '!important'
+     because it must beat that inline value. Panel width stays the plugin's
+     own (336px, capped at 100%) so the Off/High/Max ticks keep their
+     designed spacing.
+
+     The panel opens bottom:calc(100% + 8px) above the card, but the card is
+     only 70-108px tall on a phone while the panel is 208px, so it always
+     overflows upward — that is the plugin's own desktop behaviour and is
+     kept. What is NOT acceptable is overflowing the VIEWPORT, so three
+     guards follow (the inner listbox, the keyboard-short phone, landscape).
+     Every guard stays inside this mobile media query: desktop untouched. */
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] {
     flex: 1 1 auto;
     justify-content: flex-end;
+    /* Keep parked here rather than in a second rule: the panel below anchors
+       to the card, not to this root. */
+    position: static !important;
   }
   [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    left: 0 !important;
+    right: 0 !important;
+    max-width: min(100%, 420px) !important;
+    transform: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Guard 1 — the panel's inner model listbox opens upward (bottom:58px
+     inside the panel) with max-height:min(220px, 100vh - 96px). On a short
+     screen that ceiling is taller than the room above the panel, so the
+     listbox pokes past the viewport top (320x568: menu y=-41). Clamp it to
+     half the viewport minus the panel's own 58px offset + padding. */
+  @media (max-height: 700px) {
+    [data-seat-model-menu] {
+      max-height: min(220px, calc(50vh - 110px)) !important;
+    }
+  }
+
+  /* Guard 2 — with the on-screen keyboard up (portrait, ≤505px tall) there
+     is not even 208px of room above the card. Let the whole panel scroll
+     inside itself instead of escaping the top; children keep their natural
+     height so the slider and its ticks are never squashed. */
+  @media (orientation: portrait) and (max-height: 505px) {
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
+      max-height: calc(50dvh - 45px) !important;
+      overflow-y: auto !important;
+      overscroll-behavior: contain !important;
+    }
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] > * {
+      flex: 0 0 auto !important;
+    }
+  }
+
+  /* Guard 3 — landscape: above the card there are only ~156px (the card
+     sits low, the panel is 208px), so an upward opening can never fit.
+     Detach the panel into a bottom-docked sheet instead; it floats clear
+     of the card and the viewport top. */
+  @media (orientation: landscape) {
+    [data-phase] [class*="_card"]:has(textarea, [data-composer-input]) [class*="_row"]:has([class*="_trailing"]) > [class*="_trailing"] [data-seat-root] > [data-seat-panel] {
+      position: fixed !important;
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 12px !important;
+      top: auto !important;
+      transform: none !important;
+      margin: 0 auto !important;
+      max-width: min(100%, 420px) !important;
+    }
   }
 
   /* --- Composer file entry (0.1.6 host) ---
@@ -770,11 +1066,17 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        （面积 +47%），再由下面的 ::after 向外扩 4px（最终命中区约 42×42）。
        **图标位置不变**：盒宽 +6 后 margin-left 从 -10 收到 -13，图标中心原地不动；
        高度对齐发送键的 34px，行高不受影响。 */
-    width: 34px !important;
-    min-width: 34px !important;
-    max-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
+    /* 2026-10-07 店主：「点一下有一层深一点的灰色，也有一层浅一点的灰色，去掉一层」。
+       根因是**嵌套两层**：宿主的按钮盒底色（34x34、圆角 8）与我们的 ::before 胶囊
+       （28x28 圆）半透明叠半透明 —— 重叠区深、外圈浅。压层叠（!important）在真机上
+       压不住那一层（实测按下仍是 233 外圈 + 222 内层），所以改成**结构上只有一层**：
+       可见胶囊 = 按钮盒本身。盒子 28x28 + 全圆角，与加号同尺寸；图标中心不变
+       （盒宽 34→28 ⇒ margin-left 由 -11 收到 -8）；命中区仍由 ::after 外扩。 */
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
     padding: 0 !important;
     position: relative !important;
     /* 左移 10px + 图标 14→16px（2026-09-23，店主："太往右了、有点小"）：
@@ -785,11 +1087,11 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        = 盒左缘 + 8.85，故盒左缘取 98 ⇒ margin-left: -10px（吃掉 6px gap 后再
        压进 modes 尾部留白 4px，不碰它的墨迹：chevron 墨迹止于 ~91）。
        这一个数值就是"往左多少"的旋钮，可按眼睛调，别动别的。 */
-    margin: 0 0 0 -11px !important;
+    margin: 0 0 0 -8px !important;
     display: grid !important;
     place-items: center;
     border: 0 !important;
-    border-radius: 8px;
+    border-radius: 999px;
     background: transparent;
     color: inherit;
     cursor: pointer;
@@ -808,9 +1110,24 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     background: transparent;
     transition: background .12s ease;
   }
-  [data-composer-card] [data-mobile-nav="file-upload"]:hover::before,
-  [data-composer-card] [data-mobile-nav="file-upload"]:active::before {
+  [data-composer-card] [data-mobile-nav="file-upload"]::before {
+    /* 胶囊已由盒子本体承担，这一层永久透明（保留节点是为了不惊动既有锚点）。 */
+    background: transparent !important;
+  }
+  /* 2026-10-07 店主："点一下有一层深一点的灰色，也有一层浅一点的灰色，去掉一层"。
+     真因是**半透明叠半透明**，不是我们画了两层胶囊：宿主全局 CSS 里有
+     「button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}」
+     （特异性 0,2,1 > 上面那条基础规则的 0,2,0，所以它赢了）与
+     「button:active{background-color:#0000001f}」，两者都画在这个按钮的**盒子**上；
+     而 ::before 的可见胶囊又画一层 ⇒ 重叠区深、外圈浅，看着就是两层灰。
+     可见胶囊只留 ::before 一层：盒子在所有状态下强制透明（::after 只有命中区、无底色）。 */
+  [data-composer-card] [data-mobile-nav="file-upload"]:hover,
+  [data-composer-card] [data-mobile-nav="file-upload"]:active,
+  [data-composer-card] [data-mobile-nav="file-upload"]:focus-visible {
     background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: transparent !important;
   }
   /* 压掉浏览器默认的淡蓝 tap 高亮（店主 2026-09-23："单纯点击图标，出现一个淡蓝色
      的原始的点击画面"）。读源码取证：宿主头部那几个包（dsh-client-ui-subagent /
@@ -830,6 +1147,20 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   [data-composer-card] [role="button"],
   [data-composer-card] [tabindex] {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 深色下顶栏与页面底色的断层（issue #176「减轻顶部纯黑区域与网页头部的突兀色差」/
+     2026-10-11 真机反馈：手机上头部呈灰黑一块，跟上面那行系统时间栏分得太开）。
+     实测（393×844，真实会话，深色）：page/body 与 frame 都是 #151517（--dsw-alias-bg-base），
+     而宿主会话头部自带层色 #232324，头部上方还夹着一条跟随页面底色的安全区带
+     ⇒ 「深色带 → 较亮头部 → 深色内容」三段断层。
+     处理：手机档（本块在移动媒体查询内）把头部底色并到页面底色，层次改由分隔线与内容承担；
+     浅色档宿主两头同为白、本来就没有断层，不参与；桌面档不碰。
+     宿主深色标记挂在 body 上（实测设 body[data-ds-dark-theme] 即切到 #151517），
+     html 上若也挂同一个标记一并覆盖。 */
+  body[data-ds-dark-theme] [data-mobile-nav="frame"] [data-phase] header,
+  html[data-ds-dark-theme] [data-mobile-nav="frame"] [data-phase] header {
+    background-color: var(--dsw-alias-bg-base, #151517) !important;
   }
   /* 头部 UI 的按下反馈（店主 2026-09-23："是头部 UI，没有触发反馈"）。
      取证：头部四个宿主包 :active 全为 0，反馈只挂 :hover。
@@ -866,8 +1197,8 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   [data-composer-card] [data-mobile-nav="file-upload"]::after {
     content: '';
     position: absolute;
-    inset: -4px;
-    border-radius: 12px;
+    inset: -7px;
+    border-radius: 999px;
   }
   /* A busy submit phase or a subagent session refuses attachments. The host
      gates intake on canAcceptDrop (package-private), so this reads the closest
@@ -929,6 +1260,22 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding-left: 0 !important;
     padding-right: 8px !important;
     position: relative !important;
+    /* Opaque AND above the flow, both required: the host bar has no background,
+       and the message flow is a later sibling, so it painted OVER the bar (three
+       headless screenshots 2026-10-07: transparent -> content read through the
+       title row; opaque but unraised -> byte-identical to transparent, i.e. the
+       background was painted underneath; opaque + raised -> pixel-identical to
+       the untouched band). The scroll box runs underneath because of the
+       "selection-drag autoscroll ramp" rule above (it lifts it by
+       --mobile-nav-header-h). Same surface token the panel ghost uses, so themes
+       carry over; the host keeps its --dsw-alias-border-l3 bottom border.
+       z-index 30 clears the flow's own raised layers (host banners measured at
+       z 6-7 and the marks slot / composer seat at 7 on the live host) while
+       staying under this plugin's overlay tier (55+ backdrops/panels, FAB 21 is
+       hero-only where the header is hidden, drawer/menus 1000+) so a dialog or
+       the drawer still covers the bar. */
+    background: var(--dsw-alias-bg-layer-1, #fff) !important;
+    z-index: 30 !important;
   }
   /* The hero phase's empty header must stay hidden on phones. The host hides
      it via the headerHidden class at (0,1,0), but its own session-controller
@@ -1082,6 +1429,14 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     left: auto !important;
     top: 12px !important;
     z-index: 2 !important;
+  }
+  /* 手机档（≤767 + coarse）：文件夹按钮右移 4px（原 8px），为标题行右簇再腾出空间。
+     与左侧 ☰ 的 8px 不再对称，是用户明确接受的取舍（2026-10-12 用户规格）。
+     平板档这一档没被要求动，所以留在这条手机档作用域里；共用档保持本批之前的值。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="files"] {
+      right: 4px !important;
+    }
   }
   [data-mobile-nav="frame"] [data-phase] header [class*="_headerActions"] {
     display: flex !important;
@@ -1312,6 +1667,9 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      plus 2px of breathing room, so restore that instead of narrowing the
      opener: 46px clears the 36px box at right:8 by 2px at every width. */
   [data-mobile-nav="frame"] [data-phase] header [class*="wSkVaW_titleCluster"] {
+    /* 本批之前的值。2026-10-12/13 那串「46 → 40 → 36 → 32 → 26 → 34」的实验
+       **只针对手机档**（后台任务圆点搬进标题行后与预设 chip 的间距），已整串
+       搬进下面那条手机档作用域；共用档（= 平板档）保持本批之前的 46px 不动。 */
     padding-right: 46px !important;
   }
   /* Header crowding on narrow phones.
@@ -1357,6 +1715,18 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
       display: none !important;
     }
   }
+
+  /* --- 顶栏状态 chip 座位契约：**暂缓**（2026-10-12 受控实验后整块撤回）---
+     用户规格：「子智能体 chip 固定不变，后台任务 chip 出现在它左侧、间隔 2px」。
+     首版用 flex 容器 + order + gap 实现，**受控实验证明该机制不成立**：
+     子智能体 chip（ZKlsPq_root）在 alpha.2 代宿主上被插件自己钉成 position:absolute，
+     绝对定位元素脱离文档流，flex 的 order 与容器 gap 都决定不了它的落点 ——
+     注入一颗合成 jobs chip 后该 chip 实测从 x=292 跳到 x=174（视觉间距 −211px），
+     三个目标点无一达成；容器 computed gap 也仍是宿主自己的 4px。
+     真实 jobs chip 无法在受控环境构造（宿主在后台任务数为 0 时整颗不渲染），
+     故本条**已整块撤回**，等拿到「真机带后台任务的截图 + 视觉稿」后按绝对定位口径重做。
+     撤回是安全的：本组只在两颗 chip 同时在场时匹配，撤掉后单 chip 形态回到既有那批
+     规则的管辖（受控实验：单 chip 的 rect 与撤前逐像素一致，规则匹配数=0）。 */
 
   /* --- Header popovers on mobile (dsh-client-ui-jobs / dsh-client-ui-subagent) --- */
   /* Both entries sit in the session header and both anchor their panel to the
@@ -1433,6 +1803,44 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding: 0 !important;
     padding-left: 32px !important;
   }
+  /* --- 0.2.0-rc.x：header 变 grid，座位从 titleRow 内部搬到了 header 自己的第一列 ---
+     上面两条把「面板开关的 32px 座位」记在座位自己身上（padding-left）。在
+     0.1.6-alpha.2 里 headerLeading 是 titleRow 的第一个孩子，这个 padding 就是
+     titleRow 内容盒的起点，标题的 40px 落点是它直接算出来的。0.2.0-rc.x 把 header
+     改成 grid-template-columns: auto minmax(0,1fr)：座位成了 header 的直接孩子
+     （grid-area: 1/1），titleRow 独占第二列（grid-column: 2），于是标题的 40px 落点
+     变成「网格第一列恰好 32px」的副作用——座位一旦被谁塌掉（padding 被覆盖、宽度被
+     第三方归零、display 被藏），第一列就回到 0px，标题立刻压到 left:8 的圆形开关上。
+     2026-09-22 在 0.1.6 上实测过同一个失败面（座位被 padding 简写清零 → 第一列 0px
+     → crumbs x=8、toggle 8,6 28x28），当时靠把 padding-left 补回来止住；这一代改成
+     把座位记在标题行自己身上：padding-left 加在 titleRow 上（border-box，不撑破第二
+     列），座位格归零，标题落点不再依赖座位格存在、也不依赖它的宽度算得对不对。
+     判别式是「座位是不是 header 的直接孩子」——0.1.6 及更早座位在 titleRow 内部，
+     整块不命中，老规则原样管老宿主。
+     附带修掉一条静默漂移：老规则「header > :first-child > :last-child { display:none }」
+     在 0.1.5 藏的是会话日志胶囊；0.2.0 里 header 的第一格是座位，它最后一个孩子是
+     conversation.header.leading 槽的包装元素，整条规则于是变成「藏掉整个 leading 槽」
+     （实测：往槽里注入 28x28 按钮，计算盒 0x0）。手机档这一格是插件自己的抽屉开关
+     （绝对定位 left:8），槽里的控件必然和它叠在一起，所以「藏」的结果是对的、理由
+     一直没写下来；这里按槽名显式藏，别再靠 :last-child 误伤。
+     NOTE: 本文件整体是 JS 模板字符串，注释里绝不能出现反引号。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) > [data-conversation-header-leading] {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) [data-slot="conversation.header.leading"] {
+    display: none !important;
+  }
+  /* 这里用 [class*="_titleRow"] 后缀形而不是邻近两条的 [class*="wSkVaW_titleRow"]：
+     全包只有 wSkVaW_titleRow 含这个片段（无前缀重叠，且已被 header:has 门控），
+     后缀形对哈希前缀改名免疫——座位记错地方的代价是标题静默压回开关上，不值得
+     为风格统一冒这个险。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has(> [data-conversation-header-leading]) [class*="_titleRow"] {
+    box-sizing: border-box !important;
+    padding-left: 32px !important;
+  }
   /* 0.1.6 的新头部里，titleRow 的第一个孩子是新增的空座位
      headerLeading（macOS 桌面控件，安卓上渲染 null）。插件按 0.1.5 老结构
      写的「header > :first-child > :first-child { flex: 1 1 auto }」现在套在
@@ -1472,6 +1880,8 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        @container(width<=480px) 藏掉标签、只剩 14px 图标（对账见 §6），
        这一行不再需要 6px 的呼吸量；收成 4px 让「模式 / 团队 / 文件夹」
        看起来是一组。 */
+    /* 本批之前的值。2026-10-12 的「标题这一行三个之间放宽到 6px」只针对手机档
+       （后台任务圆点搬进标题行后与预设 chip 的间距），已搬进手机档作用域。 */
     gap: 0 4px !important;
     justify-content: flex-start !important;
     align-items: center !important;
@@ -1506,6 +1916,9 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     min-width: 0 !important;
     /* 6 个汉字上限：6×14px + 左右 padding 16px = 100px。再长就在本段内横滑，
        这样标题永远不会顶到右侧的预设。 */
+    /* 本批之前的值（100px 横滑窗 + 硬切）。2026-10-12 的「缩到 80px 再改省略号、
+       最后取消硬顶改 max-width: 100%」只针对手机档（子智能体 chip 进标题行后
+       要让出约 100px），已整串搬进手机档作用域；共用档（= 平板档）保持不动。 */
     max-width: 100px !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -1525,10 +1938,10 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_crumbs"] [class*="_crumbSeg"] > button {
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    max-width: 100px !important;
-    overflow-x: auto !important;
+    max-width: 80px !important;
+    overflow-x: hidden !important;
     overflow-y: hidden !important;
-    text-overflow: clip !important;
+    text-overflow: ellipsis !important;
     white-space: nowrap !important;
     text-align: left !important;
     touch-action: pan-x !important;
@@ -1571,6 +1984,8 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     justify-content: flex-end !important;
     /* 与 titleCluster 同步收到 4px（2026-09-23）：动作行里的 chip（任务 /
        谱系 / 团队）之间也只留 4px。 */
+    /* 本批之前的值。2026-10-12 的「动作行内各 chip 之间放宽到 6px」只针对手机档，
+       已搬进手机档作用域。 */
     gap: 4px !important;
     overflow-x: auto !important;
     scrollbar-width: none;
@@ -1588,18 +2003,45 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      !important 胜宿主 (0,1,0) 普通声明，与书写顺序无关；data-mobile-nav=
      "stats" 是 stats-line 效果打的稳定标记，无哈希、跨宿主代际可用。
      本条置于 ①嵌套块外：裁切陷阱与断点 A 的档位无关，全移动宽度生效。 */
-  [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats"] {
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] {
     justify-content: flex-start !important;
+    /* 指标行的空隙在手机上偏松（2026-10-07 店主截图：「距离缩一点，更紧致一点」）。
+       宿主 dsh-client-ui-chat 的 StatsPills 叠了三层：root 的 12px 列间距 +
+       sep 的 6px 两侧 margin + pill 的 8px 内边距 ⇒ 390px 实测两个指标之间的
+       视觉空隙 ~28px。手机档收成 gap 6 / sep 2 / pill 6：同组内 ~14px、组间
+       6px，仍然留得住「·」的读法，pill 的垂直尺寸没动（触控高度由宿主
+       line-height 决定）。类名前缀 bOPqQW_ 会随宿主换代，故用子串锚并整条
+       限定在本插件自己的 stats 标记内：换代只会让规则惰性化，不会误伤别处。 */
+    gap: 6px !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_sep"] {
+    margin: 0 2px !important;
+  }
+  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_pill"] {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
   }
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-mobile-nav="files"] {
-    width: 36px !important;
-    height: 36px !important;
-    flex: 0 0 36px !important;
     /* Keep the 36px seat the reference phone UI shows (opener box 316..352 at
        360px, icon 326..342): it is the geometry the lane's 46px reservation
        above is tuned against. Mirror the toggle's centre (top:6px for a 28px
-       control -> centre y=20) by lifting the taller box to top:2px. */
+       control -> centre y=20) by lifting the taller box to top:2px.
+       本批之前的值；2026-10-12 的「座位 36→30 + top 2→5」只针对手机档，见手机档作用域。 */
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
     top: 2px !important;
+  }
+  /* 手机档（≤767 + coarse）：2026-10-12 用户规格 —— 座位 36 → 30px（原来比左侧 ☰
+     的 28px 胖一圈，用户指出"外部灰色胶囊"偏大）。top 由 2 改 5，保持图标中心仍在
+     y=20，与 ☰ 同一水平线。平板档没被要求动，仍是 36px / top:2。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-mobile-nav="files"] {
+      width: 30px !important;
+      height: 30px !important;
+      flex: 0 0 30px !important;
+      top: 5px !important;
+    }
   }
   /* 新宿主把「右侧栏入口」放进了 titleRow 的 headerCorner。手机上市宿右侧栏
      就是 Files 面板，所以它和插件的文件按钮是同一个面板的两个入口；而它带
@@ -1652,9 +2094,17 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        预留才是"整整 118px"。 */
     box-sizing: border-box !important;
   }
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([class*="QsffPG_root"]) [role="tablist"] {
-    padding-right: 118px !important;
-  }
+  /* 2026-10-12（受控实测后删除）：原「jobs 在场 ⇒ tablist 右侧预留 118px」规则
+     被证明是**惰性的** —— 同一 DOM 上切 8px ↔ 118px，tablist 的 rect、clientWidth 与
+     注入元素的 x **差量全为 0**。原因：本表 box-sizing 为 border-box，padding 落在声明
+     宽度之内、不缩小 flex 容器的 content box；而 tablist 是 overflow-x 为 auto 的滚动容器，
+     子元素可以排进 padding 区 ⇒ 预留区挡不住任何视觉重叠，只让 scrollWidth 多 110px，
+     并在溢出后造成整行左移 8px（临界从 159 抬到 167）。
+     实测临界（393×844，合成"第三方 chip"）：无 jobs 时 >159px 压到谱系 chip；
+     有 jobs（74px 文案态）时 >83px 压到 jobs chip；标签行溢出要到 260px 才发生。
+     要真正预留，border-box 下 padding 做不到，须用 margin-right 或
+     width: calc(100% - Npx)（该替代方案未实测，属推断）；而 83px 这个上限的根源是
+     jobs 的定位公式（左缘 = 谱系左缘 − 2 − jobs 宽），要腾更多得动定位而不是 padding。 */
    /* Agent Team chip（VoX2oq_root，data-team-action）被 rc 代 pin 规则钉死
       （flex 0 0 auto + order 2，实测 98.7px），动作行里唯一可缩的模式 chip
       被压到 56.2px（390px 实测「创造模式」只剩「创造…」）。模式 chip 是
@@ -1685,10 +2135,18 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
       left: 3px !important;
     }
   }
+  /* @patch
+     id: header-chip-seat
+     for: 宿主 3.0.6 的 headerActions / titleCluster 槽位（两颗状态 chip 的座位）
+     why: 槽位树由宿主 React 管理，本插件不能插入自有节点，只能靠 CSS 改排位
+     until: 上游在标题行提供稳定的 actions/title 槽标记，或把两颗 chip 分到独立容器
+     test: tests/a2-header-gating.test.ts
+  */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] [class*="QsffPG_root"] {
+    /* 本批之前的值：后台任务 chip 坐在标签行右端（贴 header 底边 + 下内边距 9px
+       = 与标签文字齐平）。2026-10-12 的「搬进标题行」只针对手机档，见手机档作用域。 */
     position: absolute !important;
     right: 8px !important;
-    /* 和子代理 chip 同一套：贴 header 底边 + 下内边距 9px = 与标签文字齐平。 */
     bottom: 0 !important;
     height: 25px !important;
     min-height: 25px !important;
@@ -1711,6 +2169,21 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding: 0 2px 9px !important;
     line-height: 16px !important;
     align-items: center !important;
+  }
+  /* 手机档（≤767 + coarse）：2026-10-12 第三批·B 方案 —— 后台任务 chip **进标题行**
+     （static + order 9，排在智能体预设 chip 之后），按钮去掉贴底用的 9px 下内边距。
+     为什么只搬一颗：受控实测两颗状态 chip 同搬 ⇒ 标题触 72px 地板后右簇仍溢出 10px
+     （带文案态直接盖住文件夹按钮），所以子智能体 chip 回标签行、这颗进标题行。
+     平板档没被要求动，仍是本批之前的「标签行右端」形态。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] [class*="QsffPG_root"] {
+      position: static !important;
+      order: 9 !important;
+      margin: 0 0 0 2px !important;
+    }
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="QsffPG_root"] > button {
+      padding: 0 2px !important;
+    }
   }
   /* 头部弹层定位（jobs 任务列表 / subagent 谱系 / 预设菜单都会命中的同一族）：
      插件老规则是「弹层左缘 = chip 左缘 + 8px」，那条规则成立的年代 chip 都
@@ -1789,13 +2262,16 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      实测 84.6..264 盖住轨迹/记忆两 tab；headless 中任务已结束但
      QsffPG_root 仍在 DOM，:has 命中幽灵元素）；聚合态不受影响，让位语义
      原样保留。 */
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
-    right: 126px !important;
-  }
+  /* 2026-10-12：原「后台任务在场 ⇒ 谱系 chip 让位到 right:126px」规则已删除。
+     用户规格是主次对调（谱系 chip 固定不动、后台任务 chip 让到它左侧），
+     让位一旦保留就会把谱系 chip 推走 —— 与规格直接冲突。 */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"] > button {
     height: 25px !important;
     min-height: 25px !important;
     line-height: 16px !important;
+    /* 原 9px 下内边距是「贴 header 底边、与标签文字齐平」用的；搬进标题行后要改贴
+       预设 chip 的竖直中心（与后台任务 chip 搬上去时同一处理）。 */
+    /* 2026-10-12 用户规格：右侧内边距 4 → 2px，让 chip 的文字/箭头更靠近右缘。 */
     padding: 0 4px 9px !important;
     align-items: center !important;
   }
@@ -1814,10 +2290,8 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     right: 8px !important;
     margin: 0 !important;
   }
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([role="tablist"] button:nth-of-type(3)):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]),
-  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]):has([role="tablist"] > button:nth-child(3)):has([class*="QsffPG_root"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
-    right: 126px !important;
-  }
+  /* 2026-10-12：≥3 标签版的让位规则（原 right:126px）已一并删除 —— 同 Y1，
+     主次对调后谱系 chip 不再为后台任务 chip 让位。 */
   /* 真机反馈：「标题下面多了一条灰色滑条」。第 4/5 条为了让长标题能左右拖着看，
      把面包屑做成了横向滚动容器 —— 实测 button.wSkVaW_crumb: overflow-x:auto、
      scrollWidth − clientWidth = 88；像素实测那条灰条是 x=40.0~89.5、高 7.8、
@@ -1876,9 +2350,26 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      findHorizontalScroller/后续实测定去留（数值 48/8/180 均可调）。菜单
      position:fixed 独立定位层，不受本条影响（取证已证）。 */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"][class*="_switcherRoot"] {
+    /* 同上，进标题行流程。变体实测宽 180px，而标题行右簇只有约 229px 可用
+       （= 可用 305 − 标题地板 72 − 间隙 4），减去预设 chip 95 与间距后只剩约 124px，
+       所以这里封顶，超出部分由内部 span 的 ellipsis 收掉（见本文件 ZKlsPq span 规则）。 */
+    /* 换位后同样回标签行；标题行才需要的 124px 封顶随之撤掉。 */
+    /* 2026-10-12 用户要求：**位置定死，不被其他插件移动**。
+       绝对定位元素的落点由「四边偏移 + 包含块 + transform」三者决定，所以三处都钉：
+       ① 四边写全（含 bottom: auto），别的插件只改一条也推不动；
+       ② 包含块锁死在 header（见下面把 _titleCluster/_headerActions 钉成 static 的那条）；
+       ③ transform/margin 归零并加 !important，防被 translate / 外边距挪走；
+       ④ z-index 提固定值，防止标签行后来者把它盖住。
+       ⚠ 本块只钉「不被别的插件移动」——落点本身仍是本批之前那套（绝对定位贴
+       标签行右缘）；手机档的形态差异由手机档作用域表达。 */
+    position: absolute !important;
     left: auto !important;
     right: 8px !important;
     top: 48px !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 3 !important;
   }
   /* 聚合 chip 右锚（用户拍板 2026-09-19：中置的子代理元素应右靠）：与
      switcher 同款右靠 + 基线（top:48 → 25 高中心 60.5 ≈ tab 中心 60；
@@ -1892,10 +2383,34 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      tab/QsffPG 重叠，属无害惰性，彻底解（JS 可见性标记）留 effects
      车道。聚合 max-width min(32vw,116) 沿用基础规则不动；数值 48/8 可
      调。 */
+  /* @patch
+     id: lineage-chip-pinned
+     for: 宿主 ZKlsPq 子智能体 chip 的绝对定位落点（含包含块）
+     why: 别的插件只要给任一祖先加 position:relative，包含块被抢、chip 就会挪位；四边偏移加 transform 是唯一能钉死的手段
+     until: 宿主为该 chip 提供非绝对定位的稳定槽（届时四边偏移与祖先 static 都可删）
+     test: tests/a2-header-gating.test.ts
+  */
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"]:not([class*="_switcherRoot"]) {
+    /* 2026-10-12 用户规格（第三批·B 方案）：把**子智能体 chip 从标签行搬进标题行**，
+       坐在「智能体预设 chip」与「文件夹按钮」之间 —— 即原先后台任务圆点占的那个位置；
+       后台任务圆点同时回到标签行（见 QsffPG 规则）。
+       原来它是 absolute + right:8px + top:48px（相对 header，视觉上落在标签行 y=42..67）。
+       进流程后 left/right/top 全部失效，由 order 排在预设 chip 之后。 */
+    /* 2026-10-12 换位后回标签行：绝对定位贴右缘、top:48（原形态）。 */
+    /* 2026-10-12 用户要求：**位置定死，不被其他插件移动**。
+       绝对定位元素的落点由「四边偏移 + 包含块 + transform」三者决定，所以三处都钉：
+       ① 四边写全（含 bottom: auto），别的插件只改一条也推不动；
+       ② 包含块锁死在 header（见下面把 _titleCluster/_headerActions 钉成 static 的那条）；
+       ③ transform/margin 归零并加 !important，防被 translate / 外边距挪走；
+       ④ z-index 提固定值，防止标签行后来者把它盖住。 */
+    position: absolute !important;
     left: auto !important;
     right: 8px !important;
     top: 48px !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 3 !important;
   }
   /* 手机档（≤767 + coarse）：上面两条的 top:48 是按"标题行 40 + 页签行 36"的老几何
      推的（25 高中心 60.5 ≈ tab 中心 60）。本插件的手机档把页签行压到 26px 之后，
@@ -1923,6 +2438,74 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
       同为 (0,4,1) !important 且书写在后，同特异性后到先得把 separator
       顶回 display:block（实测 390px separator [269.1,·,5.5,25] 实绘可见）。
       加 :not 把 separator 从本条管辖范围摘掉，隐藏权交还 rc 代那条。 */
+  /* 2026-10-12 用户规格：给智能体预设 chip 套一层**不可见的胶囊**。
+     动机：公共车道里预设 chip 与子智能体 chip 会贴在一起（间距已被收到 0），
+     不套这层就分不清是两个控件。
+     做法：外壳用 ::before 画一个透明底的圆角胶囊（「灰色层、不显现」——形状与圆角
+     就位，底色透明；将来要显灰只需把 background 换成变量），实际间隔由 margin-right
+     给出（几 px，用户明确要求「不至于为 0」）。
+     用 ::before 而不是给本体加 padding：本 chip 的图标是 position:absolute 贴左缘的，
+     给本体加左内边距会让文字右移而图标不动，两者会叠上。 */
+  /* @patch
+     id: preset-invisible-capsule
+     for: 宿主 SVAs4q_label 智能体预设 chip 的外包裹层
+     why: 该 chip 的图标是 position:absolute 贴左缘，给本体加内边距会让文字与图标叠上；只能加一层绝对定位外壳
+     until: 宿主给预设 chip 自身加上左右内边距（本外壳与 margin 一并删）
+     test: tests/a2-header-gating.test.ts
+  */
+  /* 智能体预设 chip（SVAs4q_label）：**本批之前这里没有任何本插件的规则** ——
+     宿主的 max-width 180px + ellipsis 边界照旧，外层不加包裹层。
+     2026-10-12 的「不可见胶囊 + 可收缩 + 超长省略号」是一组只针对手机档的改动，
+     见下面的手机档作用域（平板档继续走宿主原样）。 */
+  /* 手机档（≤767 + coarse）：2026-10-12 用户规格 —— 给智能体预设 chip 套一层
+     **不可见的胶囊**。动机：公共车道里预设 chip 与子智能体 chip 会贴在一起
+     （间距已被收到 0），不套这层就分不清是两个控件。做法：外壳用 ::before 画一个
+     透明底的圆角胶囊（「灰色层、不显现」——形状与圆角就位，底色透明），实际间隔由
+     margin-right 给出（几 px，用户明确要求「不至于为 0」）。用 ::before 而不是给
+     本体加 padding：本 chip 的图标是 position:absolute 贴左缘的，给本体加左内边距
+     会让文字右移而图标不动，两者会叠上。
+     另加「长名字防护」：宿主自带的 min-width:auto（= 内容宽）会让长名字把同级挤出去、
+     先压垮标题的 72px 地板再让整簇溢出；这里补可收缩 + min-width:0 + 省略号。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="SVAs4q_label"] {
+      position: relative !important;
+      /* 先归零（去掉与宿主自带 2px 右内边距的重复），用户看过之后要求
+         「外包裹层的 px 抬一丢丢」⇒ 占回 2px。现在的构成 = 宿主自带右内边距 2 + 本 margin 2
+         + 容器 gap 0 + 团队 chip 左内边距 2 = 6px（改前是 11px，大头那 7px 已收掉）。 */
+      margin-right: 2px !important;
+      flex: 0 1 auto !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      border-radius: 999px !important;
+    }
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="SVAs4q_label"]::before {
+      content: '' !important;
+      position: absolute !important;
+      /* 用户要求「外包裹层的 px 抬一丢丢」：左右各 4 → 5px，上下也包 1px。 */
+      inset: -1px -5px !important;
+      border-radius: 999px !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+    /* 2026-10-12 用户反馈「预设与团队之间距离太多」：实测大头来自**团队 chip 自己**的
+       左内边距（宿主 .VoX2oq_trigger 是 padding: 3px 7px）。7 → 2px 收掉 5px，
+       与上面预设的 margin 归零合起来，这段总间距从 11px 降到 4px（视觉上才看得出来）。
+       代价：该按钮左侧命中区窄 5px（高度仍由 min-height: 28px 保证）—— 用户若觉得难点，
+       把 2px 往上调即可，值就是唯一旋钮。 */
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [data-team-action][class*="_root"] > button,
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="VoX2oq_trigger"] {
+      padding-left: 2px !important;
+    }
+  }
+  /* 2026-10-12：把子智能体 chip 与 header 之间的两个祖先钉成 static ——
+       绝对定位元素认「最近的已定位祖先」作包含块，别的插件只要给它们其中任何一个
+       加上 position:relative，chip 就会以那个元素为基准重新落点（相对位移）。
+       二者今天本来就不是定位元素，钉成 static 对现有布局零影响，只是把包含块锁死在 header。 */
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) > [class*="_titleCluster"],
+  [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_titleCluster"] > [class*="_headerActions"] {
+    position: static !important;
+  }
   [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="ZKlsPq_root"] span:not([class*="_separator"]) {
     display: block !important;
     overflow: hidden !important;
@@ -2054,14 +2637,22 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     border-radius: 14px !important;
     animation: dsh-web-mobile-sheet-in .22s var(--ds-ease-out, ease-in-out);
   }
-  /* The settings sheet's dimmed mask fades in with the panel (the mask is
-     the first child of the overlay that directly contains the sheet). */
-  :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"])) > :first-child {
+  /* The settings sheet's dimmed mask fades in with the panel: the mask is the
+     overlay's first child, so it is reached as a direct child of the overlay
+     that holds the settings panel. The panel is identified by its stable
+     data-shortcut-modal="settings" marker (host value; the shortcut editor uses
+     "shortcut-edit" instead, so this cannot reach that family) plus
+     role/aria-modal. Keep the outer :has() ATTRIBUTE-ONLY: an earlier form
+     tested the panel's shape by nesting a :has() inside this one, which is an
+     invalid selector — Chromium dropped the entire rule without a word and the
+     fade never ran once (issue: settings mask, found 2026-09-27 and 2026-10-10).
+     scripts/css-structure-check.mjs now fails the build on nested :has(). */
+  :has(> [aria-modal="true"][data-shortcut-modal="settings"]) > [class*="_mask"] {
     animation: dsh-web-mobile-fade .18s var(--ds-ease-out, ease-in-out);
   }
   @media (prefers-reduced-motion: reduce) {
     [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"]),
-    :has(> [aria-modal="true"]:has(> :first-child > :last-child > button):not(:has([role="navigation"])):not(:has([class*="ZuhsRW"])):not([data-shortcut-modal="shortcuts"])) > :first-child {
+    :has(> [aria-modal="true"][data-shortcut-modal="settings"]) > [class*="_mask"] {
       animation: none !important;
     }
   }
@@ -2327,6 +2918,20 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   [data-mobile-nav="frame"] section[data-plugin-panel] [data-plugin-row-detail] button[class*="_crumb"] {
     margin-left: var(--dsh-web-mobile-panel-clearance) !important;
   }
+  /* 自动化任务面板（@deepseek-ai/dsh-client-ui-schedule，0.2.0-rc.2 随实验性
+     bundle 提供）不是 section[data-plugin-panel]：该 bundle 里
+     「data-plugin-panel」命中 0 次，页头是 t-XoWW_pageHeading(display:flex)，
+     标题是 h1{flex:1;min-width:0;margin:0}。盒模型取自宿主自己的 CSS：
+     pageContent padding = clamp(24px,4vw,48px)（390px 视口取 24px），
+     于是标题左缘 24px 落进 FAB 盒 [10,12,38,38]（右缘 48）——20px 字号的
+     首字被整颗压住（2026-10-06 报障截图）。让位量沿用同一口径
+     （56px − 宿主自身 padding）；作用对象取 h1：它是 margin:0 的 flex item，
+     margin-left 只吃 flex 自由空间，不需要 width 补偿，也不会像整宽盒那样
+     顶出横向滚动条。「_pageHeading」片段在全部宿主 client bundle 里只有这一个
+     渲染者（2026-10-06 全量扫描），不误伤。 */
+  [data-mobile-nav="frame"] [class*="_pageHeading"] > h1 {
+    margin-left: var(--dsh-web-mobile-panel-clearance, calc(56px - clamp(24px, 4vw, 48px))) !important;
+  }
   /* 快捷键弹层在手机上的落地形态。上面那条 :not([data-shortcut-modal="shortcuts"])
      只是把它从设置面板家族里摘出来、还它官方的内部排版（2026-09-25 实测：纵向列
      回来了、标题「快捷键」回来了、列表 441px 可滚、无横向溢出、docScrollWidth
@@ -2386,6 +2991,43 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        重复变暗：屏幕的整体明暗在弹层开合前后完全一致，剩下的变化只有卡片本身。 */
     background: transparent !important;
   }
+  /* --- 插件管理页（dsh-client-ui-plugin-manager）：整卡 / 整行可点 ---
+     2026-10-07 店主：「打开如图里面的功能，需要点击那些加黑字体才行」。读宿主源码确认到两层：
+     ① 宿主**已经**给标题按钮铺了整卡覆盖层（「.cardOpen:after{position:absolute;inset:0}」 配
+        「.cardLink{position:relative}」，标准 stretched-link）；
+     ② 但卡片 DOM 顺序是 icon → titleRow(button) → **cardDesc**，描述是个 -webkit-box 盒子，
+        绘制顺序排在覆盖层**之后** ⇒ 描述整块把点击吃掉，点它什么都不发生；只有标题（按钮自身）
+        与描述以外的细缝能开详情。
+     所以本规则不是「再加一层」，而是**把覆盖层抬到描述之上**（z-index），并把卡片里的其它
+     交互件（开关等）抬得更高，保证它们仍能单独点。
+     根节点仍钉 「position: relative」：一旦宿主换代不再给 cardLink 定位，「inset:0」 的包含块会
+     落到更外层 —— 覆盖层铺满整页，就成了「点哪都开第一个插件的详情」。
+     2026-10-08 补：宿主的条目根有**三种**（li[data-plugin-package] 包卡片、li[data-plugin-row]
+     包详情里的行、li[data-plugin-item] 官方 item 卡）。item 卡（plugins.item 槽）当初漏了 ——
+     真机症状正是「有开关的包卡片能整卡点，从『终端』起的 item 卡只有加黑标题能点」。 */
+  li[data-plugin-package],
+  li[data-plugin-row],
+  li[data-plugin-item] {
+    position: relative !important;
+  }
+  li[data-plugin-package] button[class*="_cardOpen"]::after,
+  li[data-plugin-row] button[class*="_rowOpen"]::after,
+  li[data-plugin-item] button[class*="_cardOpen"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    /* 关键一行：压过同卡片里的描述/徽标等静态盒子（宿主那层没有 z-index）。 */
+    z-index: 1;
+  }
+  li[data-plugin-package] :is(button:not([class*="_cardOpen"]), a, input),
+  li[data-plugin-row] :is(button:not([class*="_rowOpen"]), a, input),
+  li[data-plugin-item] :is(button:not([class*="_cardOpen"]), a, input) {
+    position: relative;
+    /* 比覆盖层高一档：开关等控件仍在覆盖层之上，可单独点。 */
+    z-index: 2;
+  }
+
   /* ---------- sidebar panel enter / exit (see effects/panel-exit.ts) ----------
      A sidebar panel REPLACES the main area. Two motions, both short and
      horizontal, matching the drawer's own rail-in (.15s, translate + fade):
@@ -2403,26 +3045,91 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      element's first style resolution and there is no full-opacity frame first.
      The exit marker is set by JS before the swap for the same reason. */
   @keyframes dsh-web-mobile-panel-in {
-    from { opacity: 0; transform: translateX(16px); }
+    from { opacity: .55; transform: translateX(100%); }
   }
-  /* Deliberately NOT reusing dsh-web-mobile-fade: the exit cleanup listens on
-     animationend BY NAME, and that keyframe also runs on the backdrop and the
-     dialogs, which are frame descendants too — reusing it would end the
-     transition early. */
+  /* Deliberately NOT reusing dsh-web-mobile-fade. The reason is the GHOST tail,
+     not the whole exit: since 2026-10-12 the reveal side compares Animation
+     objects (panel-exit.ts finishMain reads event.animationName only for the
+     ghost), and the ghost cleanup still listens on animationend BY NAME
+     (panel-exit.ts ghostEnd). dsh-web-mobile-fade also runs on the backdrop and
+     the dialogs, which are frame descendants too — reusing it would end the
+     ghost early. Comment corrected 2026-10-13 (was claiming the whole exit
+     listens by name; the code had moved on). */
   @keyframes dsh-web-mobile-panel-reveal {
-    from { opacity: 0; }
+    from { opacity: 0; transform: translateX(-14px); }
   }
   [data-mobile-nav="frame"]:has([class*="panelRow"][aria-current="page"]) [class*="_centerCol"] > * > * {
-    animation: dsh-web-mobile-panel-in .15s var(--ds-ease-in-out, ease-in-out) backwards;
+    animation: dsh-web-mobile-panel-in .28s cubic-bezier(0, 0, .2, 1) backwards;
   }
   [data-mobile-nav="frame"][data-mobile-panel-exit]:not(:has([class*="panelRow"][aria-current="page"])) [class*="_centerCol"] > * > * {
     /* ease-out rather than the shared in-out curve: the panel vanishes and the
        conversation appears on the same frame, so the fade has to come up fast
        or the first frames read as a flash of empty background. */
-    animation: dsh-web-mobile-panel-reveal .15s cubic-bezier(0, 0, .2, 1) backwards;
+    animation: dsh-web-mobile-panel-reveal .18s cubic-bezier(0, 0, .2, 1) backwards;
+  }
+  /* ---------- 面板进出：从侧面滑出 / 从原路滑回（2026-10-07 店主两轮报障） ----------
+     ① 第一轮：「退出的时候看着跟掉帧一样，直接回到聊天界面」—— 逐帧实测（390×844，插件页）：
+        点返回后的**第一帧**面板元素就已从 DOM 消失，退场动画落在 0×0 空槽上。
+     ② 第二轮：「空档有点久了……像打开侧边栏一样，从侧面滑出来，然后从原路返回」——
+        上一版把切换推迟 220ms 等真面板滑完，结果会话重挂那次 commit（长会话 ~390ms）
+        又往后挪了 220ms，空档反而更明显。
+     终态：退场不再动真面板，而是把面板 clone 成**冻结快照**（panel-exit.ts 里的
+     panel-ghost），**立刻**切换，让快照在合成器上滑回右侧 —— 主线程忙着重挂会话时它照样
+     不掉帧；进场整屏从右侧滑入（时长与抽屉的 .28s 对齐），会话侧从左侧 14px 滑回。
+     方向：进 = 从右往左推入，退 = 原路推回右侧。 */
+  [data-mobile-nav="panel-ghost"] {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    pointer-events: none;
+    overflow: hidden;
+    background: var(--dsw-alias-bg-layer-1, #fff);
+    animation: dsh-web-mobile-panel-ghost-out .28s cubic-bezier(.4, 0, .2, 1) both;
+  }
+  [data-mobile-nav="panel-ghost"] > * {
+    width: 100%;
+    height: 100%;
+  }
+  @keyframes dsh-web-mobile-panel-ghost-out {
+    to { opacity: .72; transform: translateX(100%); }
+  }
+  /* ---------- 长会话：消息块 content-visibility（2026-10-07 实测） ----------
+     店主报「对话越长、切换/开侧边栏越卡」。真宿主取证（最长会话，中心列 ~6000 节点）：
+       · 点抽屉那一拍 = 236ms longtask / 3 条（短会话 0ms），且随会话长度暴涨；
+       · CPU profile：「(program)」（样式计算/布局/绘制）1216ms、宿主自己的
+         「getAnimations({subtree:true})」 75ms、宿主 JS 个位数 ms、**插件 JS ≈ 8ms**
+         ⇒ 代价是「大 DOM 的布局/绘制」，不是插件逻辑。
+     这里让会话滚动区里的**消息块**自己跳过屏外内容的布局/绘制（窄选择器：只命中
+     滚动区的直接子块，本次实测 3 个；宿主的 scrollBody 自身用 :not 排除）：
+       · 运行时注入 A/B（同一会话，每臂 n=3）：点抽屉长任务 关 = 247/62/143ms
+         （复测 386/206）→ 开 = **57/61/70ms**（紧致一条 ~60ms 带）；
+       · 「contain-intrinsic-size: auto 320px」：auto 表示「渲染过就用记住的真实高度」，
+         只有从未渲染过的块才吃 320px 兜底 ⇒ 本次实测 scrollHeight 17699 前后不变、
+         置顶/置底位置正常，没有滚动跳变。 */
+  [data-mobile-nav="frame"] [class*="scrollBody"] [class*="_scroll"]:not([class*="scrollBody"]) > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 320px;
+  }
+  /* ---------- 文档预览的代码行：屏外行跳过布局/绘制（2026-10-09 实测） ----------
+     报障场景：打开一份 13.4k 行文件的文档预览（DOM 23,662 节点）后整页卡死。
+     真机读数（Android 16 WebView）：单帧最差 269 / 310 / 395 / 485 / 530ms，
+     rAF 帧率掉到 2 / 5 / 17，长任务每秒合计最高 1031ms；加上下面这条规则后
+     最长帧 33ms、帧率 88–119、长任务归零，只剩首次挂载建 React 元素的那几帧。
+     代码行行高统一（约 20px），所以 contain-intrinsic-size 的估值精确，滚回很久
+     以前的历史也不会跳滚动条 —— 这正是它与上面那条消息块规则（高度差异大、
+     兜底给 320px）分开写的原因。
+     选择器保持窄：只在移动 frame 内，且必须落在宿主文档预览模块自己的代码行
+     容器里（dsh-client-ui-sidebar-documentpreview 的 TextPreview：_textDocument
+     容器中的 _line 行）。同模块的 _preview 是更泛的词根，chat / conversation /
+     deliverables 等别的宿主模块也有这个名字，纳入会越界改到那些面板，所以不收。
+     这一条只省布局与绘制，不省 React 挂载的 JS，「切换会话」的卡顿不在它的射程内。 */
+  [data-mobile-nav="frame"] [class*="_textDocument"] [class*="_line"] {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 20px;
   }
   @media (prefers-reduced-motion: reduce) {
     [data-mobile-nav="frame"]:has([class*="panelRow"][aria-current="page"]) [class*="_centerCol"] > * > *,
+    [data-mobile-nav="panel-ghost"],
     [data-mobile-nav="frame"][data-mobile-panel-exit]:not(:has([class*="panelRow"][aria-current="page"])) [class*="_centerCol"] > * > * {
       animation: none !important;
     }
@@ -2509,13 +3216,102 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
   }
   /* ---------- 会话行的 ⋯ 菜单在触屏常显（2026-09-22 交互契约） ----------
      宿主只在 :hover 和 menuOpen 时显示 _rowActions，而手机没有 hover。
-     长按以前是触屏进这个菜单的唯一路径，现在长按改成「改会话名」（见
-     phone-chrome.ts 的 requestRowRename → 标题 dblclick），所以把锚点常显，
-     删除 / 归档 / 分叉 继续有触屏入口。行内布局不动：标题是 flex:1 +
-     min-width:0，自己让位并省略；host 的 time / pinIndicator 保持原样。
-     只作用于抽屉里的会话行，搜索行（searchResultRow）不受影响。 */
+     长按改名已于 2026-10-07 下线（真机上它依赖的事件重放到不了宿主），
+     所以这个锚点是触屏到达重命名 / 分叉 / 归档 / 删除的唯一入口，必须常显。
+     行内布局不动：标题是 flex:1 + min-width:0，自己让位并省略；host 的
+     time / pinIndicator 保持原样。只作用于抽屉里的会话行，搜索行
+     （searchResultRow）不受影响。 */
   [data-mobile-nav="frame"] [class*="sessionRow"] [class*="_rowActions"] {
     display: inline-flex !important;
+  }
+  /* ---------- 归档 / 置顶快捷按钮在手机档收进 ⋯ 菜单（issue #154） ----------
+     宿主把两颗快捷按钮注册进「sidebar.workspaces.session.row.action」槽位
+     （archive order 100 / pin order 200）；_rowActions 一常显，抽屉里每一行
+     就多两颗图标、行尾发挤，而手机用户多数并不需要这两个入口。四个动作
+     （归档 / 取消归档 / 置顶 / 取消置顶）在 ⋯ 菜单里都有，所以按宿主自己的
+     aria-label 精确匹配隐藏它们——⋯ 锚点的 label 含会话标题（「会话“X”的
+     操作」/「Session actions for X」），精确匹配不会误撞。宿主字典目前只有
+     zh/en 两套（2026-10-10 核对 0.2.0-rc.2 产物），换到别的语言时本规则静默
+     失效：按钮照常显示，不会隐藏错东西；第三方注册进同一槽位的快捷按钮也
+     不动。 */
+  [data-mobile-nav="frame"] [class*="sessionRow"] [class*="_rowActions"] :is([aria-label="归档会话"], [aria-label="取消归档"], [aria-label="置顶会话"], [aria-label="取消置顶"], [aria-label="Archive session"], [aria-label="Unarchive session"], [aria-label="Pin session"], [aria-label="Unpin session"]) {
+    display: none !important;
+  }
+
+  /* ---------- 提问卡（ask-user）头部按钮热区（issue #140） ----------
+     宿主 dsh-client-ui-user-questions 的 QuestionComposer 头部两颗图标按钮
+     ——「收起问题卡片」与「放弃整组问题」——官方 24×24px、headerActions
+     gap 4px，远低于触控下限；「放弃」紧贴「收起」（放弃 = pending.cancel()
+     后 actions.clear，整组草稿不可恢复地清空，宿主无确认），单手误触即丢
+     内容。手机档原地放大命中盒（::after 透明扩展，墨迹与版式零变化），
+     同时拉开两颗按钮的节距：24px 按钮 + 12px gap + ±4px 扩展 = 32px 命中
+     盒、命中盒之间净空 4px——扩展幅度若超过节距的一半，两颗命中盒会互相
+     重叠，反而制造新的误触，这是本组数值的硬约束。
+     作用域：头部动作区专用（_headerActions 后代），翻页器的 prev/next 也
+     是同族 iconButton，但节距只有 6px，吃不下 ±4px 扩展，不掺和。哈希族
+     Mbwy4a_ 是该包 QuestionComposer.module.css 的稳定前缀，哈希变更时整组
+     规则自动失效，不误伤别家（哈希子串锚，非后缀锚，见 pitfalls「哈希子
+     串」）。 */
+  [class*="Mbwy4a_headerActions"] {
+    gap: 12px !important;
+  }
+  [class*="Mbwy4a_iconButton"] {
+    position: relative;
+  }
+  [class*="Mbwy4a_headerActions"] [class*="Mbwy4a_iconButton"]::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+  /* ===== 手机档作用域补充（2026-10-13）=====
+     下面四组是本批（2026-10-12/13）顶栏改动里「共用档已还原成本批之前的值、
+     手机档需要另一个值」的那部分。它们与本文件里其它 @media (max-width: 767px)
+     and (pointer: coarse) 嵌套块同权限 —— 同层 + 同特异性 + 书写在后，覆盖共用档。 */
+  /* ① 标题簇右侧预留：共用 46px（给右端文件夹按钮）→ 手机档 34px。
+     34 是 2026-10-12/13 那串「46 → 40 → 36 → 32 → 26 → 34」的终值，每一档的动机：
+       46 → 40：后台任务圆点搬进标题行后偏左、与预设 chip 显得拥挤，收 6px 整簇右移；
+       40 → 36：文件夹按钮盒子从 x=349 起、36px 宽，36 让整簇右缘正好贴到它的左沿
+                （视觉上离图标仍余 10px 内边距），是**安全上限**，再往下会压进命中区；
+       36 → 32：与「文件夹按钮右移 4px」**配对** —— 只移按钮不缩本值，两者之间会凭空
+                多出 4px（用户要的是整组右移，不是拉开）；
+       32 → 26：与「文件夹座位 36→30」**配对** —— 座位窄 6px 后其左沿右移 6px；
+       26 → 34：用户反馈圆点离文件夹太近（0px），左下 8px 后按钮盒内还有 7px 内边距到
+                图标，视觉距离约 15px。代价：整簇左移 8px，标题窗口相应窄 8px。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header [class*="wSkVaW_titleCluster"] {
+      padding-right: 34px !important;
+    }
+  }
+  /* ② 标题行三个（标题 / 预设 / 后台任务）之间的间距：共用 4px → 手机档 6px
+     （2026-10-12 用户要求；本条管「标题 ↔ 右侧 chip 簇」）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_titleCluster"] {
+      gap: 0 6px !important;
+    }
+  }
+  /* ③ 标题本体：共用 100px 横滑窗 + clip（截断处是硬切，像被裁掉）→ 手机档
+     可扩展 + 省略号（2026-10-12 用户规格）。第一轮收 80px 硬顶，第二轮取消硬顶改
+     100%：硬顶的问题是「关掉团队 chip 后腾出的空间标题吃不到」；改成 100% 后由 flex
+     决定 —— 右侧各 chip 是 flex 0 0 auto（不收缩，先拿够自己的地方），标题再吃掉
+     剩下的，不够时由本条 ellipsis 收尾，既有 72px 地板（在 _crumbs 上）仍兜底。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_crumbs"] [class*="_crumbCurrent"] {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      text-overflow: ellipsis !important;
+      /* 共用档保留本批之前的 pan-x（那时标题是横滑窗，横滑要先被浏览器认领，
+         免得左缘抽屉手势抢走这一笔）；手机档改成不横滑的省略号窗口 ⇒ 横滑认领
+         随之撤掉，否则手势层的判定与实际可滚动性对不上。
+         写成 pan-y pinch-zoom（而不是 auto）与全库其余的 touch-action 声明同形，
+         tests/ios-zoom-guard.test.ts 会逐条检查「非 pan-x 的值必须含 pinch-zoom」。 */
+      touch-action: pan-y pinch-zoom !important;
+    }
+  }
+  /* ④ 动作行内各 chip 之间：共用 4px → 手机档 6px（2026-10-12 用户要求）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] [data-phase] header:has([class*="_headerLeading"]) [class*="_headerActions"] {
+      gap: 6px !important;
+    }
   }
 }
 `

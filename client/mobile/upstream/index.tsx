@@ -5,19 +5,31 @@ import { ComposerFileButton } from './components/ComposerFileButton.tsx'
 import { openFilesPanel } from './components/open-files-panel.ts'
 import { MOBILE_CSS } from './styles/index.ts'
 
-import { installFrameController, installOverlayInteractions, installPhoneChrome, installReconciler, registerReconcileTasks, MOBILE_QUERY } from './effects/phone-chrome.ts'
+import { installFrameController, installPhoneChrome } from './effects/phone-chrome.ts'
+import { installReconciler, registerReconcileTasks } from './effects/reconciler-adapter.ts'
+import { installSelectionChromeYield } from './effects/selection-chrome.ts'
+import { installOverlayInteractions } from './effects/drawer-close.ts'
 import { installSidebarSwipe } from './effects/sidebar-swipe.ts'
 import { installSubagentChipTouch } from './effects/subagent-chip-touch.ts'
 import { installSessionMenuDelete } from './effects/session-menu.ts'
 import { installComposerKeyboardGuard } from './effects/composer-keyboard-guard.ts'
+import { installComposerKeyboardLift } from './effects/composer-keyboard-lift.ts'
 import { installComposerPlusToggle } from './effects/composer-plus-toggle.ts'
 import { installWorkspaceChipToggle } from './effects/workspace-chip-toggle.ts'
 import { installTeamChipToggle } from './effects/team-chip-toggle.ts'
 import { installModelMenuAnchor } from './effects/model-menu-anchor.ts'
 import { installShortcutModalKeyboardGuard } from './effects/shortcut-modal-keyboard-guard.ts'
+import { installModelMenuKeyboardGuard } from './effects/model-menu-keyboard-guard.ts'
+import { installPluginCardTap } from './effects/plugin-card-tap.ts'
+import { installInstalledListRows } from './effects/installed-list.ts'
+import { installSessionFocusGuard } from './effects/session-focus-guard.ts'
+import { installReasoningDefaults } from './effects/reasoning-defaults.ts'
 import { installAionuiCompat } from './effects/aionui-compat.ts'
+import { installComposerPasteGuard } from './effects/composer-paste-guard.ts'
+import { installComposerFilePicker } from './effects/composer-file-picker.ts'
+import { installAttachmentMention } from './effects/attachment-mention.ts'
+import { installFileShare } from './effects/file-share.ts'
 import { createPanelExit, installPanelRowExit } from './effects/panel-exit.ts'
-import { createRafScheduler } from './core/raf-scheduler.ts'
 import { installDebugBadge } from './debug.ts'
 import { NS, en, zh } from './i18n/locales.ts'
 import type { MobileNavKey } from './i18n/locales.ts'
@@ -25,12 +37,17 @@ import type { MobileNavKey } from './i18n/locales.ts'
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Directory-drawer controls copy. */
-    'mobileNav': MobileNavKey
+    'pocketMobileNav': MobileNavKey
   }
 }
 
-/** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
-export const inject = ['slots', 'layout', 'locale', 'sessionLogDownload', 'sessions', 'workspaces']
+/**
+ * Required services (cordis fiber inject — the loader passes all module exports
+ * as an object plugin). `inject` is a HARD dependency: a missing service stops
+ * the whole plugin from loading, so nothing may be listed here that the client
+ * does not actually read (issue #86 removed the never-read `workspaces`).
+ */
+export const inject = ['slots', 'layout', 'locale', 'sessionLogDownload', 'sessions']
 
 /**
  * Session-id shape the installed host's sessionLogDownload.download expects.
@@ -39,6 +56,44 @@ export const inject = ['slots', 'layout', 'locale', 'sessionLogDownload', 'sessi
  * it Branded<'SessionId'>. The runtime value is always the host's own id.
  */
 type DownloadSessionId = Parameters<ClientContext['sessionLogDownload']['download']>[0]
+
+/**
+ * How long a remembered scroll position stays usable (see {@link restoreConversationScroll}).
+ * The gap between our teardown and re-apply is one dynamic import inside the host's
+ * client-modules queue — well under a second in practice; ten is generous.
+ */
+const SWAP_RESTORE_MS = 10_000
+
+type SavedScroll = { top: number; savedAt: number; url: string }
+const scrollWindow = window as Window & { __dshaMobileScrollState?: WeakMap<HTMLElement, SavedScroll> }
+const scrollState = scrollWindow.__dshaMobileScrollState instanceof WeakMap
+  ? scrollWindow.__dshaMobileScrollState
+  : (scrollWindow.__dshaMobileScrollState = new WeakMap<HTMLElement, SavedScroll>())
+
+function conversationScrollers(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('[data-mobile-nav="frame"] [class*="scrollBody"]')]
+}
+
+function rememberConversationScroll(): void {
+  for (const element of conversationScrollers()) {
+    if (element.scrollTop > 0)
+      scrollState.set(element, { top: element.scrollTop, savedAt: Date.now(), url: location.href })
+    else scrollState.delete(element)
+  }
+}
+
+function restoreConversationScroll(): void {
+  for (const element of conversationScrollers()) {
+    const saved = scrollState.get(element)
+    scrollState.delete(element)
+    if (!saved || Date.now() - saved.savedAt > SWAP_RESTORE_MS || saved.url !== location.href) continue
+    requestAnimationFrame(() => {
+      if (element.isConnected && saved.url === location.href &&
+        Date.now() - saved.savedAt <= SWAP_RESTORE_MS && element.scrollTop === 0)
+        element.scrollTop = saved.top
+    })
+  }
+}
 
 /**
  * Mobile-adaptive shell, browser half: injects the mobile stylesheet, then
@@ -69,110 +124,19 @@ export function apply(ctx: ClientContext): void {
     setTimeout(() => {
       if (tag.isConnected) document.head.appendChild(tag)
     }, 0)
+    // 热换后的滚动回位（2026-10-07 店主：「聊到一半突然闪到最上面」）。
+    // 宿主热换插件走 client-modules.replace()：tearDown → import → refresh，
+    // 我们这张表在窗口里会**整个消失**，长会话的 content-visibility 估算与布局
+    // 翻转会让 Chromium 把会话滚动区重锚到顶部。卸载前记下位置、重挂后回填。
+    restoreConversationScroll()
     return () => {
+      rememberConversationScroll()
       tag.remove()
     }
   }, 'dsh-web-mobile: styles')
 
-  // Hard-fix the installed-plugins list text layout: the host market UI
-  // injects its own CSS after this plugin's stylesheet, so CSS overrides can
-  // be beaten. Inline !important styles win over every external rule. Keep
-  // the selector on outer rows only; irowActions/irowTrailing are nested
-  // flex containers and must retain the market's own action geometry.
-  ctx.effect(() => {
-    const mq = window.matchMedia(MOBILE_QUERY)
-    const rowSelector = '[class*="irow"]:not([class*="irowActions"]):not([class*="irowTrailing"])'
-    const set = (el: HTMLElement, props: Record<string, string>): void => {
-      for (const [key, value] of Object.entries(props)) {
-        el.style.setProperty(key, value, 'important')
-      }
-    }
-    const unset = (el: HTMLElement, props: readonly string[]): void => {
-      for (const key of props) el.style.removeProperty(key)
-    }
-    const rowProps = ['flex-wrap', 'align-items', 'gap'] as const
-    const firstProps = ['flex', 'max-width', 'min-width'] as const
-    const textProps = ['white-space', 'overflow', 'text-overflow', 'max-width'] as const
-    const clear = (): void => {
-      document.querySelectorAll<HTMLElement>(rowSelector).forEach((row) => {
-        unset(row, rowProps)
-        const first = row.children[0] as HTMLElement | undefined
-        if (first) unset(first, firstProps)
-        row.querySelectorAll<HTMLElement>(':scope > button, :scope > [class*="owner"], :scope > [class*="grow"]').forEach((el) => {
-          unset(el, ['order'])
-        })
-        const spec = row.querySelector<HTMLElement>('[class*="spec"]')
-        const nm = row.querySelector<HTMLElement>('[class*="nm"]')
-        if (spec) unset(spec, textProps)
-        if (nm) unset(nm, textProps)
-      })
-    }
-    const apply = (): void => {
-      // The market rows only exist while the market UI is mounted (inside a
-      // settings dialog). Skip the full-document class-substring scan on every
-      // streamed mutation frame with no dialog open; dshmarket keeps the
-      // data-dsh-market-root marker (1.20.x), [role="dialog"] covers the
-      // settings dialog generically so a marker change degrades to cost, not
-      // to a silently dead effect.
-      if (document.querySelector('[data-dsh-market-root], [role="dialog"]') === null) return
-      document.querySelectorAll<HTMLElement>(rowSelector).forEach((row) => {
-        set(row, {
-          'flex-wrap': 'wrap',
-          'align-items': 'center',
-          'gap': '4px 10px',
-        })
-        const first = row.children[0] as HTMLElement | undefined
-        if (first) {
-          set(first, {
-            'flex': '1 1 100%',
-            'max-width': '100%',
-            'min-width': '0',
-          })
-        }
-        const spec = row.querySelector<HTMLElement>('[class*="spec"]')
-        const nm = row.querySelector<HTMLElement>('[class*="nm"]')
-        if (spec) {
-          set(spec, {
-            'white-space': 'nowrap',
-            'overflow': 'hidden',
-            'text-overflow': 'ellipsis',
-            'max-width': '100%',
-          })
-        }
-        if (nm) {
-          set(nm, {
-            'white-space': 'nowrap',
-            'overflow': 'hidden',
-            'text-overflow': 'ellipsis',
-            'max-width': '100%',
-          })
-        }
-      })
-    }
-    const arm = (): void => {
-      clear()
-      if (mq.matches) apply()
-    }
-    arm()
-    // Streaming floods this observer with document-wide childList batches;
-    // coalesce to one apply per frame and re-check the breakpoint at flush
-    // time so a queued callback never writes mobile styles on desktop.
-    const scheduler = createRafScheduler(
-      (cb) => window.requestAnimationFrame(cb),
-      (id) => window.cancelAnimationFrame(id),
-    )
-    const mo = new MutationObserver(() => {
-      if (mq.matches) scheduler.schedule(() => { if (mq.matches) apply() })
-    })
-    mo.observe(document.documentElement, { childList: true, subtree: true })
-    mq.addEventListener('change', arm)
-    return () => {
-      scheduler.cancel()
-      mo.disconnect()
-      mq.removeEventListener('change', arm)
-      clear()
-    }
-  }, 'dsh-web-mobile: installed-list-inline-styles')
+  // Market「installed」列表行的内联样式：实现与全部注释见 effects/installed-list.ts。
+  installInstalledListRows(ctx)
 
 
   // Leaving a sidebar panel. The host's panels replace the main area and ship
@@ -188,11 +152,18 @@ export function apply(ctx: ClientContext): void {
       installFrameController(),
       installReconciler(ctx),
       registerReconcileTasks(ctx, panelExit),
+      // Last: stop the tasks before releasing the exit instance they drive.
+      () => panelExit.dispose(),
     ]
     return () => {
       for (const stop of stops) stop()
     }
   }, 'dsh-web-mobile: reconciler infrastructure')
+
+  // Selection handle drag: while a conversation selection is live the header drops
+  // out of the hit test, so the native extent stays local instead of snapping to the
+  // flow's first item and revealing it (teleporting to the top of the session).
+  installSelectionChromeYield(ctx)
 
 
 
@@ -223,6 +194,9 @@ export function apply(ctx: ClientContext): void {
   // iOS: tapping the composer's send/stop/+ buttons must not re-raise the
   // dismissed keyboard (upstream keepFocus focuses the editor on mousedown).
   installComposerKeyboardGuard(ctx)
+  // iOS: the host Lexical scroll helper mis-scrolls the window on every
+  // keystroke (issue #149); pin the composer seat above the keyboard.
+  installComposerKeyboardLift(ctx)
   installComposerPlusToggle(ctx)
   // Hero workspace chip: the host's picker portaled its Menu with
   // `anchor={null}`, so its own outside-pointerdown close eats the trigger's
@@ -240,10 +214,41 @@ export function apply(ctx: ClientContext): void {
   // EDIT, and the keyboard shrinking the viewport resizes the sheet (owner
   // report: 「打开的时候还是会闪，而且还会唤起键盘」).
   installShortcutModalKeyboardGuard(ctx)
+  // Model / reasoning-level menu (owner report 2026-10-07): drilling into the
+  // model pane focuses the host's 「搜索模型…」 field from a passive effect, so the
+  // keyboard covers the list the user just opened. Same method-shadow cure,
+  // armed from the capture-phase tap that precedes the pane switch.
+  installModelMenuKeyboardGuard(ctx)
+  installPluginCardTap(ctx)
+  // Entering a session (issue #140): the host's InputBar focuses the editor
+  // from a [locked, sessionId, editor] passive effect on every switch, which
+  // raises the soft keyboard over the history the user wanted to read. A short
+  // shadow-focus window per observed session switch swallows that one
+  // autofocus; real taps are unaffected.
+  installSessionFocusGuard(ctx)
+  installReasoningDefaults(ctx)
+
+  // Multi-line paste after an IME commit keeps only the first line (host
+  // Lexical routes Android's insertText paste through the text-insertion
+  // command). Re-dispatch those as a paste event; mobile-only.
+  installComposerPasteGuard(ctx)
+
+  // Composer paperclip (owner report 2026-10-06): the system file picker is the
+  // wrong shape and cannot pick "images only", so the tap opens the plugin's own
+  // two-option sheet (上传图片 / 上传附件) and hands the choice back to the host's
+  // hidden input. Intake stays fully host-owned.
+  installComposerFilePicker(ctx)
+
+  // @ menu 「本次附件」: mention the composer's draft attachments as locked chips.
+  installAttachmentMention(ctx)
 
   installPhoneChrome(ctx)
 
   installAionuiCompat(ctx)
+
+  // Mobile file sharing: Files-tree row buttons + preview header button
+  // (official 0.2.0 slots), share sheet with download fallback.
+  installFileShare(ctx)
 
   // Debug badge (?mobile-nav-debug=1): live state overlay for phone-side
   // repros. No-op without the query param (docs: README, AGENTS.md).

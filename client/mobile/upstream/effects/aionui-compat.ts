@@ -1,5 +1,7 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { getFrame, installMobileEffect, type ReconcilerTask } from './phone-chrome.ts'
+import type { ReconcilerTask } from '../core/reconciler-core.ts'
+import { getFrame } from '../platform/frame.ts'
+import { installMobileEffect } from '../platform/breakpoints.ts'
 
 /** dsh-web-ui 兼容：explorer / preview 列的显隐标记与升起动画（同域同机制，合并一处）。 */
 export function installAionuiCompat(ctx: ClientContext): void {
@@ -27,9 +29,13 @@ export function installAionuiCompat(ctx: ClientContext): void {
     const DESKTOP_APPVERSION = '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     let restoreTimer: number | null = null
     let spoofed = false
-    let originalPlatform = navigator.platform
-    let originalUserAgent = navigator.userAgent
-    let originalAppVersion = navigator.appVersion
+    // Restore what was actually there: an own descriptor if the page had one,
+    // otherwise REMOVE the own property we added so the prototype's getter shows
+    // through again. Writing the old VALUE back as an own property leaves a
+    // permanent own-property shadow behind (issue #86), which changes
+    // `Object.keys(navigator)` / descriptor probes for the rest of the session.
+    const NAV_KEYS = ['platform', 'userAgent', 'appVersion'] as const
+    const savedNavigator = new Map<string, PropertyDescriptor | null>()
     const restoreNavigator = (): void => {
       if (restoreTimer !== null) {
         window.clearTimeout(restoreTimer)
@@ -37,15 +43,18 @@ export function installAionuiCompat(ctx: ClientContext): void {
       }
       if (!spoofed) return
       spoofed = false
-      Object.defineProperty(navigator, 'platform', { value: originalPlatform, configurable: true })
-      Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true })
-      Object.defineProperty(navigator, 'appVersion', { value: originalAppVersion, configurable: true })
+      for (const key of NAV_KEYS) {
+        const descriptor = savedNavigator.get(key) ?? null
+        if (descriptor === null) delete (navigator as unknown as Record<string, unknown>)[key]
+        else Object.defineProperty(navigator, key, descriptor)
+      }
+      savedNavigator.clear()
     }
     const spoofDesktop = (): void => {
       if (!spoofed) {
-        originalPlatform = navigator.platform
-        originalUserAgent = navigator.userAgent
-        originalAppVersion = navigator.appVersion
+        for (const key of NAV_KEYS) {
+          savedNavigator.set(key, Object.getOwnPropertyDescriptor(navigator, key) ?? null)
+        }
         Object.defineProperty(navigator, 'platform', { value: 'Win32', configurable: true })
         Object.defineProperty(navigator, 'userAgent', { value: DESKTOP_UA, configurable: true })
         Object.defineProperty(navigator, 'appVersion', { value: DESKTOP_APPVERSION, configurable: true })
@@ -106,21 +115,56 @@ export function createPreviewCloseTask(): ReconcilerTask {
 export function createSheetRiseTask(): ReconcilerTask {
   const cols = ['[data-aionui-explorer-col]', '[data-aionui-preview-col]']
   const seen = new Map<string, boolean>()
-  const play = (el: Element): void => {
-    el.animate(
+  // 每列**我们自己**启动的那一条 Animation。只记录自有的：宿主自己创建的动画
+  // （第三方包/React 组件的 WAAPI）从不进这张表，因此也**永远不会被我们 cancel**。
+  const own = new Map<string, { el: Element; anim: Animation }>()
+  // reduce 必须在**播放那一刻**读：用户中途改系统开关也要生效（CSS 的 animation:none
+  // 管不到 WAAPI 造的动画，只能自己判）。
+  const reduceMotion = (): boolean =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const cancelOwn = (sel: string): void => {
+    const rec = own.get(sel)
+    if (rec === undefined) return
+    own.delete(sel)
+    // cancel() 会让 finished 以一个 AbortError 拒绝，那条 promise 已经在 play 里吞掉。
+    try { rec.anim.cancel() } catch { /* 已自然结束或已取消 */ }
+  }
+  /** 释放失效记录：元素已脱离文档，或该槽位已经换成别的节点。 */
+  const sweep = (): void => {
+    for (const sel of cols) {
+      const rec = own.get(sel)
+      if (rec === undefined) continue
+      if (!rec.el.isConnected) { cancelOwn(sel); continue }
+      const current = document.querySelector(sel)
+      if (current !== null && current !== rec.el) cancelOwn(sel)
+    }
+  }
+  const play = (sel: string, el: Element): void => {
+    // 同列重开：先取消上一条自有动画，避免两条 fill:backwards 叠在一起互相抢手态。
+    cancelOwn(sel)
+    if (reduceMotion()) return
+    const anim = el.animate(
       [
         { opacity: 0, transform: 'translateY(28px)' },
         { opacity: 1, transform: 'none' },
       ],
       { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' },
     )
+    own.set(sel, { el, anim })
+    // 自然结束后把记录摘掉（避免表无限增长）；cancel 造成的拒绝在此静默。
+    anim.finished.then(() => {
+      if (own.get(sel)?.anim === anim) own.delete(sel)
+    }).catch(() => {})
   }
   return {
     name: 'sheet-rise-replay',
-    // The flush runs on the next frame, by which time React has rendered the
-    // opened col, so the frame markers / inline style / class changes are
-    // reliable triggers — no '*'.
+    // 含树变更键 `*`：父容器被整体从祖父节点摘掉时，childList 的 target 是**祖父**，
+    // 局部观察器收不到回调；改为复用 reconciler 的共享全树观察（frame-marker /
+    // header-metrics / stats-line 已用同一通道）。代价由下面的便宜路径压住：没有自有动画、
+    // 也没有目标列时，只做 2 次 querySelector 就返回，**不**读样式、**不**播放、**不**写 DOM。
     scopes: [
+      '*',
       'style',
       'class',
       'data-aionui-explorer-open',
@@ -128,16 +172,28 @@ export function createSheetRiseTask(): ReconcilerTask {
       'data-mobile-preview-full',
     ],
     ensure: () => {
-      for (const sel of cols) {
-        const el = document.querySelector(sel)
-        if (el === null) continue
+      const els = cols.map((sel) => document.querySelector(sel))
+      // 便宜路径：手上没有自有动画、两个槽位也都不在 ⇒ 立刻返回。
+      if (own.size === 0 && els[0] === null && els[1] === null) return
+      sweep()
+      for (let i = 0; i < cols.length; i++) {
+        const sel = cols[i]!
+        const el = els[i]!
+        // 槽位缺席：释放该列的所有权记录（旧实现直接 continue，记录会一直挂着）。
+        // 刻意**不**动 seen ——「摘掉再挂回来是否重播」沿用既有语义，不做行为变更。
+        if (el === null) { cancelOwn(sel); continue }
+        const rec = own.get(sel)
+        if (rec !== undefined && rec.el !== el) cancelOwn(sel)
         const visible = getComputedStyle(el).visibility === 'visible'
         const prev = seen.get(sel) ?? false
-        if (visible && !prev) play(el)
+        if (visible && !prev) play(sel, el)
         seen.set(sel, visible)
       }
     },
     dispose: () => {
+      // 停用/卸载：取消自己启动的动画（fill:backwards 的起手态否则会留在元素上）。
+      for (const sel of cols) cancelOwn(sel)
+      own.clear()
       seen.clear()
     },
   }

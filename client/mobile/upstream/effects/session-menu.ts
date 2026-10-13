@@ -15,10 +15,8 @@
  * menu component, no child elements) — label reads and the injected text
  * fall back across both.
  *
- * Row → session id: session rows carry no id in the DOM, so the session is
- * resolved from the client list by display title (the row's rendered title IS
- * the summary's `displayTitle`); duplicate titles are disambiguated by the
- * row's position within its workspace group section.
+ * Row → session id: session rows carry no id in the DOM, so the id is read
+ * off the host's own stable anchors (see `rowSessionId`).
  *
  * Ported from community-fork wzxmt-zhc v2.7.0; the only mainline delta is
  * where the delete-dialog CSS lives: base.css.ts, with corrected animation
@@ -26,12 +24,13 @@
  * `dsh-mobile-nav-*` names, which silently no-op).
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { MOBILE_QUERY, TOUCH_QUERY, installMobileEffect, toggleDrawer } from './phone-chrome.ts'
-import { currentSessionIdOf, sessionsCanClear } from '../core/sessions-compat.ts'
+import { MOBILE_QUERY, TOUCH_QUERY, installMobileEffect } from '../platform/breakpoints.ts'
+import { getFrame } from '../platform/frame.ts'
+import { toggleDrawer } from './drawer-close.ts'
+import { currentSessionIdOf, sessionsCanClear, verifySessionDeleted } from '../core/sessions-compat.ts'
+import { NS } from '../i18n/locales.ts'
+import { findSessionIdInFiber, reactFiberOf } from './session-row-fiber.ts'
 
-// Mirrored from src/client/locales.ts: the custom client bundler cannot
-// resolve `../` requires from effects/. Keep in sync.
-const NS = 'mobileNav'
 /** The ui-workspace dictionary namespace the host session menu labels come from. */
 const WORKSPACE_NS = 'workspace'
 
@@ -49,10 +48,14 @@ const TRASH_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" x
 interface MenuAnchor {
   /** The ⋯ button that opened the menu (used to close it). */
   button: HTMLButtonElement
-  /** The session row the button lives in. */
-  row: HTMLElement
-  /** The row's displayed session title. */
+  /** The row's displayed session title (display + legacy fallback only). */
   title: string
+  /**
+   * The session id read straight off the row's React fiber — the primary source
+   * (2026-10-07). `null` when the fiber walk found nothing, in which case the
+   * delete flow falls back to the title/group heuristic.
+   */
+  sessionId: string | null
 }
 
 /** Host delete-endpoint response shape. */
@@ -94,41 +97,39 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
     let dialogHost: { backdrop: HTMLElement; card: HTMLElement } | null = null
     let closeDialogOnKey: ((event: KeyboardEvent) => void) | null = null
 
-    /** Resolve one session id for a row: title match, group position tiebreak. */
-    const resolveSessionId = (row: HTMLElement, title: string): string | undefined => {
-      const sessions = ctx.sessions.list.getSnapshot()
-      const workspaces = ctx.workspaces.list.getSnapshot()
-      const archived = new Set(workspaces.archivedSessionIds)
-      const candidates = sessions.ids.filter((id: string) => {
-        const summary = sessions.byId[id]
-        return summary !== undefined && !summary.blank && summary.displayTitle === title && !archived.has(id)
-      })
-      if (candidates.length === 1) return candidates[0]
-      if (candidates.length === 0) return undefined
-      // Duplicate titles: the row's position among its group's same-title
-      // rows maps 1:1 onto the same-title ids of that group's account.
-      const group = row.closest<HTMLElement>('[class*="_groupSection"]')
-      if (group === null) return undefined
-      const headerTitle = group
-        .querySelector<HTMLElement>(':scope > [class*="_projectRow"] [class*="_title"]')
-        ?.textContent?.trim()
-      const owned = new Set(workspaces.items.flatMap((workspace: { sessionIds: readonly string[] }) => workspace.sessionIds))
-      const workspace = headerTitle === undefined
-        ? undefined
-        : workspaces.items.find((candidate: { title: string; sessionIds: readonly string[] }) => candidate.title === headerTitle)
-      const workspaceIds: readonly string[] = workspace === undefined ? [] : workspace.sessionIds
-      const groupIds: readonly string[] = workspace === undefined
-        ? sessions.ids.filter((id: string) => !owned.has(id) && !archived.has(id) && sessions.byId[id] !== undefined)
-        : workspaceIds.filter(id => !archived.has(id) && sessions.byId[id] !== undefined)
-      const sameTitleGroupIds = groupIds.filter(id => sessions.byId[id]?.displayTitle === title)
-      const rows = [...group.querySelectorAll<HTMLElement>(':scope > [class*="_sessionRow"]')]
-      const rowIndex = rows.indexOf(row)
-      const sameTitleBefore = rowIndex === -1
-        ? 0
-        : rows.slice(0, rowIndex).filter(candidate =>
-          candidate.querySelector<HTMLElement>('[class*="_title"]')?.textContent?.trim() === title,
-        ).length
-      return sameTitleGroupIds[sameTitleBefore]
+    // 请求身份（epoch），每次确认点击自增。更晚的删除一发起，在途响应即过期 ——
+    // 过期结果不得 closeDialog / clear / 收抽屉，否则会拿旧响应改新对话框与新当前会话。
+    let deleteEpoch = 0
+
+    /**
+     * The session id of one row, from the host's own stable anchors.
+     *
+     * 2026-10-07 — this replaces the whole "match the displayed title, then
+     * disambiguate duplicates by group position" heuristic, which 0.2.0-rc.2
+     * broke twice over on the real drawer: every row is now wrapped in the
+     * host's `HoverCard` `<span>`, so `:scope > [class*="_sessionRow"]` and the
+     * `_projectRow` group header matched NOTHING → duplicate titles silently
+     * resolved to the FIRST session with that title, i.e. **deleting the wrong
+     * conversation**.
+     *
+     * Order of preference, all host-owned:
+     *  1. `data-row-key="session:<id>"` — the same attribute the host's own
+     *     `AnimatedRows.readPositions()` uses, so it is a real contract;
+     *  2. `data-dsha-session-select` — the DSHA build stamps the id directly;
+     *  3. the React fiber (`session-row-fiber.ts`, the proven path long-press
+     *     navigation already uses).
+     * @param row - the session row element.
+     * @returns the session id, or null when the row offers none.
+     */
+    const rowSessionId = (row: HTMLElement): string | null => {
+      const rowKey = row.getAttribute('data-row-key') ?? ''
+      if (rowKey.startsWith('session:')) {
+        const id = rowKey.slice('session:'.length)
+        if (id !== '') return id
+      }
+      const stamped = row.getAttribute('data-dsha-session-select')
+      if (stamped !== null && stamped !== '') return stamped
+      return findSessionIdInFiber(reactFiberOf(row), isKnownSessionId)
     }
 
     /**
@@ -251,7 +252,8 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
         if (noButton !== null) noButton.disabled = true
         yesButton.textContent = navT('deletePending')
         if (errorLine !== null) errorLine.hidden = true
-        const wasCurrent = currentSessionIdOf(ctx.sessions.list.getSnapshot()) === sessionId
+        // 请求身份：本次点击的序号。期间又发起删除时，这次的结果就过期了。
+        const epoch = ++deleteEpoch
         try {
           const response = await fetch('/api/mobile-nav.session.delete', {
             method: 'POST',
@@ -264,25 +266,50 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
             return
           }
         } catch (reason) {
-          fail(mapError(null, reason))
-          return
+          // A rejected fetch proves nothing (DSHA's host half aborts the reply
+          // after the trash move — see verifySessionDeleted). Ask the session
+          // list instead; only a session that survives every re-read failed.
+          // Verification itself must not become the new failure mode.
+          let landed = false
+          try {
+            landed = await verifySessionDeleted({
+              listed: () => ctx.sessions.list.getSnapshot()?.byId?.[sessionId] !== undefined,
+              // Called AS A METHOD: refresh() reads `this.manager`.
+              refresh: async () => {
+                await (ctx.sessions as { refresh?: () => Promise<void> }).refresh?.()
+              },
+              sleep: (ms) => new Promise<void>((resolve) => {
+                window.setTimeout(() => { resolve() }, ms)
+              }),
+            })
+          } catch {
+            landed = false
+          }
+          if (!landed) {
+            fail(mapError(null, reason))
+            return
+          }
         }
+        // 「是否仍是当前会话」必须在**请求完成时**重新核对：请求期间用户可能已经切到
+        // 别的会话，用请求前算好的旧值 clear() 会把新当前会话的选中态清掉（2026-10-11）。
+        const wasCurrent = currentSessionIdOf(ctx.sessions.list.getSnapshot()) === sessionId
+        // 过期结果（期间又发起过删除）只丢弃，不关别人的对话框、也不动状态。
+        if (epoch !== deleteEpoch) return
         closeDialog()
         if (wasCurrent && sessionsCanClear(ctx.sessions)) ctx.sessions.clear()
-        // Repull the baseline so the deleted row disappears. Must be called AS
-        // A METHOD on ctx.sessions: refresh() reads `this.manager`, and an
-        // extracted reference would throw "this is undefined" — the failure
-        // mode that left deleted cold sessions lingering as ghost rows.
+        // Repull the baseline so the deleted row disappears; called AS A METHOD
+        // on ctx.sessions because refresh() reads `this.manager`.
         const sessions = ctx.sessions as { refresh?: () => Promise<void> }
-        await sessions.refresh?.()
-        // On the mobile branch the drawer hosts the list, so closing it is
-        // the right follow-up after deleting the current session; on the
-        // desktop layout (wide touch) the same call would collapse the
-        // always-visible sidebar panel, so gate it on the mobile query.
-        // toggleDrawer keeps that semantics (it falls back to the plain toggle
-        // when the drawer is not open) while making the close a late commit,
-        // so the marker cannot flip while the column is still painted — the
-        // window in which the drawer band covers an open modal (2026-09-25).
+        try {
+          await sessions.refresh?.()
+        } catch (reason) {
+          // 列表重拉失败只影响刷新，不代表删除失败 —— 单独 warn，也不许变成未处理 rejection。
+          console.warn('[dsh-web-mobile] session list refresh after delete failed:', reason)
+        }
+        // 手机档抽屉里就是列表，删完当前会话顺手收起；桌面档的面板不得被收起（MOBILE_QUERY
+        // 门保持）。只有抽屉**确实开着**才关：盲 toggle 会把已关的抽屉重新打开（2026-10-11）。
+        const frame = getFrame()
+        if (frame === null || frame.hasAttribute('data-sidebar-collapsed')) return
         if (wasCurrent && window.matchMedia(MOBILE_QUERY).matches) toggleDrawer(ctx)
       })
 
@@ -324,13 +351,25 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
       dialogHost = { backdrop, card }
     }
 
+    /**
+     * The clones injected into host menus. They are plugin-owned nodes inside
+     * React-owned lists, so disposal must remove them explicitly — the host
+     * never unmounts them on our behalf, and the click listener rides the clone
+     * (issue #86: the old disposer left the node and its listener behind, and a
+     * later tap went through showError on a dead anchor).
+     */
+    const injected = new Set<HTMLElement>()
+
     /** Inject the delete item into one open session menu (idempotent). */
     const injectInto = (menu: HTMLElement): void => {
       if (menu.querySelector(`[${DELETE_ITEM_MARKER}]`) !== null) return
       const template = menu.querySelector<HTMLElement>('[role="menuitem"]')
-      const wrap = template?.parentElement
+      // `?? null` collapses the optional chain so the guard is exact: the old
+      // `wrap === undefined` arm was unreachable once `template === null` had
+      // returned (issue #86).
+      const wrap = template?.parentElement ?? null
       const viewport = menu.querySelector<HTMLElement>('[class*="_viewport"]')
-      if (template === null || wrap === null || wrap === undefined || viewport === null) return
+      if (template === null || wrap === null || viewport === null) return
       const clone = wrap.cloneNode(true) as HTMLElement
       const button = clone.querySelector<HTMLButtonElement>('[role="menuitem"]')
       if (button === null) return
@@ -360,12 +399,16 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
         // Close the host menu by toggling its anchor (React-owned state).
         captured?.button.click()
         try {
-          if (captured === null || captured === undefined) {
+          if (captured === null) {
             showError(navT('deleteErrorResolve'))
             return
           }
-          const sessionId = resolveSessionId(captured.row, captured.title)
-          if (sessionId === undefined) {
+          // 用录制点击时从行上读到的会话 id（`data-row-key` → DSHA 戳 → fiber）。
+          // 读不到就报错，不再按标题/行序猜 —— 2026-10-07 实测那条路在 0.2.0-rc.2
+          // 上会静默删到**另一个同名会话**（宿主把行包进 HoverCard 后 `:scope >` 取不到行，
+          // rowIndex 变成 -1，于是永远取"第一个同名 id"）。
+          const sessionId = captured.sessionId
+          if (sessionId === null) {
             showError(navT('deleteErrorResolve'))
             return
           }
@@ -380,6 +423,7 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
         }
       })
       viewport.appendChild(clone)
+      injected.add(clone)
     }
 
     /**
@@ -394,6 +438,8 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
      * resolution itself would still work).
      */
     const injectAll = (): void => {
+      // Drop references to clones the host already unmounted with its menu.
+      for (const clone of injected) if (!clone.isConnected) injected.delete(clone)
       const blankLabel = wsT('session.new')
       for (const menu of document.querySelectorAll<HTMLElement>('[role="menu"]')) {
         if (!isSessionMenu(menu)) continue
@@ -409,21 +455,55 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
       })
     }
 
-    // Capture the ⋯ button click before React handles it, so the row/title
-    // are known when the portaled menu appears. The host renders the anchor
-    // button WITHOUT `aria-haspopup` (Menu renders `{anchor}` verbatim), so
-    // the row's single button IS the ⋯ anchor — no attribute to match on.
+    /** Whether an id is a session this client knows (the fiber walk's filter). */
+    const isKnownSessionId = (id: string): boolean => ctx.sessions.list.getSnapshot().byId[id] !== undefined
+
+    /**
+     * The row's ⋯ anchor button.
+     *
+     * 2026-10-07 (host 0.2.0-rc.2): a row now carries THREE buttons — the ⋯
+     * (`aria-label="Session actions for …"`), `Archive session` and
+     * `Pin session`. Reading `querySelector('button')` only worked because the ⋯
+     * happened to come first; match it by its label and exclude the two row
+     * actions instead of betting on document order.
+     * @param row - the session row.
+     * @returns the ⋯ button, or null when this row has none.
+     */
+    const menuButtonOf = (row: HTMLElement): HTMLButtonElement | null => {
+      const buttons = [...row.querySelectorAll<HTMLButtonElement>('button')]
+      const labelled = buttons.find((candidate) => {
+        const label = candidate.getAttribute('aria-label') ?? ''
+        return /session actions/i.test(label)
+      })
+      if (labelled !== undefined) return labelled
+      const fallback = buttons.find((candidate) => {
+        const label = candidate.getAttribute('aria-label') ?? ''
+        return !/archive session|pin session/i.test(label)
+      })
+      return fallback ?? null
+    }
+
+    // Capture the ⋯ button click before React handles it, so the row/title/session
+    // id are known when the portaled menu appears.
+    //
+    // The id comes off the row's React FIBER first (same proven path the
+    // long-press navigation uses in drawer-close.ts:249). The old title/group
+    // heuristic is kept only as a fallback: on 0.2.0-rc.2 the `_projectRow`
+    // group header no longer sits inside `_groupSection`, so duplicate titles
+    // (three rows all called 「你好」) could not be disambiguated and the delete
+    // tap died with 「无法确定要删除的会话」.
     // Shared with the contextmenu path: a long-press / contextmenu open never
     // fires the row's click, so without it the delete would resolve against
-    // the previously clicked row.
+    // the previously captured row.
     const captureRow = (target: EventTarget | null): void => {
       if (!(target instanceof Element)) return
       const row = target.closest<HTMLElement>('[class*="_sessionRow"]')
       if (row === null) return
-      const button = row.querySelector<HTMLButtonElement>('button')
+      const button = menuButtonOf(row)
       if (button === null) return
       const title = row.querySelector<HTMLElement>('[class*="_title"]')?.textContent?.trim() ?? ''
-      anchor = { button, row, title }
+      const sessionId = rowSessionId(row)
+      anchor = { button, title, sessionId }
       scheduleInject()
     }
     const onDocumentClick = (event: MouseEvent): void => captureRow(event.target)
@@ -456,11 +536,11 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
           break
         }
       }
-      // Once no session menu remains in the document, drop the captured row:
-      // a later open that never passes through the click/contextmenu capture
-      // (programmatic) must hit the null guard instead of acting on the
-      // previous row. The delete item snapshots `anchor` before the menu
-      // closes, so the normal click→open→confirm flow still resolves.
+      // Once no session menu remains in the document, drop the captured row: a
+      // later programmatic open that never passes through the click/contextmenu
+      // capture must hit the null guard instead of acting on the previous row.
+      // The delete item snapshots `anchor` before the menu closes, so the
+      // normal click→open→confirm flow still resolves.
       if (menuRemoved && anchor !== null
         && ![...document.querySelectorAll<HTMLElement>('[role="menu"]')].some(isSessionMenu)) {
         anchor = null
@@ -474,11 +554,10 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
       document.removeEventListener('contextmenu', onDocumentContextmenu, true)
       observer.disconnect()
       if (injectRaf !== 0) cancelAnimationFrame(injectRaf)
-      // The clone lives inside React's menu, so it is only reached on this
-      // branch when a menu happens to be open at deactivation — remove it so
-      // the host menu never ships a dead delete entry to a mouse user.
-      for (const item of document.querySelectorAll(`[${DELETE_ITEM_MARKER}]`)) item.remove()
       closeDialog()
+      // Remove the injected items (and with them their click listeners).
+      for (const clone of injected) clone.remove()
+      injected.clear()
       anchor = null
     }
   }, TOUCH_QUERY)

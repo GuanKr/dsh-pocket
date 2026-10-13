@@ -98,6 +98,56 @@ export const MISC_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     transition: transform .12s !important;
   }
 
+  /* ---------- mattskills status capsule: keep its tail (skills button / fold
+      chevron) inside the pill on portrait ----------
+      dsh-mattpocock-skills-deck renders a capsule status bar in
+      conversation.input.dock (order 40, the row above the composer card). Its
+      own sheet deliberately never shrinks icons or counters ("图标与普通计数
+      永不收缩"), so as soon as the capsule's content is wider than the pill the
+      host wrapper's overflow:hidden cuts the right edge and the two segments
+      that sit last — the skills-list button (2×2 grid) and the fold chevron
+      that collapses the whole deck strip — are not painted at all.
+      Measured 2026-10-10 on a 393px portrait viewport, session bound to a
+      ticket with two-digit counters (可接 21 / 诊断 20): capsule content
+      ≈ 415px against a ~360px pill, i.e. ~55px short — exactly those two
+      segments; the same session on landscape shows both, so this is width
+      pressure, not a missing feature (and not a deck version difference:
+      1.7.51 / 1.8.0-rc.1 / 1.8.0-rc.2 all render both unconditionally).
+      Reclaim the width from the capsule's desktop-sized spacing (6px column
+      gap plus 7px padding on each of ~11 children) rather than hiding any
+      segment, and keep a horizontal scroll as the fallback for the narrowest
+      phones so the tail can still be swiped into view. The scrollbar stays
+      hidden, so the pill still reads as one pill. Desktop untouched: this
+      block lives inside the max-width: 1023px media query. */
+  [data-slot="conversation.input.dock"] .dsws-capsule {
+    gap: 1px 3px !important;
+    padding: 3px 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule::-webkit-scrollbar {
+    display: none !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-capsule-word {
+    padding: 2px 4px !important;
+    column-gap: 3px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-seg {
+    padding: 2px 4px !important;
+    gap: 3px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-split .dsws-split-part {
+    padding: 2px 4px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-timebtn {
+    padding: 2px 4px !important;
+  }
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-skillbtn,
+  [data-slot="conversation.input.dock"] .dsws-capsule .dsws-fold-toggle {
+    padding: 1px 2px !important;
+  }
+
   /* ---------- ask question composer (ask_user_question): kill iOS Safari
       input-focus auto-zoom ----------
       Safari on iPhone enlarges the whole viewport when a focused <input> /
@@ -200,6 +250,58 @@ export const MISC_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   [data-mobile-nav="frame"] > :first-child [role="tree"] {
     content-visibility: auto;
     contain-intrinsic-size: auto 600px;
+  }
+
+  /* ---------- text selection stays inside content (B1, 2026-10-04) ----------
+     Report (Android): long-press a word in an AI reply, drag the selection
+     handle up over the session header, and the selection jumps to "select
+     all" instead of extending through the message list. Mechanism: the
+     header and the composer card are ordinary selectable boxes; the header
+     sits BEFORE the scrollport in DOM order (header, then
+     [data-conversation-scroll]) and the drawer earlier still (frame first
+     child, parked off-screen at -110%). A selection extent whose hit point
+     resolves into that chrome lands IN the chrome, so the highlighted range
+     covers the header and app shell on top of the messages - on a phone it
+     reads as the whole page. With the chrome unselectable the extent snaps
+     to the nearest message text instead (headless drag-select 390x844
+     touch-emulated, message -> header: focus node went from the header
+     title span to a message <p>; message -> composer row: from the Send
+     button to a message <p>; the scrollport kept auto-scrolling in both).
+     Layout is untouched: this only sets user-select.
+     Kept selectable: the message flow (outside every rule below) and the
+     composer editing surface, which is re-enabled explicitly - auto would
+     inherit none from the card, and an unselectable contenteditable cannot
+     host a caret or a paste on WebKit. Dialogs and text fields portalled
+     into the drawer DOM (settings sheet) are re-enabled the same way, so
+     their values stay copyable. Scope: the conversation header is the
+     header inside the [data-phase] root (chat content never renders one
+     there), and the anchor stays the DESCENDANT form on purpose: 0.2.0-rc.2
+     (live-host probe 2026-10-07) renders an unclassed wrapper <div> between
+     .wSkVaW_root[data-phase] and <header class="wSkVaW_header">, so the
+     child-combinator form this rule used to carry matched 0 elements - the
+     title bar kept user-select:auto and a drag-select up over it still ended
+     in the header title span (4391 selected chars, opening with the title /
+     mode / tab labels). On the composer side only the input card
+     ([data-composer-card], host marker since 0.1.2) and the plugin stats
+     row - the dock above the card (todo card, approval / ask-question
+     panels) is reply content and stays copyable. */
+  [data-mobile-nav="frame"] > :first-child,
+  [data-mobile-nav="frame"] [data-phase] header,
+  [data-mobile-nav="frame"] [data-composer-card],
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"],
+  [data-mobile-nav="fab"],
+  [data-mobile-nav="backdrop"] {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+  [data-mobile-nav="frame"] [data-composer-input],
+  [data-mobile-nav="frame"] [data-composer-card] textarea,
+  [data-mobile-nav="frame"] > :first-child [role="dialog"],
+  [data-mobile-nav="frame"] > :first-child input,
+  [data-mobile-nav="frame"] > :first-child textarea,
+  [data-mobile-nav="frame"] [data-phase] header input {
+    -webkit-user-select: text !important;
+    user-select: text !important;
   }
 }
 

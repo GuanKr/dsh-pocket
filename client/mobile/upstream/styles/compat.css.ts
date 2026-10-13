@@ -513,6 +513,71 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     border: 1px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .12)) !important;
   }
 
+  /* ---------- dsh-model-capabilities: model row must not crush its name ----------
+     On the Models page each catalog model is a flex row:
+     [model id] [display name] [chips] [chevron]. A chip can be long — the
+     reasoning summary prints the whole level list
+     ("reasoning: minimal/low/medium/high/xhigh/max", measured 322px at
+     min-content) — and the chips wrapper inherits the flex default
+     min-width: auto, so it grows past the row and squeezes the model id to
+     its minimum content width. With overflow-wrap: anywhere on the id, the
+     text then breaks one character per line: owner report 2026-10-05,
+     "gpt-6.1-sol" rendering as a 8x270px vertical sliver at 393px (a 223px
+     chip against a 259px row).
+
+     Upstream already declares flex-wrap: wrap on the wrapper — it is MEANT
+     to move to another line — but a single chip alone exceeds the row, so
+     wrapping never triggers. Let the row itself wrap and give the chips a
+     full-width line of their own; the chips then wrap chip-by-chip inside
+     it and every chip keeps a readable width.
+
+     Measured at 393px (id width x height): none 8x270 vertical ->
+     this rule keeps the id one line (72x15 on the widest case) and every
+     chip intact.
+
+     Two things this rule set has to get right beyond the id:
+     - the chips take a FULL line (flex: 1 0 100%) and must therefore be sent
+       after the id/name with order:1; without it the chevron, which is the
+       row's last child, is pushed onto a line of its own at the far LEFT
+       (measured: chevron 237px from the right edge = flush left, the orphaned
+       arrow the first cut of this rule produced).
+     - the chevron then needs margin-left:auto to stay flush right on the
+       first line (measured 10px from the edge on every row).
+     Rejected alternatives: min-width:0 + flex:1 1 auto on the wrapper alone
+     still left the id crushed at 44x60 vertical; white-space:nowrap on the id
+     kept it unreadably narrow at 44px; truncating the over-long chip
+     (white-space:nowrap + ellipsis on the chip) hid the reasoning summary
+     entirely - the user needs to see which levels a model offers.
+     Scoped to the settings dialog and the plugin's own class prefix; the
+     whole file is mobile-gated, so desktop never sees it. */
+  [aria-modal="true"] [class*="Qzh-QG_rowHeader"] {
+    flex-wrap: wrap !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_chips"] {
+    order: 1 !important;
+    flex: 1 0 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+  }
+  /* NOTE the :not() guard below: [class*="..._chip"] is a SUBSTRING match and
+     also hits the wrapper ("..._chips" contains "..._chip"), which would put
+     max-width/overflow-wrap on the container too. Exclude the wrapper by its
+     own overlapping prefix, the way this file's other _stat / _header families
+     do (pitfall: 哈希子串). */
+  [aria-modal="true"] [class*="Qzh-QG_chip"]:not([class*="Qzh-QG_chips"]) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_modelId"] {
+    min-width: 0 !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_modelName"] {
+    min-width: 0 !important;
+  }
+  [aria-modal="true"] [class*="Qzh-QG_rowHeader"] > svg {
+    margin-left: auto !important;
+  }
+
   /* ---------- dsh-web-ui polish: explorer sheet ----------
      The aionui explorer was designed for a desktop side column: compact the
      header, search box and tree rows so a phone shows more entries, and pad
@@ -583,7 +648,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   /* ---------- dsh-web-ui polish: conversation stats line ----------
      The official session-status row (turns / steps / LLM time / TTFT /
      cache) is long. The client marks the exact row with
-     [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
+     body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] (text-anchored, hashed classes can't be
      targeted). Layout: ONE fixed-height (28px) flex strip that scrolls
      horizontally — the full metrics stream stays reachable by swiping,
      the row never grows vertically, no ellipsis or fade, 12px gaps
@@ -597,9 +662,17 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
      4px 下内边距；overflow 改 hidden（不可滑）、滚动条显式干掉；第一组
      flex:0 0 auto 保持完整，最后一组 flex:0 1 auto + min-width:0 自己吃掉
      差额并在末尾出省略号（实测截到"…缓存命…"，tok 数字仍完整可读）。
-     高度仍是 28px：composer 的底部占位（8px + 28px）不变，其它几何不跟着动。 */
+     高度仍是 28px：composer 的底部占位（8px + 28px）不变，其它几何不跟着动。
 
-  [data-mobile-nav="stats"] {
+      2026-10-06 加档（店主："输入框下面的轮次这一条和输入框底部的距离缩减一下，
+      但不能挨得太近，还是要留出一点空间"）。**实测（真机同源 headless，工厂版）**：
+      卡片 rect.bottom=808、轮次条 rect.top=812 → flex 间隙只有 4px，视觉间距
+      ≈ 4px + 28px 行高里文字上方的约 5px ≈ 9px。所以只上提 2px（margin-top:-2px）
+      → 视觉间距约 7px，仍留余量；早前的 -4px 会把间隙压到 0（就是"挨得太近"），
+      已按实测改回。不改 28px 行高、不动 composer 底部占位（8px + 28px 几何契约）。 */
+
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] {
+    margin-top: -2px !important;
     display: flex !important;
     flex-flow: row nowrap !important;
     align-items: center !important;
@@ -618,12 +691,12 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     line-height: 18px !important;
     font-size: 10px !important;
   }
-  [data-mobile-nav="stats"]::-webkit-scrollbar {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"]::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
   }
-  [data-mobile-nav="stats"] > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > * {
     display: flex !important;
     flex-flow: row nowrap !important;
     align-items: center !important;
@@ -632,7 +705,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     padding: 0 !important;
   }
   /* 第一组（轮次·步数·tok/s）保持完整。 */
-  [data-mobile-nav="stats"] > *:first-child {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:first-child {
     flex: 0 0 auto !important;
     width: max-content !important;
     min-width: max-content !important;
@@ -644,7 +717,7 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
      这版保持 flex 对齐，只让药丸**内部的文字 span** 收缩 + 出省略号；
      图标 svg 固定不缩。另外把两组药丸的左右内边距压到 6px、组间距压到 4px，
      抠出来的宽度全部让给第二组（实测它原本只分到 76px 而需要 156px）。 */
-  [data-mobile-nav="stats"] > *:last-child {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child {
     display: flex !important;
     align-items: center !important;
     flex: 0 1 auto !important;
@@ -654,23 +727,23 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     overflow: hidden !important;
     margin-right: 0 !important;
   }
-  [data-mobile-nav="stats"] > *:last-child > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child > * {
     display: flex !important;
     align-items: center !important;
     min-width: 0 !important;
     max-width: 100% !important;
     overflow: hidden !important;
   }
-  [data-mobile-nav="stats"] > *:last-child svg {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child svg {
     flex: 0 0 auto !important;
   }
-  [data-mobile-nav="stats"] > *:last-child span {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:last-child span {
     flex: 0 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
-  [data-mobile-nav="stats"] button {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button {
     padding: 0 3px !important;
     margin: 0 !important;
     min-width: 0 !important;
@@ -678,17 +751,17 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   }
   /* 药丸内部的 span/svg 有自己的字号（宿主 .pill 自带），只在外层设 10px 不会被
      继承进去 —— 真机上第二组仍差 ~20px 被省略号切掉，所以这里显式压到内部。 */
-  [data-mobile-nav="stats"] button,
-  [data-mobile-nav="stats"] button span,
-  [data-mobile-nav="stats"] button svg,
-  [data-mobile-nav="stats"] > * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button span,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] button svg,
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > * {
     font-size: 10px !important;
     line-height: 18px !important;
   }
-  [data-mobile-nav="stats"] > *:not(:last-child) {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] > *:not(:last-child) {
     margin-right: 3px !important;
   }
-  [data-mobile-nav="stats"] * {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] * {
     white-space: nowrap !important;
   }
   /* 「上下文环」显示在输入框行的右簇（店主 2026-09-23 确认：
@@ -726,9 +799,24 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   }
   [data-mobile-nav="stats-ring"] svg {
     display: inline-block !important;
-    width: 16px !important;
-    height: 16px !important;
+    /* 2026-09-29 验收定稿（issue #140）：16px 难瞄准、24px 过大、20px 仍偏大，
+       店主拍板 18px；与 26×26 命中盒（见 layout.css.ts 的环规则）匹配。
+       增宽由尾道左侧富余吸收，按键间距不变。 */
+    width: 18px !important;
+    height: 18px !important;
     flex: 0 0 auto !important;
+  }
+  /* 轨道深化（2026-09-29 验收，issue #140）：宿主轨道只有 12% 黑，环放大到
+     24px 后深灰进度弧显得像残缺的加载圈（店主「什么玩意儿」）。加深到 25%
+     让 donut 成完整圆环——是「用量表」不是「spinner」。子串锚 class*=_track
+     与仓库哈希锚惯例一致，环标记内不会跨匹配（fill 类名不同）。
+     #142：25% 黑改按主题取色——color-mix 取 25% 标签色（label-primary 浅色
+     =近黑、暗色=近白），浅色维持 #140 验收观感，暗色自动翻成 25% 白（裸
+     rgba(0,0,0,.25) 在暗色下不可见，环又退回残缺加载圈）；token 缺失时 var
+     兜底 #000 与原值等价。border 族没有 25% 等价档，纯 var 兜底会让浅色回
+     归宿主 12%，故用 color-mix；宿主 CSS 已用同款 color-mix+var 组合。 */
+  [data-mobile-nav="stats-ring"] [class*="_track"] {
+    stroke: color-mix(in srgb, var(--dsw-alias-label-primary, #000) 25%, transparent) !important;
   }
   /* 环与 TPS 读数不再搬动宿主 React 节点（#104：搬动后宿主卸载调 removeChild
      对不上父节点直接抛 NotFoundError，SlotErrorBoundary 把整个 composer 槽位
@@ -742,8 +830,10 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   [data-mobile-nav="stats-ring-reserve"] {
     flex: 0 0 auto !important;
     display: inline-block !important;
-    width: 16px !important;
-    height: 16px !important;
+    /* 18px 与定稿的环（上方 svg 规则）同尺寸：占位顶住的槽位即环的落点，
+       尾道左侧富余吸收增宽，按键间距不变。 */
+    width: 18px !important;
+    height: 18px !important;
     margin: 0 2px 0 0 !important;
     padding: 0 !important;
   }
@@ -1014,14 +1104,14 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
+  /* 到头继续拽不把整页拖出（pocket 补丁） */
+  overscroll-behavior-x: contain !important;
   scrollbar-width: thin !important;
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   gap: 8px !important;
   padding: 4px 0 !important;
-  /* 到头继续拽不把整页拖出（pocket 补丁） */
-  overscroll-behavior-x: contain !important;
   }
   [data-mobile-nav="frame"] [class*="cardShots"] > [class*="cardShot"] {
   flex: 0 0 min(100%, 420px) !important;
@@ -1143,6 +1233,109 @@ export const COMPAT_CSS = `@media (max-width: 1023px) and (pointer: coarse) {
     [data-mobile-nav="frame"][data-file-viewer-open] [class*="dsfv-"] {
       transition: none !important;
       animation: none !important;
+    }
+  }
+
+  /* ---------- File share (effects/file-share.ts) ----------
+     Files tree rows: the plugin appends one share button after the host's
+     own row button inside li[data-files-entry="file"] (host nodes are never
+     moved). The li becomes a flex row only while it carries that button, the
+     host button keeps the remaining width. Preview header: one icon button in
+     the official document.actions slot, sized like the host tool buttons. */
+  [data-files-body] li[data-files-entry="file"]:has(> [data-mobile-nav="file-share-row"]) {
+    display: flex;
+    align-items: center;
+  }
+  [data-files-body] li[data-files-entry="file"]:has(> [data-mobile-nav="file-share-row"]) > button:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  [data-mobile-nav="file-share-row"],
+  [data-mobile-nav="file-share-preview"] {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: var(--dsw-radius-sm, 6px);
+    background: transparent;
+    color: var(--dsw-alias-label-tertiary, currentColor);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  [data-mobile-nav="file-share-row"] {
+    width: 36px;
+    height: 32px;
+  }
+  [data-mobile-nav="file-share-preview"] {
+    width: 32px;
+    height: 32px;
+    color: var(--dsw-alias-label-secondary, currentColor);
+  }
+  [data-mobile-nav="file-share-row"] svg,
+  [data-mobile-nav="file-share-preview"] svg {
+    width: 16px;
+    height: 16px;
+  }
+  [data-mobile-nav="file-share-row"]:active,
+  [data-mobile-nav="file-share-preview"]:active {
+    background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.16));
+  }
+  [data-mobile-nav="file-share-row"]:focus-visible,
+  [data-mobile-nav="file-share-preview"]:focus-visible {
+    outline: 2px solid var(--dsw-alias-border-focus, #4d6bfe);
+    outline-offset: -2px;
+  }
+  [data-mobile-nav="file-share-row"][aria-busy="true"],
+  [data-mobile-nav="file-share-preview"][aria-busy="true"] {
+    opacity: 0.45;
+    cursor: progress;
+  }
+  /* Fallback notice, only on hosts without the primitives Toast. */
+  [data-mobile-nav="file-share-toast"] {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 1500;
+    max-width: min(90vw, 420px);
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(28, 28, 30, 0.92);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.45;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /* ---------- Markdown 表格：手机档（≤767px）不再被压成「一字一行」 ----------
+     2026-10-06 真机报障：6 列宽表在 390px 上被 table-layout:auto 压到每列
+     1~2 字宽，表头竖排成一列单字，完全不可读。宿主 chat 包（ui-chat）只给
+     表格外面套了 .md-table-wide —— 用容器查询单位做「出血加宽」
+     （--dsh-table-lead / --dsh-table-spare），**整包没有任何 th/td/table
+     规则**（已 grep 确认，唯一命中在 settings-subagent 的 depthTable，与本页
+     无关），所以列宽完全由内容最小宽度决定，没有下限也没有滚动容器。
+     这里补齐手机档的两件事：给单元格一个最小宽度下限 + 让包裹层横向滚动。
+     th 允许 nowrap（表头本来就短、竖排最难看），td 只设下限、长句仍可换行，
+     不会把表格撑到无法阅读的宽度。
+     平板（768–1023）与桌面不动 —— 店主明确「平板不用」（对齐上游 768px
+     分档边界，与 layout.css.ts 的手机档写法一致）。 */
+  @media (max-width: 767px) and (pointer: coarse) {
+    [data-mobile-nav="frame"] .md-table-wide {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table {
+      width: auto !important;
+      min-width: 100% !important;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table th {
+      white-space: nowrap !important;
+    }
+    [data-mobile-nav="frame"] .md-table-wide > table th,
+    [data-mobile-nav="frame"] .md-table-wide > table td {
+      min-width: 4.5em !important;
     }
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { IconFolderOpen, IconPanelLeft } from '../core/icon-compat.ts'
-import { getFrame } from '../effects/phone-chrome.ts'
+import { getFrame } from '../platform/frame.ts'
 import { NS } from '../i18n/locales.ts'
 import { openFilesPanel } from './open-files-panel.ts'
 
@@ -22,23 +22,24 @@ export interface MobileNavToggleProps extends PropsRuntime<'conversation.session
  * Hidden entirely on wide screens (CSS media query).
  */
 export function MobileNavToggle({ toggleSidebar, t }: MobileNavToggleProps) {
-  // pocket 补丁：抽屉开关 a11y——订阅 frame 的 data-sidebar-collapsed
-  // （documentElement 级 MutationObserver + attributeFilter），渲染
-  // aria-expanded，开/关态 aria-label/title 在 t('open')/t('close') 间切换。
-  // 抽屉真值口径与 phone-chrome drawerOpen() 一致（collapsed 属性缺失=开）。
+  // pocket patch: drawer-toggle a11y — subscribe to the frame's
+  // data-sidebar-collapsed (documentElement-level MutationObserver with
+  // attributeFilter) and render aria-expanded, switching aria-label/title
+  // between t('open')/t('close'). Same truth source as the drawer state in
+  // platform/frame.ts: missing data-sidebar-collapsed attribute = open.
   const [drawerOpen, setDrawerOpen] = useState(false)
   useEffect(() => {
-    // 与 phone-chrome drawerOpen() 同一口径：frame 存在且不带
-    // data-sidebar-collapsed 即为开。
     const readOpen = (): boolean => {
       const frame = getFrame()
       return frame !== null && !frame.hasAttribute('data-sidebar-collapsed')
     }
     setDrawerOpen(readOpen())
-    // 流式输出的每个 token 都是一条文本 childList 突变——抽屉状态不可能被纯
-    // 文本批次改变，直接跳过；其余批次 rAF 合并成每帧至多一次 readOpen（两次
-    // querySelector）。attributeFilter 只过滤 attributes 类记录，childList 仍会
-    // 进回调，所以上面两道豁免是必须的，不是优化。
+    // Every streamed token is a text childList mutation — a pure-text batch
+    // cannot change drawer state, skip it; every other batch is coalesced by
+    // rAF into at most one readOpen (two querySelectors) per frame.
+    // attributeFilter only narrows attribute records; childList records still
+    // reach the callback, so the two exemptions above are required, not an
+    // optimization.
     let raf = 0
     const schedule = (): void => {
       if (raf !== 0) return

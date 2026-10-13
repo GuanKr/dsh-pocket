@@ -1,7 +1,8 @@
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ReconcilerTask } from '../core/reconciler-core.ts'
+import { NS } from '../i18n/locales.ts'
 import type { PanelExit } from './panel-exit.ts'
-import { getFrame } from './phone-chrome.ts'
+import { getFrame } from '../platform/frame.ts'
 
 /** Fade the CURRENT backdrop out (pointer-events off + opacity 0). Called by
  * the gesture layer when a close commit starts animating, so the dimming
@@ -32,7 +33,7 @@ const FAB_DRAWER_ICON =
   '</svg>'
 
 /**
- * @param t - `mobileNav` dictionary.
+ * @param t - our dictionary (the `NS` locale namespace, i18n/locales.ts).
  * @param toggleSidebar - opens/closes the drawer.
  * @param panelExit - the sidebar-panel exit face (panel-exit.ts). The FAB is the
  *   screen's only control while a panel owns the main area — the header toggle
@@ -40,7 +41,7 @@ const FAB_DRAWER_ICON =
  *   cannot select panels (rc.6), where it stays a plain drawer button.
  */
 export function createOverlayTask(
-  t: TranslateNS<'mobileNav'>,
+  t: TranslateNS<typeof NS>,
   toggleSidebar: () => void,
   panelExit: PanelExit | null,
 ): ReconcilerTask {
@@ -112,9 +113,10 @@ export function createOverlayTask(
       }
       const frame = getFrame()
       if (frame === null) {
-        // pocket 补丁：frame 缺失（宿主重建 shell）时清掉遗留的
-        // backdrop/FAB/褪除定时器再早退——否则 backdrop 变量持着脱挂节点，
-        // frame 恢复后 drawerOpen() 把 stale 引用当活的用，永不重挂。
+        // Pocket patch: with the frame gone (host rebuilt the shell), clear
+        // the stale backdrop/FAB/fade timer before the early return — the
+        // closure-held nodes are detached but non-null, so a later frame
+        // would keep treating them as live overlay state.
         if (backdropRemoveTimer !== null) {
           window.clearTimeout(backdropRemoveTimer)
           backdropRemoveTimer = null

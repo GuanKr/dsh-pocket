@@ -6,12 +6,53 @@
 //    DOM or DSH runtime, so registration / dirty routing / coalescing /
 //    error-isolation can be covered by plain unit tests.
 //
-// The browser half (phone-chrome.ts) is a thin adapter: it owns the
+// The browser half (reconciler-adapter.ts) is a thin adapter: it owns the
 // MutationObserver and requestAnimationFrame scheduler, feeds mutation keys
-// into `note()`, and delegates task lifecycle to `register()` /
-// `activate()` / `deactivate()`. `scopes` are opaque dirty keys — the core
-// never interprets them (an attribute name like 'data-sidebar-collapsed' or
-// the tree sentinel '*').
+// into note(), and delegates task lifecycle to register() / activate() /
+// deactivate(). The dirty-key vocabulary both halves must agree on lives just
+// below: the core never interprets a key, it only publishes the spellings so
+// the adapter, every task's scopes and the unit tests cannot drift apart.
+
+/**
+ * Tree-change key: the sentinel for a childList record (a node was added,
+ * removed or moved anywhere in the observed tree). Coarse on purpose -- one
+ * observer watches the whole tree, so any structural change can invalidate a
+ * task's cached node, and the core cannot know which subtree a task cares
+ * about.
+ */
+export const TREE_MUTATION_SCOPE = '*'
+
+/**
+ * Text-change key: one characterData record (a text node's value was rewritten
+ * in place, no node added or removed). Kept separate from the tree sentinel so
+ * a task that only measures structure is not re-run for every streamed token,
+ * while a task that reads text declares this key and stays woken. A text
+ * reader MUST declare it next to TREE_MUTATION_SCOPE: React rebuilds a node
+ * for some updates and rewrites the text in place for others, so both record
+ * shapes reach a live readout.
+ */
+export const TEXT_MUTATION_SCOPE = 'characterData'
+
+/** The part of a mutation record this mapping reads (structural: no DOM). */
+export interface MutationLike {
+  readonly type: string
+  readonly attributeName: string | null
+}
+
+/**
+ * Map one observer record onto the dirty key it dirties: attribute records
+ * route by attribute name, text records to TEXT_MUTATION_SCOPE, tree records
+ * to TREE_MUTATION_SCOPE. Fail-open on the two shapes it cannot name -- an
+ * attribute record without a name, and any record type this mapping does not
+ * know, both widen to the tree sentinel, so a mapping gap can only cost extra
+ * wakeups, never a missed one.
+ */
+export function mutationDirtyKey(record: MutationLike): string {
+  if (record.type === 'attributes') {
+    return record.attributeName === null ? TREE_MUTATION_SCOPE : record.attributeName
+  }
+  return record.type === 'characterData' ? TEXT_MUTATION_SCOPE : TREE_MUTATION_SCOPE
+}
 
 /** One unit of DOM reconciliation driven by the shared full-tree observer. */
 export interface ReconcilerTask {
@@ -19,6 +60,8 @@ export interface ReconcilerTask {
   /**
    * Dirty keys that must be present for this task to re-run on a flush.
    * Undefined = unscoped: run on every non-empty flush (legacy behavior).
+   * A key is TREE_MUTATION_SCOPE, TEXT_MUTATION_SCOPE, or an attribute name;
+   * the core compares keys literally and never interprets them.
    */
   readonly scopes?: readonly string[]
   /** Called once on activation and after every matching DOM mutation. */
@@ -101,16 +144,21 @@ export function createReconcilerCore(options: ReconcilerCoreOptions): Reconciler
       forceAll = false
       return
     }
-    if (forceAll) {
+    // Snapshot and clear BEFORE running tasks: a task that calls note() from
+    // inside ensure() must leave its key dirty for the next pass. Clearing at
+    // the end swallowed exactly those keys (issue #86).
+    const keys = dirty
+    const all = forceAll
+    dirty = new Set<string>()
+    forceAll = false
+    if (all) {
       for (const task of active) runEnsure(task)
-    } else if (dirty.size > 0) {
+    } else if (keys.size > 0) {
       for (const task of active) {
         const scopes = task.scopes
-        if (scopes === undefined || scopes.some((key) => dirty.has(key))) runEnsure(task)
+        if (scopes === undefined || scopes.some((key) => keys.has(key))) runEnsure(task)
       }
     }
-    dirty.clear()
-    forceAll = false
   }
 
   const schedule = (): void => {
@@ -129,10 +177,11 @@ export function createReconcilerCore(options: ReconcilerCoreOptions): Reconciler
     }
     return () => {
       registered.delete(task)
-      if (active !== null) {
-        active.delete(task)
-        runDispose(task)
-      }
+      // Ownership check: the disposer is idempotent and only disposes a task
+      // that is actually active. Without it, calling one disposer twice ran
+      // dispose() twice (and a stale disposer could dispose a task this call
+      // never registered — issue #86).
+      if (active !== null && active.delete(task)) runDispose(task)
     }
   }
 

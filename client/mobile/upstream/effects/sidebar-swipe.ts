@@ -1,5 +1,6 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { installMobileEffect, getFrame } from './phone-chrome.ts'
+import { getFrame } from '../platform/frame.ts'
+import { installMobileEffect } from '../platform/breakpoints.ts'
 import { markGestureConsumed, consumeIfGestured, markStrokeLocked, clearStrokeLocked } from './gesture-guard.ts'
 import { fadeOverlayOut } from './overlay-backdrop-fab.ts'
 
@@ -226,12 +227,9 @@ let filesToggleFn: () => boolean = () => false
 export interface SwipeThresholds {
   openDistanceRatio: number
   closeDistanceRatio: number
-  velocityWindowMs: number
   openVelocity: number
   closeVelocity: number
   lockPx: number
-  cooldownMs: number
-  startZonePx: number
 }
 
 /**
@@ -380,7 +378,7 @@ export function hitTestStart(
   clientX: number,
   viewportWidthPx: number,
   rtl: boolean,
-  t: Pick<SwipeThresholds, 'startZonePx'>,
+  t: { startZonePx: number },
 ): boolean {
   const edge = rtl ? viewportWidthPx - clientX : clientX
   return edge >= 0 && edge <= t.startZonePx
@@ -792,6 +790,8 @@ function startFollow(): void {
 /** True while the drawer subtree layout+paint is deliberately deferred by
  * the arm-time content-visibility split (see armOpenFollow). */
 let cvDeferred = false
+/** Pending reveal chain handle (double rAF); cancelled on dispose. */
+let armRevealRaf = 0
 
 /** Re-materialize the drawer contents after the mount-frame split. */
 function revealDrawerContent(): void {
@@ -837,8 +837,14 @@ function armOpenFollow(ctx: ClientContext): void {
   cvDeferred = true
   openFollowArmed = true
   ctx.layout.toggleSidebar()
-  requestAnimationFrame(() => {
-    requestAnimationFrame(revealDrawerContent)
+  // Two frames (layout flush, then reveal). Kept in module state so a dispose
+  // between them cancels the chain instead of revealing a drawer that no
+  // longer belongs to this effect (issue #86).
+  armRevealRaf = requestAnimationFrame(() => {
+    armRevealRaf = requestAnimationFrame(() => {
+      armRevealRaf = 0
+      revealDrawerContent()
+    })
   })
 }
 
@@ -916,8 +922,8 @@ function releaseFollowStyles(): void {
   followEngaged = false
   el.style.removeProperty('transition')
   el.style.removeProperty('transform')
-  // Drop the arm-time layer promotion with the inline pair (see
-  // armOpenFollow): the resting drawer must not hold a compositor layer.
+  // Drop the arm-time layer promotion with the inline pair (see armOpenFollow):
+  // the resting drawer must not hold a compositor layer.
   el.style.removeProperty('will-change')
 }
 
@@ -931,7 +937,7 @@ function releaseFollowStyles(): void {
  * IN FLIGHT — user report 「最后抽屉样式突然消失,不是自然的动画收起」.
  * Late commit: animate the inline transform to the slot, flip only when the
  * drawer is already off-screen, then drop the inline pair. */
-let pendingCommit: { el: HTMLElement; ctx: ClientContext; timer: number } | null = null
+let pendingCommit: { el: HTMLElement; ctx: ClientContext; timer: number; target: string } | null = null
 
 function finishPendingCommit(): void {
   const pending = pendingCommit
@@ -953,14 +959,38 @@ function finishPendingCommit(): void {
 }
 
 /** Animate `el` to `targetTx` with our own transition, flip the host when it
- * lands. One-shot: a second call settles the previous commit first. */
+ * lands. A repeat of the SAME intent inside the window is claimed by the
+ * in-flight commit (no-op); a different intent settles it first. */
 function commitWithAnimation(ctx: ClientContext, el: HTMLElement, targetTx: string): void {
+  // Same target, same element = the drawer is already leaving that way. Let the
+  // first commit land: force-settling here would flip the host state NOW and
+  // then animate an already-closed drawer (Escape twice inside the 320ms window
+  // used to toggle the host twice — the "晚提交" contract broken by us).
+  const inFlight = pendingCommit
+  if (inFlight !== null && inFlight.el === el && inFlight.target === targetTx) return
   finishPendingCommit()
+  // prefers-reduced-motion: degrade the animation instead of adding one. This
+  // cannot be left to CSS — the transition written below is inline
+  // `!important`, which the stylesheet's reduce block cannot override, and the
+  // gesture-close path reaches here without a reduce check (issue #86). Land
+  // the exact same guarded commit, just without the animation beat.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    fadeOverlayOut()
+    cooldownUntil = performance.now() + COOLDOWN_MS
+    pendingCommit = { el, ctx, timer: 0, target: targetTx }
+    finishPendingCommit()
+    return
+  }
   el.style.setProperty('transition', `transform ${COMMIT_ANIM_MS}ms ease-in-out`, 'important')
-  // Flush the before-change style so the transition provably starts from the
-  // current (finger) position instead of risking a coalesced recalc that
-  // would jump straight to the target.
-  void el.getBoundingClientRect()
+  // Flush the before-change style ONLY when an inline transform is already
+  // present — that is the case this flush exists for: a finger-follow wrote the
+  // current position in this same frame, and the transition has to start from it
+  // instead of from a coalesced recalc. A click/Escape/backdrop close starts from
+  // the stylesheet's open state (`transform: none`, no inline value), so the
+  // transition is well defined without forcing a reflow of the whole column —
+  // measured 105ms of `onDrawerClick` on a 3.5k-node session, growing with the
+  // conversation.
+  if (el.style.getPropertyValue('transform') !== '') void el.getBoundingClientRect()
   el.style.setProperty('transform', targetTx, 'important')
   // Fade the dimming in step with the slide-out: the marker flips only when
   // the drawer lands, so without this the screen would go drawer-then-dark
@@ -971,6 +1001,7 @@ function commitWithAnimation(ctx: ClientContext, el: HTMLElement, targetTx: stri
     el,
     ctx,
     timer: window.setTimeout(finishPendingCommit, COMMIT_ANIM_MS + 40),
+    target: targetTx,
   }
 }
 
@@ -1083,8 +1114,13 @@ function beginStroke(
   // drawer open (failure scenario C1). Applies to both branches: inside the
   // drawer the same "scroller owns horizontal" semantics should hold.
   if (findHorizontalScroller(chainFrom(event.target)) !== null) return false
-  // A touch starting on the composer or bottom bar belongs to chat input/actions:
-  // never trigger drawer opening gesture from inside the composer or bottom controls!
+  // The composer card sits low-center and often hosts horizontally draggable
+  // affordances (attachment chips, file cards) that are NOT inside any
+  // horizontally scrollable container, so the scroller test above does not
+  // cover them; a swipe armed on the composer would also yank the drawer
+  // under the user's thumb mid-edit. Host class names differ per build, so
+  // match the seat/card/dock shapes the composer is known to render into
+  // (class-substring, same tolerance the rest of this file uses).
   if (event.target.closest('[class*="_composerSeat"], [data-composer-card], [class*="_dock"]') !== null) return false
   const open = drawerOpen()
   const filesZonePx = startZonePxFor(viewportWidthPx, FILES_ZONE_RATIO)
@@ -1291,12 +1327,9 @@ function endStroke(
             {
               openDistanceRatio: OPEN_DISTANCE_RATIO,
               closeDistanceRatio: CLOSE_DISTANCE_RATIO,
-              velocityWindowMs: VELOCITY_WINDOW_MS,
               openVelocity: OPEN_VELOCITY,
               closeVelocity: CLOSE_VELOCITY,
               lockPx: LOCK_PX,
-              cooldownMs: COOLDOWN_MS,
-              startZonePx: startZonePxFor(viewportWidthPx),
               viewportWidthPx,
               drawerOpen: lockDrawerOpen,
             },
@@ -1544,7 +1577,7 @@ export function installSidebarSwipe(ctx: ClientContext, filesToggle: () => boole
     // report: pinch-out zoomed but pinch-in would not zoom back).
     const onTouchMove = (event: TouchEvent): void => {
       if (trackingPointer === 0) return
-      if (event.touches.length > 1) {
+      if (event.touches.length !== 1 || !event.cancelable || document.hidden) {
         abortStroke(ctx)
         return
       }
@@ -1570,6 +1603,10 @@ export function installSidebarSwipe(ctx: ClientContext, filesToggle: () => boole
       document.removeEventListener('touchmove', onTouchMove, { capture: true } as EventListenerOptions)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('blur', onBlur)
+      if (armRevealRaf !== 0) {
+        cancelAnimationFrame(armRevealRaf)
+        armRevealRaf = 0
+      }
       abortStroke(ctx, true)
     }
   })

@@ -25,10 +25,22 @@ node C:\Users\daha\.dsh\dsh-pocket\sync-dsh-web-mobile.mjs          # 跟 origin
 node C:\Users\daha\.dsh\dsh-pocket\sync-dsh-web-mobile.mjs v2.4.0   # 或指定 tag
 ```
 
-脚本会：fetch → 镜像 src/client → esbuild 重建 client.js → node --check。
-产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配器 + fileGuard 为一个
-`window.__ModuleLoader__.load` 包装的 CJS bundle（react 与
+脚本会：fetch → 镜像 src/client → **镜像期变换（见下）** → esbuild 重建 client.js →
+node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配器 + fileGuard
+为一个 `window.__ModuleLoader__.load` 包装的 CJS bundle（react 与
 `@deepseek-ai/dsh-client-ui-primitives` 保持 external）。
+
+**镜像期变换（sync 脚本 step 2.5，自动施加，无需手工）**——v3.1.0 起上游 NS 家族
+改为 `dshWebMobileNav` 前缀，vendored 副本注册同名人会与独立安装的 dsh-web-mobile
+插件撞车（上游 locales.ts 注释：register 重名 throw 且整条插件 fiber 死亡）：
+1. `dshWebMobileNav` → `pocketMobileNav`（全字符串，含 `.attachments` 子 NS 与
+   `…FileShare` 变体；对历史 `'mobileNav'` 字面量同改，`dataset.mobileNav`/`data-mobile-nav`
+   是 data 属性**不在其列**）；
+2. `[data-mobile-nav="stats"]` 选择器 → `body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"]`
+   （让位机制：其它插件设 `document.body.dataset.pocketStats='off'` 即可整组回收
+   stats 条，纯 CSS、无 JS 拦截；幂等：已前缀的选择器不会二次加前缀）。
+   变换后脚本断言镜像目录零 `dshWebMobileNav` 残留——**上游新增未跟踪文件**（如
+   v3.1.0 的 file-share-locale.ts）git grep 搜不到，断言必须走文件系统遍历。
 
 构建依赖 esbuild：vendored 于 `C:\Users\daha\.dsh\dsh-pocket\vendor\node_modules\`
 （esbuild@0.28.1 + @esbuild/win32-x64），sync 脚本自动 junction 进包内 node_modules。
@@ -47,51 +59,43 @@ node C:\Users\daha\.dsh\dsh-pocket\sync-dsh-web-mobile.mjs v2.4.0   # 或指定 
 组件闭包/reconciler 回调/slot 组件），每次 `sync-dsh-web-mobile.mjs` 会把它们
 整目录冲掉。按序号逐个施加，施加完用 `git diff client/mobile/upstream` 复核。
 
-**2026-09-28 对账基线：v3.0.3 (a094288)。** 老清单 20 条里，#1 图标兜底（icon-compat.ts）、
-#5 fadeHook、#10 clear() order、#11 裸 768px 媒体臂、#13 stats 败块裁剪、#17 前身的
-部分回退、#18 isSessionMenu 包含式、#20 的 stats-line fast path **已被上游吸收**；
-#4 git-chip-reparent、#7 的 settings-toolbar-reparent **整文件被上游删除**（#105 改
-CSS 锚定）。存活清单重编号如下：
+**2026-10-14 对账基线：v3.1.0 (ab3a85b)。** v3.0.3 清单 13 条的去向：#1 脏键豁免
+（上游 reconciler 拆分——adapter 过滤 [data-chat-flow] 内全部记录 + core 的
+characterData 脏键取代）、#2 frame 缓存（上游原生 isConnected）、#4③ dispose 清
+注入（上游 injected Set）、#5 gesture-guard 清扫（上游 consumed 改 WeakMap，
+detached 节点天然可回收）**已被上游吸收**；NS 改名与 stats 让位升级为脚本镜像期
+变换（见「同步步骤」节）。存活 10 条重编号如下：
 
-1. `effects/phone-chrome.ts` — reconciler 脏键：added+removed 全为文本节点的 childList
-   批次不记 `'*'`（空批次跳过 flush），**但目标落在 `[class*="_composerStack"]` 内的
-   文本批次仍记 `'*'`**——stats-line 的 TPS 镜像以 tree key 为唯一唤醒源（其 scopes
-   注释明示），全豁免会让流末最后一批后覆盖层永久 stale。丢了回到「流式输出每帧
-   全任务全文档扫描」；漏掉 composerStack 例外则 TPS 读数卡死。
-2. `effects/phone-chrome.ts` — frame-marker 任务缓存 frame 引用，isConnected 时复用，
-   脱挂再查（`'*'` 任务每批两次 querySelector 的豁免）。
-3. `effects/overlay-backdrop-fab.ts` — frame 缺失分支：清 backdrop/FAB/褪除定时器后
-   early return（原实现挂起的 backdrop 引用不清，frame 恢复后永不重挂）。
-4. `effects/session-menu.ts` — ① capture 阶段 contextmenu 也更新 anchor（captureRow
-   共用，长按/右键开菜单）；② 菜单卸载且再无会话菜单时 anchor 清空；③ dispose 移除
-   注入的 `[data-mobile-nav="session-delete"]` 项。
-5. `effects/gesture-guard.ts` — `consumed` Map 超 500 条时清扫 `!isConnected` 节点
-   （否则已卸载节点被强引用整个会话）。sweep 在 markGestureConsumed 两端调用。
-6. `debug.ts` — observer 回调里的 `paint()` 改 rAF 合并（schedulePaint + dispose 取消）；
-   `?mobile-nav-debug=1` 下流式每批强制 reflow 的豁免。
-7. `effects/sidebar-swipe.ts` — ① follow 合成层：armOpenFollow 设
+1. `effects/overlay-backdrop-fab.ts` — frame 缺失分支：清 backdropRemoveTimer、
+   backdrop/FAB 引用后 early return（挂起的 stale 引用会让 frame 恢复后永不重挂）。
+2. `effects/session-menu.ts` — ① capture 阶段 contextmenu 也更新 anchor（captureRow
+   共用，长按/右键开菜单）；② 菜单卸载且再无会话菜单时 anchor 清空（removedMenu
+   检测，防程序化开菜单命中过期 anchor）。③ dispose 清注入项上游已做（injected Set）。
+3. `debug.ts` — observer 回调里的 `paint()` 改 rAF 合并（schedulePaint + dispose
+   取消）；`?mobile-nav-debug=1` 下流式每批强制 reflow 的豁免。
+4. `effects/sidebar-swipe.ts` — ① follow 合成层：armOpenFollow 设
    `style.willChange='transform'`，releaseFollowStyles 与 finishPendingCommit 两个
    内联出口同步 removeProperty（漏清理=抽屉常驻占一个合成层）；② 起手守卫：目标在
    `_composerSeat`/`[data-composer-card]`/`_dock` 内直接 false（输入区起手不开抽屉）。
-8. `effects/file-viewer-compat.ts` — 备忘上次 panel 存在性 + frame 引用，同值同帧
+5. `effects/file-viewer-compat.ts` — 备忘上次 panel 存在性 + frame 引用，同值同帧
    直接 return；dispose 清缓存。
-9. `components/MobileNavToggle.tsx` — 抽屉开关 a11y：`useState`+`useEffect` 订阅
+6. `components/MobileNavToggle.tsx` — 抽屉开关 a11y：`useState`+`useEffect` 订阅
    `data-sidebar-collapsed`（documentElement 级 MutationObserver + attributeFilter，
    口径同 phone-chrome drawerOpen()），渲染 `aria-expanded`，开/关态 aria-label/title
    在 `t('open')`/`t('close')` 间切换。观察者回调必须：纯文本 childList 批次跳过 +
    其余 rAF 合并——attributeFilter 不挡 childList，流式每 token 都会进回调，裸跑
    readOpen = 每帧两次全文档 querySelector。（图标兜底已上游化：core/icon-compat.ts。）
-10. `styles/layout.css.ts` — `html,body` 加 `-webkit-text-size-adjust/text-size-adjust:
-    100%`（iOS 竖屏防文字自动放大）；`[class*="_scrollBody"]` 加
-    `overscroll-behavior: contain`；composer 座底部安全区
-    `padding-bottom: calc(5px + env(safe-area-inset-bottom,0px)) !important`
-    （`_composerSeat` 三选择器组，哈希代际变化时静默 no-op）。
-11. `styles/compat.css.ts` — opPanel 补 `z-index: 60 !important`；cardShots 横滚容器补
-    `overscroll-behavior-x: contain !important`；preview-full-toggle 的 :hover 包入
-    `@media (hover: hover)`。
-12. `styles/base.css.ts` — 三处 :hover（toggle/files、session-log、fab）包入
-    `@media (hover: hover)`（:active 拆出保留），触屏点后不再粘滞灰底。
-13. dvh 全量补 vh 回退双行（vh 行在前、dvh 行在后；iOS<15.4 无 dvh 引擎整条丢弃 dvh
+7. `styles/layout.css.ts` — `html,body` 加 `-webkit-text-size-adjust/text-size-adjust:
+   100%`（iOS 竖屏防文字自动放大）；`[class*="_scrollBody"]` 加
+   `overscroll-behavior: contain`；composer 座底部安全区
+   `padding-bottom: calc(5px + env(safe-area-inset-bottom,0px)) !important`
+   （`_composerSeat` 三选择器组，哈希代际变化时静默 no-op）。
+8. `styles/compat.css.ts` — opPanel 补 `z-index: 60 !important`；cardShots 横滚容器补
+   `overscroll-behavior-x: contain !important`；preview-full-toggle 的 :hover 包入
+   `@media (hover: hover)`。
+9. `styles/base.css.ts` — 三处 :hover（toggle/files、session-log、fab）包入
+   `@media (hover: hover)`（:active 拆出保留），触屏点后不再粘滞灰底。
+10. dvh 全量补 vh 回退双行（vh 行在前、dvh 行在后；iOS<15.4 无 dvh 引擎整条丢弃 dvh
     声明）：`compat.css.ts` explorer sheet（height/max-height）、preview sheet
     （height/max-height）、preview 全屏（height）、agent-preset 菜单（max-height）；
     `layout.css.ts` header `_menu`（max-height）、`_panel` 族（max-height calc-96px）、
@@ -136,6 +140,22 @@ CSS 锚定）。存活清单重编号如下：
   - 合并时 pocket 补做：宿主侧 delete-session 路由移植（手机删除 404 断链）、
     rc.2 右上角双入口治理（见上「适配器层的宿主侧配套」）、老清单 20 条补丁对账
     重打（8 条已被上游吸收、2 条随文件删除作废、13 条存活重编号）
+- **2026-10-14 同步到 v3.1.0 @ab3a85b（基于上游 v3.0.6 b78babc 的基线重放版）**：
+  - 上游要点：C08 stats-line TPS 宽度不刷新（characterData scope）、panel-exit
+    try/finally、disposer 按 ownership 删除、@patch 注册门禁、reasoning-effort
+    自动档位（compat 不支持不写 tier）、顶栏座位重做（后台任务点进标题行、
+    subagent chip 钉右、标题省略+展开）、性能第一批（header-metrics 几何重绑拆分、
+    installed-list 容器缓存、model-menu-anchor 每帧 rect 缓存、composer-file-picker
+    先比后写）、断点收敛 767px、!important 941→922
+  - 架构变化：reconciler 拆 `core/reconciler-core.ts`（DOM-free）+
+    `effects/reconciler-adapter.ts`（唯一全树 observer，characterData:true，
+    **过滤 [data-chat-flow] 内全部记录**）；getFrame/findFrame 迁至
+    `platform/frame.ts`；NS 家族改 `dshWebMobileNav` 前缀（与 dsh-pocket 撞车的
+    #162 由上游在上游侧同时解决：pocket 应注册 pocketMobileNav——本仓由 sync
+    脚本镜像期变换保证）
+  - pocket 侧配套：sync 脚本新增镜像期变换 + 残留断言（见「同步步骤」节）；
+    13 条补丁对账重打（4 条被上游吸收、存活 10 条重编号）；gesture-guard 的
+    WeakMap 化使清扫补丁作废；session-menu ③ 上游 injected Set 化
 
 ## pocket 附加层（适配器 mobile-apply.tsx 负责，上游没有的）
 
