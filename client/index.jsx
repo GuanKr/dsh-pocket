@@ -418,11 +418,15 @@ function PocketSettingsTab({ rpcCall, t }) {
   }, h('span', { style: { position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,.18)', transition: 'left .15s ease' } }));
 
   // 通道小节：标题行（状态点 + 名称 + 右侧控件）+ 内容；小节之间只靠留白，不再画粗边框
-  const Section = (title, right, children, key) => h('section', { style: { marginTop: 20 }, 'data-dshp-section': key ?? '' },
+  // children 只有一个槽——再加行必须包成数组传入，多余的 row 会落进 key 槽被静默丢弃
+  const Section = (title, right, children, key) => {
+    if (key != null && typeof key !== 'string') console.warn('[dsh-pocket] Section 参数错位：key 槽收到非字符串（多余实参会被静默丢弃），children 需为数组', key);
+    return h('section', { style: { marginTop: 20 }, 'data-dshp-section': key ?? '' },
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
       title ? h('span', { style: { fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6 } }, title) : h('span', { style: { flex: 1 } }, null),
       right ?? null),
     children ?? null);
+  };
 
   // 设置行：发丝线分隔；第一行 = 左标签 + 右控件；extra 追加在下方
   const row = (label, control, extra) => h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l2,#eceef2)', paddingTop: 10, marginTop: 10 } },
