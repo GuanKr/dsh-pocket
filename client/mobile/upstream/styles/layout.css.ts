@@ -2003,7 +2003,7 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
      !important 胜宿主 (0,1,0) 普通声明，与书写顺序无关；data-mobile-nav=
      "stats" 是 stats-line 效果打的稳定标记，无哈希、跨宿主代际可用。
      本条置于 ①嵌套块外：裁切陷阱与断点 A 的档位无关，全移动宽度生效。 */
-  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats"] {
     justify-content: flex-start !important;
     /* 指标行的空隙在手机上偏松（2026-10-07 店主截图：「距离缩一点，更紧致一点」）。
        宿主 dsh-client-ui-chat 的 StatsPills 叠了三层：root 的 12px 列间距 +
@@ -2014,10 +2014,10 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
        限定在本插件自己的 stats 标记内：换代只会让规则惰性化，不会误伤别处。 */
     gap: 6px !important;
   }
-  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_sep"] {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats"] [class*="_sep"] {
     margin: 0 2px !important;
   }
-  [data-mobile-nav="frame"] [data-phase] body:not([data-pocket-stats="off"]) [data-mobile-nav="stats"] [class*="_pill"] {
+  body:not([data-pocket-stats="off"]) [data-mobile-nav="frame"] [data-phase] [data-mobile-nav="stats"] [class*="_pill"] {
     padding-left: 6px !important;
     padding-right: 6px !important;
   }

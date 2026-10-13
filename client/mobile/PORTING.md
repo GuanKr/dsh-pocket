@@ -69,10 +69,12 @@ node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配�
 
 **2026-10-14 对账基线：v3.1.0 (ab3a85b)。** v3.0.3 清单 13 条的去向：#1 脏键豁免
 （上游 reconciler 拆分——adapter 过滤 [data-chat-flow] 内全部记录 + core 的
-characterData 脏键取代）、#2 frame 缓存（上游原生 isConnected）、#4③ dispose 清
-注入（上游 injected Set）、#5 gesture-guard 清扫（上游 consumed 改 WeakMap，
-detached 节点天然可回收）**已被上游吸收**；NS 改名与 stats 让位升级为脚本镜像期
-变换（见「同步步骤」节）。存活 10 条重编号如下：
+characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）、#5 gesture-guard
+清扫（上游 consumed 改 WeakMap，detached 节点天然可回收）**已被上游吸收**；NS 改名
+与 stats 让位升级为脚本镜像期变换（见「同步步骤」节）。存活 11 条重编号如下
+（⚠ 2026-10-14 审查更正：#2「frame 缓存 isConnected 检查」v3.1.0 上游**没有**吸收
+——upstream/effects/phone-chrome.ts 上游仍是裸 `frame = findFrame()`，isConnected
+短路是我们镜像里的本地补丁，回归存活清单，勿再误记）：
 
 1. `effects/overlay-backdrop-fab.ts` — frame 缺失分支：清 backdropRemoveTimer、
    backdrop/FAB 引用后 early return（挂起的 stale 引用会让 frame 恢复后永不重挂）。
@@ -108,6 +110,10 @@ detached 节点天然可回收）**已被上游吸收**；NS 改名与 stats 让
     （height/max-height）、preview 全屏（height）、agent-preset 菜单（max-height）；
     `layout.css.ts` header `_menu`（max-height）、`_panel` 族（max-height calc-96px）、
     team-action 面板（max-height calc-200px）。
+ 11. `effects/phone-chrome.ts` — frame 引用缓存加 isConnected 短路：
+     if (frame === null || !frame.isConnected) frame = findFrame()`。宿主 SPA 换页/
+     重挂会把旧 frame 从文档摘除，裸缓存会让后续轮询一直对着游离节点打标。上游
+     v3.1.0 仍是裸缓存（audit 2026-10-14 复核），勿信「已吸收」旧说。
 
 ### 适配器层的宿主侧配套（不在 upstream/ 内，但同一次合并引入）
 
