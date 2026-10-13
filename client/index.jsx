@@ -67,7 +67,7 @@ function applyMobileRightbarSetting(enabled) {
 }
 
 function applyMobilePinchZoomSetting(enabled) {
-  const on = enabled !== false;
+  const on = enabled === true;
   document.body?.setAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE, on ? 'on' : 'off');
   window.dispatchEvent(new CustomEvent(MOBILE_PINCH_ZOOM_EVENT, { detail: { enabled: on } }));
 }
@@ -681,7 +681,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       ),
       row(
         t('mobilePinchZoom'),
-        Switch(status?.mobilePinchZoomEnabled !== false, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled === false)),
+        Switch(status?.mobilePinchZoomEnabled === true, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled !== true)),
         h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobilePinchZoomHint')),
       ),
       'prefs'),

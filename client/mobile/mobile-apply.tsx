@@ -36,11 +36,11 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
     touch-action: pan-y pinch-zoom !important;
   }
 
-  /* ---------- 两指捏合缩放开关（2026-10-14）：设置页关闭后全拦 ----------
-     设置层写 body[data-dsh-pocket-pinch-zoom="off"]；此处去掉 pinch-zoom 令牌
-     （Android 侧 touch-action 即生效），iOS 侧由下方 H3 手势锁双向全拦兜底。
-     注意：关掉后若浏览器自行放大视口（#45 场景）将无法捏合还原，只能重开
-     页面——提示文案已写在设置页开关下方。 */
+  /* ---------- 两指捏合缩放开关（2026-10-14）：默认关，全拦 ----------
+     设置层写 body[data-dsh-pocket-pinch-zoom]（默认 off）；off 时去掉
+     pinch-zoom 令牌（Android 侧 touch-action 即生效），iOS 侧由下方 H3
+     手势锁双向全拦兜底。注意：关闭期间若浏览器自行放大视口（#45 场景）
+     将无法捏合还原，只能重开页面——提示文案已写在设置页开关下方。 */
   body[data-dsh-pocket-pinch-zoom="off"],
   body[data-dsh-pocket-pinch-zoom="off"] [data-mobile-nav="frame"] [class*="scrollBody"] {
     touch-action: pan-y !important;
@@ -456,9 +456,9 @@ export function mobileApply(ctx: ClientContext): void {
           ok?: boolean
           value?: { mobilePinchZoomEnabled?: boolean }
         }
-        if (active) applyEnabled(result?.ok === true ? result.value?.mobilePinchZoomEnabled !== false : true)
+        if (active) applyEnabled(result?.ok === true ? result.value?.mobilePinchZoomEnabled === true : false)
       } catch {
-        if (active) applyEnabled(true)
+        if (active) applyEnabled(false)
       }
     }
     window.addEventListener(MOBILE_PINCH_ZOOM_EVENT, onChange)
@@ -501,10 +501,10 @@ export function mobileApply(ctx: ClientContext): void {
       startScale = window.visualViewport?.scale ?? 0
     }
     const onChange = (event: Event): void => {
-      // 设置页关闭捏合（body[data-dsh-pocket-pinch-zoom="off"]）→ 双向全拦：
-      // 放大缩小都 preventDefault，页面锁死 1x。手势事件低频，直接读属性即可，
-      // 无需向设置层订阅。开关默认开，属性缺失时走下方条件拦截老语义。
-      if (document.body?.getAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE) === 'off') {
+      // 设置页开启捏合（body 属性非 "off"）→ 维持条件拦截；关闭（默认，
+      // 属性为 "off" 或拉取失败前缺失）→ 双向全拦：放大缩小都 preventDefault，
+      // 页面锁死 1x。手势事件低频，直接读属性即可，无需向设置层订阅。
+      if (document.body?.getAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE) !== 'on') {
         event.preventDefault()
         return
       }
