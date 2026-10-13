@@ -50,8 +50,16 @@ node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配�
 1. 重启 dsh web（`node C:\Users\daha\.dsh\dsh-pocket\detached-restart.cjs`，注意会断当前会话）。
    combo URL 的 rev 启动时重分配，无缓存问题。
 2. WebKit（JSC/同 iPhone 引擎）回归：登录 PIN → 开历史会话（对话渲染）→ 抽屉开合 → 左缘右滑。
-3. 若上游改了 slots 注册或 inject 依赖，检查适配器（mobile-apply.tsx）里 upstreamApply 的调用注释。
-4. **重打下方「upstream/ 内的 pocket 手工补丁」清单**——sync 会整目录覆盖，丢了会静默回归。
+3. **对表 inject 硬依赖**：upstream/index.tsx 的 `export const inject` 若增删服务名，
+   `client/index.jsx` 的适配器 inject 数组必须同步改成它的超集（v3.1.0 起 upstream
+   新增 `'sessions'`，漏声明 → 宿主给 `ctx.sessions` 传 undefined → 激活即抛
+   "1 entry did not activate"，2026-10-14 实测翻车一次）。upstream 动态依赖
+   （`ctx.inject([...], cb)` 懒加载，如 inputTriggers/remote.workspaceFiles）不进
+   静态表，宿主 0.2.0-rc.1 原生支持。
+4. **激活冒烟**：`node client\repro-activate.mjs`（桩环境直跑 bundle 的 apply()，
+   应打印 `apply() completed` + 41 effects + locale NS 清单；NS 重名/漏 inject
+   一律当场炸）。比「重启后拿手机试」快得多。
+5. **重打下方「upstream/ 内的 pocket 手工补丁」清单**——sync 会整目录覆盖，丢了会静默回归。
 
 ## upstream/ 内的 pocket 手工补丁（sync 覆盖后必须重打）
 

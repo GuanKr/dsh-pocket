@@ -20,7 +20,10 @@ import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as POCKET_NS, zh as POCKET_ZH, en as POCKET_EN } from './pocket-locales.js';
 
 const name = 'dsh-pocket';
-const inject = ['slots', 'connection', 'layout', 'locale', 'sessionLogDownload'];
+// inject 必须是 upstream（client/mobile/upstream/index.tsx）inject 的超集：
+// v3.1.0 起新增 'sessions'（session-focus-guard 读 ctx.sessions.list），
+// 漏声明会让宿主给 ctx.sessions 传 undefined，激活即抛错 "did not activate"。
+const inject = ['slots', 'connection', 'layout', 'locale', 'sessionLogDownload', 'sessions'];
 
 // 词典在 pocket-locales.js；这里只做「取 key → 替换 {占位符} → 字符串」。
 // 不依赖 DSH t() 的插值能力，避免行为不一致。
