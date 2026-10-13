@@ -672,8 +672,8 @@ function PocketSettingsTab({ rpcCall, t }) {
       ),
       'wan'),
 
-    // ── 偏好：手机端右边栏 ───────────────────────────────────────────────────
-    Section(null, null,
+    // ── 偏好：手机端右边栏 / 捏合缩放（同属「手机访问」页，给出可见分组标题）──
+    Section(h('span', null, t('prefsTitle')), null,
       row(
         t('mobileRightbar'),
         Switch(status?.mobileRightbarEnabled !== false, () => setMobileRightbar(status?.mobileRightbarEnabled === false)),
