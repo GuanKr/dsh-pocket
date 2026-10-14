@@ -15,7 +15,7 @@
 
 import { createElement as h, useEffect, useRef, useState } from 'react';
 
-import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, redactStatus, compareVersions } from './api.js';
+import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, redactStatus, compareVersions, isSameRepo } from './api.js';
 import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as POCKET_NS, zh as POCKET_ZH, en as POCKET_EN } from './pocket-locales.js';
 
@@ -165,7 +165,11 @@ function PocketSettingsTab({ rpcCall, t }) {
         const meta = await (await fetch('https://registry.npmjs.org/dsh-pocket/latest', { cache: 'no-store' })).json();
         if (!alive) return;
         const latest = typeof meta?.version === 'string' ? meta.version : null;
-        if (latest && v.current && compareVersions(latest, v.current) > 0) {
+        const upstreamRepo = typeof meta?.repository === 'string' ? meta.repository : meta?.repository?.url ?? null;
+        // fork/分支安装（repository 与 npm 上游不同源）不比 npm 版本：版本号滞后是常态，
+        // 横幅会永远挂着；且一键更新会把上游代码盖在本地修改上。只保留「已更新未重启」本地分支。
+        const npmManaged = isSameRepo(v.repository ?? null, upstreamRepo);
+        if (npmManaged && latest && v.current && compareVersions(latest, v.current) > 0) {
           setUpdateInfo({ current: v.current, latest, updating: false, result: null });
         } else if (v.current && v.loaded && compareVersions(v.current, v.loaded) > 0) {
           // 已更新未重启：显示「已更新，重启生效」+ 重启按钮

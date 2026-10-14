@@ -60,6 +60,17 @@ export function compareVersions(a, b) {
   return 0;
 }
 
+/** 归一化 git 仓库 URL 以便比较：去 git+ 前缀、.git 后缀、尾斜杠，统一小写。 */
+export function normalizeRepoUrl(u) {
+  return String(u ?? '').trim().toLowerCase().replace(/^git\+/, '').replace(/\/+$/, '').replace(/\.git$/, '');
+}
+
+/** 两仓库是否同源（都非空且归一化后相等）。fork/分支安装返回 false → 不走 npm 更新。 */
+export function isSameRepo(a, b) {
+  const na = normalizeRepoUrl(a);
+  return na !== '' && na === normalizeRepoUrl(b);
+}
+
 /** 浏览器可见的状态字段（无敏感信息；含二维码 data URL）。 */
 export function redactStatus(s) {
   return {

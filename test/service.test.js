@@ -471,6 +471,96 @@ test('RPC：version 返回磁盘版本 current 与启动版本 loaded', async ()
   await service.dispose();
 });
 
+test('RPC：version 返回 repository（安装来源仓库），旧 runUpdate 形状降级为 null', async () => {
+  const internals = stubInternals();
+  const service = createPocketService({ dshPort: 3080, port: 3081, internals });
+  const conn = fakeCtxConnection();
+  installPocketRpc({ connection: conn }, {
+    service,
+    runUpdate: {
+      currentVersion: () => '2.10.6',
+      loadedVersion: () => '2.10.6',
+      currentRepository: () => 'git+https://github.com/daha1216/dsh-pocket.git',
+      perform: async () => ({ ok: true }),
+    },
+    log: { error() {}, warn() {} },
+  });
+  const v = await conn.handler(POCKET_ENDPOINTS.version, {});
+  assert.equal(v.value.repository, 'git+https://github.com/daha1216/dsh-pocket.git');
+
+  const conn2 = fakeCtxConnection();
+  installPocketRpc({ connection: conn2 }, {
+    service,
+    runUpdate: { currentVersion: () => '1.0.0', loadedVersion: () => '1.0.0', perform: async () => ({ ok: true }) },
+    log: { error() {}, warn() {} },
+  });
+  const v2 = await conn2.handler(POCKET_ENDPOINTS.version, {});
+  assert.equal(v2.value.repository, null);
+
+  await service.dispose();
+});
+
+test('RPC：update 对 fork/分支安装拦截一键更新，registry 不可达时放行', async () => {
+  const internals = stubInternals();
+  const service = createPocketService({ dshPort: 3080, port: 3081, internals });
+  const realFetch = globalThis.fetch;
+  const makeRunUpdate = () => {
+    const calls = [];
+    return {
+      calls,
+      currentVersion: () => '2.10.6',
+      loadedVersion: () => '2.10.6',
+      currentRepository: () => 'git+https://github.com/daha1216/dsh-pocket.git',
+      perform: async (profile) => { calls.push(profile); return { ok: true }; },
+    };
+  };
+  try {
+    // ① npm 上游 repository 与本地不同源 → 拦截，perform 不得执行
+    globalThis.fetch = async () => ({ json: async () => ({ version: '2.11.0', repository: { url: 'git+https://github.com/shaobeichen/dsh-pocket.git' } }) });
+    {
+      const runUpdate = makeRunUpdate();
+      const conn = fakeCtxConnection();
+      installPocketRpc({ connection: conn }, { service, runUpdate, log: { error() {}, warn() {} } });
+      const r = await conn.handler(POCKET_ENDPOINTS.update, { profile: 'web' });
+      assert.equal(r.ok, false);
+      assert.match(r.error.message, /fork\/分支安装/);
+      assert.deepEqual(runUpdate.calls, [], 'fork 不得执行一键更新');
+    }
+    // ② 同源（归一化后一致）→ 放行
+    globalThis.fetch = async () => ({ json: async () => ({ version: '2.11.0', repository: { url: 'https://github.com/daha1216/dsh-pocket' } }) });
+    {
+      const runUpdate = makeRunUpdate();
+      const conn = fakeCtxConnection();
+      installPocketRpc({ connection: conn }, { service, runUpdate, log: { error() {}, warn() {} } });
+      const r = await conn.handler(POCKET_ENDPOINTS.update, { profile: 'web' });
+      assert.equal(r.ok, true);
+      assert.deepEqual(runUpdate.calls, ['web']);
+    }
+    // ③ registry 不可达 → 放行（一键更新需要联网，离线时按钮也不出现）
+    globalThis.fetch = async () => { throw new Error('ENOTFOUND'); };
+    {
+      const runUpdate = makeRunUpdate();
+      const conn = fakeCtxConnection();
+      installPocketRpc({ connection: conn }, { service, runUpdate, log: { error() {}, warn() {} } });
+      const r = await conn.handler(POCKET_ENDPOINTS.update, { profile: 'web' });
+      assert.equal(r.ok, true);
+      assert.deepEqual(runUpdate.calls, ['web']);
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+    await service.dispose();
+  }
+});
+
+test('isSameRepo/normalizeRepoUrl：fork 判定（更新横幅常显案）', async () => {
+  const { isSameRepo, normalizeRepoUrl } = await import('../client/api.js');
+  assert.equal(normalizeRepoUrl('git+https://github.com/Shaobeichen/DSH-POCKET.git/'), 'https://github.com/shaobeichen/dsh-pocket');
+  assert.equal(isSameRepo('git+https://github.com/daha1216/dsh-pocket.git', 'git+https://github.com/shaobeichen/dsh-pocket.git'), false);
+  assert.equal(isSameRepo('git+https://github.com/daha1216/dsh-pocket.git', 'https://github.com/daha1216/dsh-pocket'), true);
+  assert.equal(isSameRepo(null, 'https://github.com/shaobeichen/dsh-pocket'), false);
+  assert.equal(isSameRepo('https://github.com/x/y', ''), false);
+});
+
 test('lib/index.js 模块可加载，apply 可调用（防模块级 ReferenceError 回归）', async () => {
   // 回归：pocketRestart 曾引用 apply 参数里的 internals，点「重启」抛 ReferenceError
   const mod = await import('../lib/index.js');
