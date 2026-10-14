@@ -653,7 +653,10 @@ export function mobileApply(ctx: ClientContext): void {
       if (diagEl === null) {
         diagEl = document.createElement('div')
         diagEl.dataset.dshPocketDiag = '1'
-        diagEl.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 2px);left:2px;z-index:2147483647;font:10px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.65);color:#4ade80;padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap'
+        // 三轮升级：nowrap 在 390pt 宽屏把行尾字段截出屏外（真机「结尾只到
+        // seatB=」实为右缘裁切而非旧代码）——改换行铺满视口宽，行尾信息必须
+        // 全部可见。
+        diagEl.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 2px);left:2px;z-index:2147483647;font:10px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.65);color:#4ade80;padding:2px 6px;border-radius:4px;pointer-events:none;white-space:normal;width:calc(100vw - 8px);word-break:break-all'
         document.body.appendChild(diagEl)
       }
       // 10-14 空白案：追加滚动区/座位几何（宿主稳定标记 data-conversation-scroll /
@@ -661,11 +664,18 @@ export function mobileApply(ctx: ClientContext): void {
       // 二轮升级：滚动区限定为座位自己的那个（querySelector 全局首个在多会话实例
       // 下会探到隐藏实例）；加 va/col/nz 三元组量化宿主虚拟列状态——WebKit 上
       // 虚拟化保留高塌缩（列高≈已挂载窗口高）正是 643 悬空的另一半病因。
-      const seatEl = document.querySelector<HTMLElement>('[data-composer-seat]')
+      // 座位取「可见实例」：多会话并存时全局首个可能是隐藏实例（无 rect，
+      // seatB 量到 0 或别的会话）。三轮：va/col/nz 无条件输出（- 占位）——
+      // 条件输出下「字段缺失=旧代码」与「字段缺失=没找到列」无法判别。
+      const seatEl =
+        Array.from(document.querySelectorAll<HTMLElement>('[data-composer-seat]')).find(
+          el => el.getClientRects().length > 0,
+        ) ?? null
       const sbEl = seatEl?.closest<HTMLElement>('[data-conversation-scroll]') ?? null
       const vaEl = sbEl?.querySelector<HTMLElement>('[class*="_viewArea"]') ?? null
-      let colNote = ''
+      let colNote = ' va=-/col=-/nz=-'
       if (vaEl !== null) {
+        colNote = ` va=${Math.round(vaEl.getBoundingClientRect().height)}/col=-/nz=-`
         // 列 = viewArea 向下首个「子元素 >10 个」的容器（宿主虚拟列的稳定形状）
         let n: HTMLElement | null = vaEl
         for (let i = 0; i < 6 && n !== null; i += 1) {
@@ -679,7 +689,8 @@ export function mobileApply(ctx: ClientContext): void {
       }
       const sbNote = sbEl === null ? '' : ` sb=${sbEl.clientHeight}/${sbEl.scrollHeight}@${Math.round(sbEl.scrollTop)}`
       const seatNote = seatEl === null ? '' : ` seatB=${Math.round(seatEl.getBoundingClientRect().bottom)}`
-      diagEl.textContent = `ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}${colNote}`
+      // tag=探针构建号：一眼判别真机跑的是不是新包（缺 tag=即旧包/旧文档）
+      diagEl.textContent = `tag=1014.2 ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}${colNote}`
       if (auto) {
         window.clearTimeout(diagTimer)
         diagTimer = window.setTimeout(() => { diagEl?.remove(); diagEl = null }, 8000)
@@ -703,7 +714,11 @@ export function mobileApply(ctx: ClientContext): void {
           //（它的 scrollTop 目标按旧视口算过、已「到底」）——对话滚动区若原本就贴
           // 底（余量 ≤8px），下一帧再推一次到底，消除内容与钉底座位之间等于差值
           // 的空带；不贴底则不动，不与用户的手动滚动打架。
-          const sb = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+          // 补推同样限定可见实例：全局首个若是隐藏会话，补推就打在死实例上
+          const sb =
+            Array.from(document.querySelectorAll<HTMLElement>('[data-conversation-scroll]')).find(
+              el => el.getClientRects().length > 0,
+            ) ?? null
           if (sb !== null && sb.scrollHeight - sb.scrollTop - sb.clientHeight <= 8) {
             requestAnimationFrame(() => { if (applied && sb.isConnected) sb.scrollTop = sb.scrollHeight })
           }
