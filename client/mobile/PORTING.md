@@ -98,8 +98,11 @@ characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）
 7. `styles/layout.css.ts` — `html,body` 加 `-webkit-text-size-adjust/text-size-adjust:
    100%`（iOS 竖屏防文字自动放大）；`[class*="_scrollBody"]` 加
    `overscroll-behavior: contain`；composer 座底部安全区
-   `padding-bottom: calc(5px + env(safe-area-inset-bottom,0px)) !important`
-   （`_composerSeat` 三选择器组，哈希代际变化时静默 no-op）。
+   `padding-bottom: 2px !important`（`_composerSeat` 三选择器组）+ 输入卡外层
+   root `:has(> [class*="_card"])` 底垫同收 2px。注意：v3.1.0 起 frame 自身
+   已垫 `env(safe-area-inset-bottom)`（#193），座位不得再叠 inset——旧值
+   `calc(5px + env(...))` 是 v3.0.3 时代 frame 不垫底部的补偿，照叠会把
+   inset 计两遍（哈希代际变化时静默 no-op）。
 8. `styles/compat.css.ts` — opPanel 补 `z-index: 60 !important`；cardShots 横滚容器补
    `overscroll-behavior-x: contain !important`；preview-full-toggle 的 :hover 包入
    `@media (hover: hover)`。

@@ -1012,14 +1012,26 @@ var Li=Object.create;var nt=Object.defineProperty;var Ri=Object.getOwnPropertyDe
     max-width: 100%;
   }
 
-  /* 底部安全区与输入框边距（pocket 补丁）：基础内边距 5px，另加 home indicator 的
-     env(safe-area-inset-bottom)。viewport-fit=cover 下 frame 只垫了顶部 inset，
-     输入座位若不垫底，stats 条会落进 home indicator 保留区。类名哈希代际不同时
-     规则静默 no-op（与上游其余规则同一种脆弱性）。 */
+  /* 底部安全区与输入框边距（pocket 补丁，v3.1.0 起重算）：frame 自身已垫
+     env(safe-area-inset-bottom)（上方 html [data-mobile-nav="frame"] 规则，
+     v3.1.0 新增的 #193 修复），座位只补 2px 呼吸缝。旧值 calc(5px +
+     env(...)) 是 v3.0.3 时代 frame 不垫底部的补偿——现在照叠会把 inset 计
+     两遍（34px inset 真机 ~73px 下巴）。类名哈希代际不同时规则静默 no-op
+     （与上游其余规则同一种脆弱性）。 */
   [data-mobile-nav="frame"] [class*="_composerSeat"],
   div[class*="_frame"] [class*="_composerSeat"],
   [data-mobile-nav="frame"] [data-phase] [class*="_composerSeat"] {
-    padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: 2px !important;
+  }
+
+  /* 输入卡外层 root 的 8px 底垫收紧为 2px（pocket 补丁）：root 是宿主
+     InputBar 的包裹层（padding: 0 … 8px），底垫只服务桌面悬浮态；移动端
+     frame 已垫 inset，这 8px 属于重复留白。root 结构变化时 :has 不匹配，
+     规则退化为 no-op。 */
+  [data-mobile-nav="frame"] [class*="_composerSeat"] [class*="_root"]:has(> [class*="_card"]),
+  div[class*="_frame"] [class*="_composerSeat"] [class*="_root"]:has(> [class*="_card"]),
+  [data-mobile-nav="frame"] [data-phase] [class*="_composerSeat"] [class*="_root"]:has(> [class*="_card"]) {
+    padding-bottom: 2px !important;
   }
 
   /* 座位钉底（pocket 补丁，10-14 真机底部空白案第二轮定案）：iOS WebKit 上
