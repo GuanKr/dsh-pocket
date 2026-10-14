@@ -305,6 +305,16 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
       height: var(--dshp-frame-h, 100%) !important;
     }
 
+    /* 10-14 空白案补注：html/body 顶满只对「frame 是纯 100% 高度链后代」成立——
+       中间任何一层被 100vh（B 态下 = 矮布局视口，如 660）截断时顶满传导不到
+       frame，底部仍空出等于差值的一条带。给 frame 本体（reconciler 的
+       data-mobile-nav="frame" 标记；健康态高度本就等值）直接补一跳，双保险。
+       max-height 同值：单写 height 会被中间层的 max-height:100vh 压回。 */
+    html[data-dsh-pocket-full-height] [data-mobile-nav="frame"] {
+      height: var(--dshp-frame-h, 100%) !important;
+      max-height: var(--dshp-frame-h, 100%) !important;
+    }
+
     /* ---------- M10 上游小控件触控达标（44pt 触控标准：Apple HIG / WCAG 2.2） ----------
        上游控件以桌面视觉密度定尺寸（28-38px），手指按压容易 miss。upstream 零手改
        原则 → 在本层用 min-* 覆盖（min-height/width 会压过上游的固定 height/width）。 */
@@ -646,7 +656,13 @@ export function mobileApply(ctx: ClientContext): void {
         diagEl.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 2px);left:2px;z-index:2147483647;font:10px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.65);color:#4ade80;padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap'
         document.body.appendChild(diagEl)
       }
-      diagEl.textContent = `ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}`
+      // 10-14 空白案：追加滚动区/座位几何（宿主稳定标记 data-conversation-scroll /
+      // data-composer-seat）——B 态补注定失败时，一张截图即可点名断在哪一层
+      const sbEl = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+      const seatEl = document.querySelector<HTMLElement>('[data-composer-seat]')
+      const sbNote = sbEl === null ? '' : ` sb=${sbEl.clientHeight}/${sbEl.scrollHeight}@${Math.round(sbEl.scrollTop)}`
+      const seatNote = seatEl === null ? '' : ` seatB=${Math.round(seatEl.getBoundingClientRect().bottom)}`
+      diagEl.textContent = `ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}`
       if (auto) {
         window.clearTimeout(diagTimer)
         diagTimer = window.setTimeout(() => { diagEl?.remove(); diagEl = null }, 8000)
@@ -662,7 +678,18 @@ export function mobileApply(ctx: ClientContext): void {
         if (!applied && performance.now() - shortSince > 600) {
           applied = true
           root.style.setProperty('--dshp-frame-h', `${Math.round(vv.height)}px`)
+          // 差值单独发布（B 态=可视高−布局视口高，如 758−660=98px）：CSS 侧补偿
+          // 与诊断用；解除时随 --dshp-frame-h 一并撤除
+          root.style.setProperty('--dshp-vh-diff', `${Math.round(vv.height - window.innerHeight)}px`)
           root.setAttribute('data-dsh-pocket-full-height', '')
+          // 10-14 空白案补注：视口从 660 顶到 758 后宿主的 at-bottom 跟随不会重跑
+          //（它的 scrollTop 目标按旧视口算过、已「到底」）——对话滚动区若原本就贴
+          // 底（余量 ≤8px），下一帧再推一次到底，消除内容与钉底座位之间等于差值
+          // 的空带；不贴底则不动，不与用户的手动滚动打架。
+          const sb = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+          if (sb !== null && sb.scrollHeight - sb.scrollTop - sb.clientHeight <= 8) {
+            requestAnimationFrame(() => { if (applied && sb.isConnected) sb.scrollTop = sb.scrollHeight })
+          }
           showDiag(true)
         }
       } else {
@@ -670,6 +697,7 @@ export function mobileApply(ctx: ClientContext): void {
         if (applied) {
           applied = false
           root.style.removeProperty('--dshp-frame-h')
+          root.style.removeProperty('--dshp-vh-diff')
           root.removeAttribute('data-dsh-pocket-full-height')
         }
       }
@@ -692,6 +720,7 @@ export function mobileApply(ctx: ClientContext): void {
       window.clearTimeout(diagTimer)
       diagEl?.remove()
       root.style.removeProperty('--dshp-frame-h')
+      root.style.removeProperty('--dshp-vh-diff')
       root.removeAttribute('data-dsh-pocket-full-height')
     }
   })
