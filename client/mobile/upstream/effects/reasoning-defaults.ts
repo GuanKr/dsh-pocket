@@ -324,16 +324,18 @@ export function installReasoningDefaults(ctx: ClientContext): void {
     const warn = (message: string): void => {
       context.logger?.warn?.(message)
     }
-    const fill = (): void => {
-      if (disposed || running) return
+    const fill = (onDone?: (ok: boolean) => void): void => {
+      if (disposed || running) { onDone?.(false); return }
       const remote = settingsRemoteOf(context)
-      if (remote === undefined) return
+      if (remote === undefined) { onDone?.(false); return }
       running = true
+      let ok = false
       void (async () => {
         try {
           const described = await withTimeout(remote.describe(), REMOTE_TIMEOUT_MS)
           if (disposed) return
           if (described?.ok !== true) return
+          ok = true
           const namespaces = isRecord(described.value) ? described.value.namespaces : undefined
           if (!Array.isArray(namespaces)) return
           const section = namespaces.find((row): row is Record<string, unknown> => isRecord(row) && row.ns === LLM_PI_AI_ENTRY)
@@ -350,11 +352,30 @@ export function installReasoningDefaults(ctx: ClientContext): void {
           warn(`dsh-web-mobile: reasoning-level fill failed: ${error instanceof Error ? error.message : String(error)}`)
         } finally {
           running = false
+          onDone?.(ok)
         }
       })()
     }
     const retry = setTimeout(fill, 2_000)
-    const sweep = setInterval(fill, 10_000)
+    // Pocket patch: the fixed 10s describe sweep re-polls a document the
+    // settings/document-updated subscription below already fills on change;
+    // in the steady state (levels set, nothing to write) every tick is a
+    // wasted full-describe RPC. Self-scheduling backoff instead: a sweep
+    // whose describe round completed stretches the gap 10s -> 60s -> 300s
+    // (cap); any failure (timeout, refusal, no remote, a round still in
+    // flight) resets to 10s. The 2s retry and the event path are untouched.
+    const sweepLadderMs = [10_000, 60_000, 300_000]
+    let sweepLevel = 0
+    let sweep = 0
+    const sweepTick = (): void => {
+      sweep = 0
+      if (disposed) return
+      fill((ok) => {
+        sweepLevel = ok ? Math.min(sweepLevel + 1, sweepLadderMs.length - 1) : 0
+        if (!disposed && sweep === 0) sweep = setTimeout(sweepTick, sweepLadderMs[sweepLevel]!)
+      })
+    }
+    sweep = setTimeout(sweepTick, sweepLadderMs[0]!)
     fill()
     // Host event, therefore the remote gateway — never the client-local bus.
     // The whole wiring is best-effort: this effect is an optimization over the
@@ -373,7 +394,7 @@ export function installReasoningDefaults(ctx: ClientContext): void {
     return () => {
       disposed = true
       clearTimeout(retry)
-      clearInterval(sweep)
+      clearTimeout(sweep)
       if (typeof off === 'function') off()
     }
   })

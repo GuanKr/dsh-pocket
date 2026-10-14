@@ -157,6 +157,10 @@ export function createSheetRiseTask(): ReconcilerTask {
       if (own.get(sel)?.anim === anim) own.delete(sel)
     }).catch(() => {})
   }
+  // Pocket patch（每-flush 查询缓存批）：两列槽位元素缓存，isConnected/matches
+  // 短路（模式同 installed-list 的 resolveRoot）。列在位时 ensure 零查询；缺席
+  // （null）不缓存负结果——负结果无法安全失效，照旧每趟查询。
+  const colCache: Array<Element | null> = [null, null]
   return {
     name: 'sheet-rise-replay',
     // 含树变更键 `*`：父容器被整体从祖父节点摘掉时，childList 的 target 是**祖父**，
@@ -172,7 +176,11 @@ export function createSheetRiseTask(): ReconcilerTask {
       'data-mobile-preview-full',
     ],
     ensure: () => {
-      const els = cols.map((sel) => document.querySelector(sel))
+      const els = cols.map((sel, i) => {
+        const cached = colCache[i]
+        if (cached !== null && cached.isConnected && cached.matches(sel)) return cached
+        return (colCache[i] = document.querySelector(sel))
+      })
       // 便宜路径：手上没有自有动画、两个槽位也都不在 ⇒ 立刻返回。
       if (own.size === 0 && els[0] === null && els[1] === null) return
       sweep()
@@ -195,6 +203,7 @@ export function createSheetRiseTask(): ReconcilerTask {
       for (const sel of cols) cancelOwn(sel)
       own.clear()
       seen.clear()
+      colCache[0] = colCache[1] = null
     },
   }
 }

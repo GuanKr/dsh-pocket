@@ -57,7 +57,7 @@ node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配�
    （`ctx.inject([...], cb)` 懒加载，如 inputTriggers/remote.workspaceFiles）不进
    静态表，宿主 0.2.0-rc.1 原生支持。
 4. **激活冒烟**：`node client\repro-activate.mjs`（桩环境直跑 bundle 的 apply()，
-   应打印 `apply() completed` + 41 effects + locale NS 清单；NS 重名/漏 inject
+   应打印 `apply() completed` + 42 effects + locale NS 清单；NS 重名/漏 inject
    一律当场炸）。比「重启后拿手机试」快得多。
 5. **重打下方「upstream/ 内的 pocket 手工补丁」清单**——sync 会整目录覆盖，丢了会静默回归。
 
@@ -117,6 +117,35 @@ characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）
      if (frame === null || !frame.isConnected) frame = findFrame()`。宿主 SPA 换页/
      重挂会把旧 frame 从文档摘除，裸缓存会让后续轮询一直对着游离节点打标。上游
      v3.1.0 仍是裸缓存（audit 2026-10-14 复核），勿信「已吸收」旧说。
+
+2026-10-15 性能批新增 12–14（流式每-flush 固定税 + 轮询退避）：
+
+12. `effects/reasoning-defaults.ts` — 固定 10s describe 轮询改自调度退避：10s→60s→
+    300s 封顶，describe 回合成功（ok=true）步进、失败（超时/拒绝/无 remote/上轮
+    未完）回 10s。settings/document-updated 订阅已即时 fill，稳态每 10s 一次全量
+    settings describe RPC 属重复劳动。fill 加可选 onDone(ok) 回调上报结果；2s
+    retry 与事件路径不动。找点：`setInterval(fill, 10_000)` 处 + fill 尾部
+    finally（onDone 调用）。
+13. 每-flush 查询缓存批（四处，模式同 #11 phone-chrome frame 缓存 / installed-list
+    resolveRoot 的 isConnected 短路；凡命中属性可能在保持连接的节点间移动的选择器
+    （aria-current、data-phase、自有标记），缓存命中一律加 matches() 复验；缺席
+    （null）不缓存负结果、照旧查询——负结果无法安全失效）：
+    - `effects/stats-line.ts` — mark() 每趟的 `[data-mobile-nav="stats"]` 锚查询，
+      闭包 cachedAnchor，dispose 清空；
+    - `effects/panel-exit.ts` — panelOwnsMainArea() 的
+      `[class*="panelRow"][aria-current="page"]`，模块级缓存（aria-current 随面板
+      选中换宿主，matches 复验兜住）；
+    - `effects/overlay-backdrop-fab.ts` — heroPhase() 的 `[data-phase="active"]`
+      （ensure 每趟最多调两次），闭包缓存 + dispose 清空；注意别覆盖 #1 的
+      frame-null 清理补丁；
+    - `effects/aionui-compat.ts` — sheet-rise-replay ensure 的两列
+      `[data-aionui-explorer-col]`/`[data-aionui-preview-col]`，闭包 colCache +
+      dispose 清空。
+14. `effects/session-menu.ts` — body 全树 MutationObserver 补 chat-flow 整批早退
+    （照抄 installed-list 的过滤形态）：整批 records 全在 `[data-chat-flow]` 内
+    直接 return，不跑 scheduleInject 也不跑 removedMenu 判定——会话菜单是 body 级
+    portal，正文内 mutation 不可能含菜单开合。此前它是唯一缺这层过滤的观察者，
+    流式期间每条记录都白跑一次 closest('[role="menu"]')。
 
 ### 适配器层的宿主侧配套（不在 upstream/ 内，但同一次合并引入）
 

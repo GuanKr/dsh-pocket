@@ -603,6 +603,15 @@ export function mobileApply(ctx: ClientContext): void {
     let last = ''
     let lastKb = 0
     let liftActive = false
+    // B5：座位元素缓存（isConnected 短路，模式同 installed-list 的 resolveRoot）。
+    // 多会话并存时取「有 rect 的可见实例」语义不变——缓存命中也要仍可见（rects
+    // 非空），失联/转隐藏才回到全量 querySelectorAll 重查。
+    let seatEl: HTMLElement | null = null
+    const findSeat = (): HTMLElement | null => {
+      if (seatEl !== null && seatEl.isConnected && seatEl.matches('[data-composer-seat]') && seatEl.getClientRects().length > 0) return seatEl
+      seatEl = Array.from(document.querySelectorAll<HTMLElement>('[data-composer-seat]')).find(el => el.getClientRects().length > 0) ?? null
+      return seatEl
+    }
     const write = (): void => {
       raf = 0
       const raw = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
@@ -616,7 +625,7 @@ export function mobileApply(ctx: ClientContext): void {
       // vv.height 换算混乱，occl 不采信（raw 路径维持原行为）。
       let occl = 0
       if (Math.abs(vv.scale - 1) < 0.01) {
-        const seat = Array.from(document.querySelectorAll<HTMLElement>('[data-composer-seat]')).find(el => el.getClientRects().length > 0) ?? null
+        const seat = findSeat()
         if (seat !== null) {
           const restBottom = seat.getBoundingClientRect().bottom + (liftActive ? lastKb : 0)
           occl = Math.max(0, restBottom - vv.height)
@@ -645,6 +654,7 @@ export function mobileApply(ctx: ClientContext): void {
       vv.removeEventListener('resize', schedule)
       vv.removeEventListener('scroll', schedule)
       if (raf !== 0) cancelAnimationFrame(raf)
+      seatEl = null
       root.style.removeProperty('--dshp-kb')
       root.removeAttribute('data-dshp-kb')
     }

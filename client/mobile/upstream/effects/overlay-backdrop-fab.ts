@@ -63,8 +63,18 @@ export function createOverlayTask(
     // rules stay armed and this backdrop keeps being created.
     return !frame.hasAttribute('data-sidebar-collapsed')
   }
-  const heroPhase = (): boolean =>
-    document.querySelector('[data-phase="active"]') === null
+  // Pocket patch: cache the active-phase node — heroPhase() runs up to twice
+  // per ensure (every flush), and the steady state has no [data-phase] host
+  // node at all, so the query is pure tax whenever a phase IS mounted.
+  // isConnected + matches() re-check (the attribute moves between connected
+  // nodes); a miss falls through to the same query as before.
+  let heroActiveEl: Element | null = null
+  const heroPhase = (): boolean => {
+    const cached = heroActiveEl
+    if (cached !== null && cached.isConnected && cached.matches('[data-phase="active"]')) return false
+    heroActiveEl = document.querySelector('[data-phase="active"]')
+    return heroActiveEl === null
+  }
   /**
    * The FAB has two faces. While a sidebar panel owns the main area it reads as
    * 「返回会话」 and leaves the panel; everywhere else it opens the drawer.
@@ -179,6 +189,7 @@ export function createOverlayTask(
         window.clearTimeout(backdropRemoveTimer)
         backdropRemoveTimer = null
       }
+      heroActiveEl = null
       fadeHook = null
       backdrop?.remove()
       backdrop = null

@@ -524,6 +524,18 @@ export function installSessionMenuDelete(ctx: ClientContext): void {
       return false
     }
     const observer = new MutationObserver((records) => {
+      // Pocket patch: same whole-batch chat-flow drop as installed-list — this
+      // body-wide observer was the last one without it, so every streamed
+      // record paid a closest('[role="menu"]') walk. A session menu is a
+      // body-level portal: it can never mount, update or unmount inside the
+      // conversation, so a fully in-flow batch needs neither scheduleInject
+      // nor the removedMenu sweep below.
+      let relevant = records.length === 0
+      for (const record of records) {
+        const target = record.target instanceof Element ? record.target : record.target.parentElement
+        if (target?.closest('[data-chat-flow]') == null) { relevant = true; break }
+      }
+      if (!relevant) return
       let menuRemoved = false
       for (const record of records) {
         if (record.type !== 'childList') continue

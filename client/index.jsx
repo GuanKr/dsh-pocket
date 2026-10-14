@@ -105,11 +105,16 @@ function PocketSettingsTab({ rpcCall, t }) {
   const [now, setNow] = useState(Date.now()); // 每秒 tick，驱动倒计时
   const [pinShown, setPinShown] = useState({}); // 密码明文开关 { lan?: true, public?: true }——默认遮罩
 
-  // 进行中操作的「已等待 X 秒」倒计时
+  // 进行中操作的「已等待 X 秒」倒计时——只在有活跃倒计时（更新/重启进行中、隧道
+  // 连接中）时才挂每秒 tick，操作结束即卸载；空闲设置页不再无条件每秒重渲染
   useEffect(() => {
+    const countdownActive =
+      !!((updateInfo?.updating || updateInfo?.restarting) && updateInfo?.startedAt) ||
+      !!(tunnelState?.startedAt && ['downloading', 'starting', 'registering'].includes(tunnelState?.phase ?? ''));
+    if (!countdownActive) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [updateInfo, tunnelState]);
   const elapsed = (startedAt) => (startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : 0);
 
   const call = async (endpoint, payload) => {
@@ -141,7 +146,8 @@ function PocketSettingsTab({ rpcCall, t }) {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 3000);
+    // 页面不可见时跳过 status 轮询，回到前台后下一拍（≤3s）自动恢复
+    const t = setInterval(() => { if (!document.hidden) load(); }, 3000);
     return () => clearInterval(t);
   }, []);
 

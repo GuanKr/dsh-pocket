@@ -354,6 +354,11 @@ export function createStatsLineTask(): ReconcilerTask {
   let foldedTpsReserve: Element | null = null
   let foldedRing: Element | null = null
   let foldedRingReserve: Element | null = null
+  // Pocket patch（每-flush 查询缓存批）：锚点是我们自己写的 data-mobile-nav="stats"
+  // 标记节点，mark() 每趟的全文档 querySelector 在流式期间是固定税。缓存 +
+  // isConnected/matches 短路（模式同 installed-list 的 resolveRoot；matches 复验
+  // 防 React 换节点后旧标记残留误判），失联/失标才重查。
+  let cachedAnchor: Element | null = null
   const stillFolded = (el: Element | null, marker: string): boolean =>
     el !== null && el.isConnected && el.getAttribute('data-mobile-nav') === marker
   /**
@@ -385,7 +390,10 @@ export function createStatsLineTask(): ReconcilerTask {
     // tokens; re-verifying the anchor is O(1) while the full-tree hunt below
     // grows with the conversation. moveTps still re-runs so a rebuilt TPS
     // readout is re-folded.
-    const anchor = document.querySelector('[data-mobile-nav="stats"]')
+    let anchor: Element | null = cachedAnchor
+    if (anchor === null || !anchor.isConnected || !anchor.matches('[data-mobile-nav="stats"]')) {
+      anchor = cachedAnchor = document.querySelector('[data-mobile-nav="stats"]')
+    }
     if (anchor !== null && statsAnchorAlive(anchor)) {
       // Read—write separation (candidate B): every rectangle both folds need is
       // measured BEFORE either fold writes a style. Interleaving them (write
@@ -539,6 +547,7 @@ export function createStatsLineTask(): ReconcilerTask {
         relayoutRaf = 0
       }
       relayoutKey = ''
+      cachedAnchor = null
       if (viewportHandler !== null) {
         window.removeEventListener('resize', viewportHandler)
         window.visualViewport?.removeEventListener('resize', viewportHandler)

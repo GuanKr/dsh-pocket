@@ -52,8 +52,18 @@ let panelLeaving = false
 let panelLeavingOwner: symbol | null = null
 
 /** Whether a panel owns the main area (DOM truth, ignoring the exit window). */
+// Pocket patch: cache the last aria-current row — panelOwnsMainArea() is on the
+// per-flush hot path (own task's ensure, overlay-backdrop-fab, panelElement),
+// and a full-document query per call is a fixed streaming tax. isConnected +
+// matches() re-check (the attribute moves between rows that stay connected);
+// a miss falls through to the same query as before. Module-level like
+// phone-chrome's frame cache — the isConnected guard covers staleness.
+let panelRowActiveEl: Element | null = null
 export function panelOwnsMainArea(): boolean {
-  return document.querySelector(PANEL_ROW_ACTIVE) !== null
+  const cached = panelRowActiveEl
+  if (cached !== null && cached.isConnected && cached.matches(PANEL_ROW_ACTIVE)) return true
+  panelRowActiveEl = document.querySelector(PANEL_ROW_ACTIVE)
+  return panelRowActiveEl !== null
 }
 
 /** Whether a panel owns the main area, counting the in-flight exit as closed. */
