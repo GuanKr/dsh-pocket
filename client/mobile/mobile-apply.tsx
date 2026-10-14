@@ -284,12 +284,17 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
        规则不命中，宿主原定位逐字节保留。刻意不用 translateY：座位子树里的
        fixed 弹层（plus 菜单等）会被 transform 变成 containing block，锚定全乱。
        html 前缀与三锚点选择器族同上游座位 padding 规则（防类名哈希代际漂移），
-       特异性手法同 M2。 */
+       特异性手法同 M2。
+       键盘开态同时置 transform:none（10-14 键盘案）：上游 composer-keyboard-lift
+       会给座位内联 translateY 抬升——与本规则双抬叠加、且让座位子树 fixed 弹层
+       （plus 菜单）失去锚点。统一到 sticky 单机制：!important 压过上游内联样式，
+       通道校验 fail-open 时也绝不再漏抬。 */
     html[data-dshp-kb="open"] [data-mobile-nav="frame"] [class*="_composerSeat"],
     html[data-dshp-kb="open"] div[class*="_frame"] [class*="_composerSeat"],
     html[data-dshp-kb="open"] [data-mobile-nav="frame"] [data-phase] [class*="_composerSeat"] {
       position: sticky !important;
       bottom: var(--dshp-kb, 0px) !important;
+      transform: none !important;
     }
 
     /* ---------- iOS standalone 布局视口偏矮兜底（2026-09-28 真机反馈：A2HS 底部留白） ----------
@@ -596,13 +601,33 @@ export function mobileApply(ctx: ClientContext): void {
     const root = document.documentElement
     let raf = 0
     let last = ''
+    let lastKb = 0
+    let liftActive = false
     const write = (): void => {
       raf = 0
       const raw = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      // 遮挡地板（10-14 键盘抬升案）：raw 公式在「iOS 平移露出焦点」模型下恒为 0
+      //（offsetTop 恰好抵消内高差），叠加座位 rect 与 vv.height 直比的上游 transform
+      // 抬升又被其 scrollY/offsetTop 通道校验 fail-open 清零——输入框真被键盘盖住
+      // 时三条路全哑（真机症状：点击输入框不跟随上移）。改取 raw 与「座位实际低于
+      // 可视带」的较大者：occl = 静止底边 − vv.height（同为布局 px）。静止底边 =
+      // rect.bottom + 上次写入的抬升量——sticky 已把座位抬离流位时加回，否则下一帧
+      // occl 读到抬升后的底边会自我取消、来回振荡。scale≠1（捏合）时 rect 与
+      // vv.height 换算混乱，occl 不采信（raw 路径维持原行为）。
+      let occl = 0
+      if (Math.abs(vv.scale - 1) < 0.01) {
+        const seat = Array.from(document.querySelectorAll<HTMLElement>('[data-composer-seat]')).find(el => el.getClientRects().length > 0) ?? null
+        if (seat !== null) {
+          const restBottom = seat.getBoundingClientRect().bottom + (liftActive ? lastKb : 0)
+          occl = Math.max(0, restBottom - vv.height)
+        }
+      }
       // 回归修复（低）：强制 mobile + 桌面浏览器缩放 ≠100% 时，innerHeight 与
       // vv.height 的换算会出现正值（并无键盘），toast/fallback 被无端抬升。真实
       // 软键盘高度物理上不会超过视口六成，超出即判为缩放伪差，钳到 60% innerHeight。
-      const kb = Math.min(raw, Math.round(window.innerHeight * 0.6))
+      const kb = Math.min(Math.max(raw, occl), Math.round(window.innerHeight * 0.6))
+      lastKb = kb
+      liftActive = kb > 0
       const value = `${Math.round(kb)}px`
       if (value === last) return
       last = value
@@ -689,8 +714,13 @@ export function mobileApply(ctx: ClientContext): void {
       }
       const sbNote = sbEl === null ? '' : ` sb=${sbEl.clientHeight}/${sbEl.scrollHeight}@${Math.round(sbEl.scrollTop)}`
       const seatNote = seatEl === null ? '' : ` seatB=${Math.round(seatEl.getBoundingClientRect().bottom)}`
+      // kb 态（10-14 键盘案）：kbc=--dshp-kb 实际写入值 / f=data-dshp-kb 开态标记。
+      // 键盘展开截图看这两个字段：kbc=0px/f=0 = 写入方判定无键盘（公式哑了），
+      // kbc=NNpx/f=1 且 seatB 还在键盘下 = CSS 抬升规则没命中。
+      const kbc = getComputedStyle(root).getPropertyValue('--dshp-kb').trim() || '0px'
+      const kbf = root.hasAttribute('data-dshp-kb') ? 1 : 0
       // tag=探针构建号：一眼判别真机跑的是不是新包（缺 tag=即旧包/旧文档）
-      diagEl.textContent = `tag=1014.2 ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}${colNote}`
+      diagEl.textContent = `tag=1014.3 ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}${colNote} kbc=${kbc}/f=${kbf}`
       if (auto) {
         window.clearTimeout(diagTimer)
         diagTimer = window.setTimeout(() => { diagEl?.remove(); diagEl = null }, 8000)

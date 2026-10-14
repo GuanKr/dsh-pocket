@@ -12,7 +12,7 @@ const bundle = readFileSync(new URL('../client/client.js', import.meta.url), 'ut
 
 test('抬座位规则只在键盘开态命中（html[data-dshp-kb="open"] 门控 + 座位三锚点选择器族）', () => {
   // 开态门控：收起时规则不命中，宿主原定位逐字节保留（不赌宿主原值恰为 sticky/0）
-  const gated = apply.match(/html\[data-dshp-kb="open"\][^{]*\{[^}]*position:\s*sticky\s*!important;[^}]*bottom:\s*var\(--dshp-kb, 0px\)\s*!important;\s*\}/);
+  const gated = apply.match(/html\[data-dshp-kb="open"\][^{]*\{[^}]*position:\s*sticky\s*!important;[^}]*bottom:\s*var\(--dshp-kb, 0px\)\s*!important;[^}]*\}/);
   assert.ok(gated, '必须存在 data-dshp-kb="open" 门控的座位 sticky+bottom 覆盖规则');
   // 三锚点与上游座位 padding 规则同族（防类名哈希代际漂移）
   const sel = gated[0];
@@ -21,15 +21,18 @@ test('抬座位规则只在键盘开态命中（html[data-dshp-kb="open"] 门控
   }
 });
 
-test('抬座位刻意不用 translateY（座位子树 fixed 弹层会被 transform 变 containing block）', () => {
-  const m3b = apply.slice(apply.indexOf('M3b'), apply.indexOf('M3b') + 1200);
+test('抬座位不用 translateY，但必须 transform:none 中和上游内联抬升（10-14 键盘案统一 sticky 单机制）', () => {
+  const m3b = apply.slice(apply.indexOf('M3b'), apply.indexOf('M3b') + 1600);
   assert.ok(m3b.includes('containing block'), 'M3b 注释必须记录 transform 禁用原因（防后人『优化』成 translateY）');
   // 剥掉块注释再取规则：注释正文本身含 html[data-dshp-kb="open"] 与 transform 字样，
   // 不剥会从注释起匹、误把说明文字算进规则体
   const bare = apply.replace(/\/\*[\s\S]*?\*\//g, '');
   const gatedRule = bare.match(/html\[data-dshp-kb="open"\][^{]*\{[^}]*\}/)?.[0] ?? '';
   assert.ok(gatedRule.length > 0, '剥注释后必须仍能取到开态门控规则');
-  assert.ok(!gatedRule.includes('transform'), '座位抬升规则不得使用 transform');
+  assert.ok(!gatedRule.includes('translate'), '抬升不得走 translateY（transform 会把座位子树 fixed 弹层变 containing block）');
+  // 上游 composer-keyboard-lift 给座位内联 translateY，与 sticky 双抬叠加且破坏
+  // 弹层锚点——开态必须置 transform:none 压过内联样式（10-14 键盘案三路 fail-open）
+  assert.ok(/transform:\s*none\s*!important/.test(gatedRule), '开态必须 transform:none 中和上游内联抬升');
 });
 
 test('开合标记与 --dshp-kb 同点维护（同短路路径，卸载时清理）', () => {
