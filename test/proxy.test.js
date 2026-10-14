@@ -1549,3 +1549,74 @@ test('慢加载：gzip JS 在客户端接受 br 时转码 brotli，条件不满�
     await new Promise((r) => up.close(r));
   }
 });
+
+/** 用原始 socket 发一条任意请求行，收完整响应文本（Node http 客户端构造不出畸形目标）。 */
+function rawExchange(port, requestLine) {
+  return new Promise((resolve, reject) => {
+    const sock = connect(port, '127.0.0.1', () => {
+      sock.write(`${requestLine}\r\nHost: 127.0.0.1:${port}\r\n\r\n`);
+    });
+    const chunks = [];
+    sock.on('data', (c) => chunks.push(c));
+    sock.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    sock.on('error', reject);
+  });
+}
+
+test('畸形请求目标（端口越界）不崩代理：未鉴权走 SW 路由前被 400 拒绝（P0）', async () => {
+  const up = await fakeUpstream();
+  const proxy = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.port } });
+  try {
+    // `new URL('//x:99999', base)` 解析为协议相对目标、端口 99999 越界必抛 TypeError；
+    // 修复前 SW 路由的裸 new URL 直接穿出 request 回调崩掉宿主（已两次独立复现）。
+    const res1 = await rawExchange(proxy.port, 'GET //x:99999 HTTP/1.1');
+    assert.match(res1, /^HTTP\/1\.1 400/, '畸形请求目标被 400 拒绝');
+    // 后续正常请求仍可用 = 回调没崩、进程存活
+    const ok1 = await getWithHost(proxy.port, '127.0.0.1');
+    assert.equal(ok1.status, 200, '后续正常请求仍可用（进程未崩）');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.server.close(r));
+  }
+});
+
+test('畸形绝对形式请求行（http://x:99999/）不崩代理：按未认证 401 处理（P0）', async () => {
+  const up = await fakeUpstream();
+  const TOKEN = 'ABCDE123';
+  const proxy = await createPocketProxy({
+    port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.port },
+    auth: { getToken: () => TOKEN, isProtected: () => true, sessionKey: 'session-key' },
+  });
+  try {
+    // 绝对形式 + 端口越界：authCheck 里解析 query token 的 new URL 必抛——
+    // 修复前穿出回调崩进程；现在按「无 query token」继续走，落在 401。
+    const res1 = await rawExchange(proxy.port, 'GET http://x:99999/ HTTP/1.1');
+    assert.match(res1, /^HTTP\/1\.1 401/, '按未认证处理（401），不崩');
+    const ok1 = await getWithHost(proxy.port, 'abc.trycloudflare.com');
+    assert.equal(ok1.status, 200, '登录页照常可取（进程未崩）');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.server.close(r));
+  }
+});
+
+test('accept-encoding 的 q 值被尊重：br;q=0 视为不支持 brotli（P1-3）', async () => {
+  // 高熵内容：重复文本 gzip 后 <4096 会踩到转码分支的 size floor，测试就没意义了
+  const raw = Array.from({ length: 3000 }, (_, i) => `const v${i} = 0x${(i * 2654435761 >>> 0).toString(16)};`).join('\n');
+  const gz = gzipSync(Buffer.from(raw));
+  const up = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript; charset=utf-8', 'content-encoding': 'gzip', 'content-length': String(gz.length) });
+    res.end(gz);
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.address().port } });
+  try {
+    // `br;q=0` 是明确排除；词边界正则会误判成支持 br 而转码出客户端解不开的响应
+    const res = await rawGet(proxy.port, '/plugins/??a/client.js&rev=12e24962dfd7', { 'accept-encoding': 'br;q=0, gzip' });
+    assert.equal(res.headers['content-encoding'], 'gzip', 'q=0 不选 br，原样透传 gzip');
+    assert.equal(res.body.length, gz.length, '字节原样');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});

@@ -7,6 +7,9 @@ import { createPocketService, selectLanIPv4 } from '../lib/service.mjs';
 import { installPocketRpc } from '../lib/web-rpc.js';
 import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS } from '../client/api.js';
 import { isValidIpv4 } from '../lib/ip.mjs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 function fakeCtxConnection() {
   let handler = null;
@@ -254,6 +257,34 @@ test('RPC：lan.setEnabled 设置局域网访问总开关并回写到 status', a
   assert.equal(on.value.lanEnabled, true, '重新开启');
 
   await service.dispose();
+});
+
+test('RPC：settings 写失败 → lan.setEnabled 回 ok:false（P1-1）', async () => {
+  // 真实 setter 走真实写盘：用同名文件占住 <DSH_HOME>/dsh-pocket，writeSettings
+  // 必失败并抛错（旧实现吞错返回原值，设置页显示已保存而实际没落盘）。
+  const home = mkdtempSync(join(tmpdir(), 'dshp-svc-'));
+  const prev = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    writeFileSync(join(home, 'dsh-pocket'), 'not a dir');
+    const { setLanEnabled } = await import('../lib/settings.mjs');
+    const internals = stubInternals();
+    const service = createPocketService({ dshPort: 3080, port: 3081, internals });
+    const conn = fakeCtxConnection();
+    installPocketRpc({ connection: conn }, {
+      service,
+      setLanEnabled, // 真实 setter：写盘失败会抛
+      log: { error() {}, warn() {} },
+    });
+    const res = await conn.handler(POCKET_ENDPOINTS.lanSetEnabled, { on: false });
+    assert.equal(res.ok, false, '写失败回 ok:false');
+    assert.equal(res.error?.code, 'bad-request', '错误信封带 bad-request');
+    await service.dispose();
+  } finally {
+    if (prev === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = prev;
+    rmSync(home, { recursive: true, force: true });
+  }
 });
 
 test('RPC：mobile.rightbar.setEnabled 默认开启并回写到 status', async () => {

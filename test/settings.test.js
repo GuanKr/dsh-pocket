@@ -226,3 +226,12 @@ test('cloudflared 路径（issue #45）：默认空、可设可清', async () =>
   // 空格 trim
   assert.equal(setCloudflaredPath('  /opt/cf/cloudflared  '), '/opt/cf/cloudflared', '自动 trim');
 }));
+
+test('写失败不再被吞：settings 目录建不起来时 setter 抛错（P1-1）', async () => withHome(async (home) => {
+  // 用同名普通文件占住 <home>/dsh-pocket 的目录位置，mkdir 必失败
+  // （Windows ENOTDIR/EEXIST、POSIX EEXIST）——只读目录在不同平台/权限下不可靠。
+  writeFileSync(join(home, 'dsh-pocket'), 'not a dir');
+  const { setLanEnabled } = await import('../lib/settings.mjs');
+  // 旧实现 catch 吞错返回原值，调用方以为已保存；现在必须抛错让 RPC 回 ok:false
+  assert.throws(() => setLanEnabled(false), (err) => err instanceof Error);
+}));

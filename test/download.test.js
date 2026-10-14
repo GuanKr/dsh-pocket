@@ -101,7 +101,9 @@ test('resolveCloudflared：手动放置的资产名文件也能命中缓存（is
   await fsp.rm(home, { recursive: true, force: true });
 });
 
-test('resolveCloudflared：Linux 上丢弃 Homebrew bottle 坏缓存（issue #22）', async () => {
+// 仅 Linux 适用：假缓存文件名 cloudflared 无扩展名，Windows 候选名
+// （cloudflared.exe / cloudflared-windows-*.exe）永不匹配 → 必走真实下载挂网络。
+test('resolveCloudflared：Linux 上丢弃 Homebrew bottle 坏缓存（issue #22）', { skip: process.platform !== 'linux' && '仅 Linux 适用（Windows 候选名带 .exe，无扩展名假缓存永不匹配）' }, async () => {
   const fsp = await import('node:fs/promises');
   const os = await import('node:os');
   const path = await import('node:path');
