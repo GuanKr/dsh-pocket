@@ -657,12 +657,29 @@ export function mobileApply(ctx: ClientContext): void {
         document.body.appendChild(diagEl)
       }
       // 10-14 空白案：追加滚动区/座位几何（宿主稳定标记 data-conversation-scroll /
-      // data-composer-seat）——B 态补注定失败时，一张截图即可点名断在哪一层
-      const sbEl = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+      // data-composer-seat）——B 态补注定失败时，一张截图即可点名断在哪一层。
+      // 二轮升级：滚动区限定为座位自己的那个（querySelector 全局首个在多会话实例
+      // 下会探到隐藏实例）；加 va/col/nz 三元组量化宿主虚拟列状态——WebKit 上
+      // 虚拟化保留高塌缩（列高≈已挂载窗口高）正是 643 悬空的另一半病因。
       const seatEl = document.querySelector<HTMLElement>('[data-composer-seat]')
+      const sbEl = seatEl?.closest<HTMLElement>('[data-conversation-scroll]') ?? null
+      const vaEl = sbEl?.querySelector<HTMLElement>('[class*="_viewArea"]') ?? null
+      let colNote = ''
+      if (vaEl !== null) {
+        // 列 = viewArea 向下首个「子元素 >10 个」的容器（宿主虚拟列的稳定形状）
+        let n: HTMLElement | null = vaEl
+        for (let i = 0; i < 6 && n !== null; i += 1) {
+          if (n.children.length > 10) {
+            const nz = Array.from(n.children).filter(c => (c as HTMLElement).offsetHeight > 0).length
+            colNote = ` va=${Math.round(vaEl.getBoundingClientRect().height)} col=${Math.round(n.getBoundingClientRect().height)} nz=${nz}/${n.children.length}`
+            break
+          }
+          n = n.firstElementChild as HTMLElement | null
+        }
+      }
       const sbNote = sbEl === null ? '' : ` sb=${sbEl.clientHeight}/${sbEl.scrollHeight}@${Math.round(sbEl.scrollTop)}`
       const seatNote = seatEl === null ? '' : ` seatB=${Math.round(seatEl.getBoundingClientRect().bottom)}`
-      diagEl.textContent = `ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}`
+      diagEl.textContent = `ih=${window.innerHeight} vv=${Math.round(vv.height)} off=${Math.round(vv.offsetTop)} sc=${vv.scale.toFixed(2)} sy=${window.scrollY}${sbNote}${seatNote}${colNote}`
       if (auto) {
         window.clearTimeout(diagTimer)
         diagTimer = window.setTimeout(() => { diagEl?.remove(); diagEl = null }, 8000)

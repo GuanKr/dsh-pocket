@@ -532,6 +532,19 @@ export const LAYOUT_CSS = `/* ---------- mobile-only layout (narrow viewport AND
     padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  /* 座位钉底（pocket 补丁，10-14 真机底部空白案第二轮定案）：iOS WebKit 上
+     viewArea（显式 px 高度的 flex 子项）在滚动容器 flex 列里 flex-grow 不生效
+     （Blink 同构即拉伸，WebKit 停在内容高），内容不足一屏时座位按流内位置悬在
+     内容末尾、与窗口底之间留出死区（真机探针 seatB=643 vs 视口 796）。座位是
+     scrollBody 的直接 flex 子项，margin-top:auto 是跨引擎页脚钉底模式：有富余
+     时吃掉全部自由空间把座位压到容器底，无富余（内容满/超一屏）时解析为 0、
+     与 sticky 行为和长内容态完全无扰。hero 态被 [data-phase=active] 排除——
+     hero 的居中布局依赖自由空间分配，auto margin 会抢走它把输入框甩到底。
+     全部走宿主稳定标记（data-phase/-scroll/-seat），无哈希脆弱性。 */
+  [data-phase="active"] [data-conversation-scroll] > [data-composer-seat] {
+    margin-top: auto !important;
+  }
+
   /* --- Composer bottom row on mobile ---
      The official row contains two lanes: tools (plus + permission/mode
      controls) and trailing (model + context + send). The previous rules made
