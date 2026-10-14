@@ -4,9 +4,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
 import { connect } from 'node:net';
+import { gzipSync, brotliDecompressSync } from 'node:zlib';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import { createPocketProxy, createHandshakeTracker } from '../lib/proxy.mjs';
+import { createPocketProxy, createHandshakeTracker, DEFAULT_INJECT, SW_SCRIPT, SW_SCRIPT_PATH, SW_REGISTER_SCRIPT, HASHED_ASSET_RE } from '../lib/proxy.mjs';
 
 /** 构造一个带掩码的 WS 文本帧（浏览器在握手后立即发的首帧，会进 upgrade 的 head）。 */
 function maskedTextFrame(text) {
@@ -1444,6 +1445,105 @@ test('?token=<原始 PIN> 直达种 HttpOnly cookie，issue #35', async () => {
     });
     assert.equal(r4.status, 200, '错误密码走登录页（200）');
     assert.ok(!String(r4.setCookie ?? '').includes('dsh_pocket_token'), '错误密码不种 cookie');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});
+
+// —— 慢加载修复：SW 直出 + 哈希资产 immutable + gzip→brotli 转码 ——
+
+/** 原始 GET：返回未解码的字节（断言 content-encoding 必须用它，fetch 会代理解码）。 */
+function rawGet(port, path, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ host: '127.0.0.1', port, path, headers }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+test('慢加载：SW 脚本由代理直出，注册脚本随 DEFAULT_INJECT 注入', async () => {
+  const up = await fakeUpstream();
+  const proxy = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.port } });
+  try {
+    const res = await fetch(`http://127.0.0.1:${proxy.port}${SW_SCRIPT_PATH}`);
+    assert.equal(res.status, 200, 'SW 脚本 200 直出');
+    assert.match(res.headers.get('content-type') ?? '', /javascript/, 'JS 类型');
+    assert.equal(res.headers.get('cache-control'), 'no-cache', 'SW 主脚本要能更新');
+    const js = await res.text();
+    assert.equal(js, SW_SCRIPT, '返回导出的 SW 脚本本体');
+    assert.match(js, /headers\.delete\('content-encoding'\)/, '入库前摘 content-encoding（防缓存命中双重解码）');
+    assert.ok(SW_REGISTER_SCRIPT.includes(SW_SCRIPT_PATH), '注册脚本指向 SW_SCRIPT_PATH');
+    assert.ok(DEFAULT_INJECT.includes('data-dsh-pocket-sw-register="1"'), 'DEFAULT_INJECT 带 SW 注册');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.server.close(r));
+  }
+});
+
+test('慢加载：内容哈希资产改写一年 immutable，非哈希路径原样透传', async () => {
+  const up = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript', 'cache-control': 'max-age=14400' });
+    res.end('x');
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.address().port } });
+  try {
+    const hashed = await fetch(`http://127.0.0.1:${proxy.port}/assets/index-5SrrfWpU.js`);
+    assert.equal(hashed.headers.get('cache-control'), 'public, max-age=31536000, immutable', '哈希资产一年 immutable');
+    const combo = await fetch(`http://127.0.0.1:${proxy.port}/plugins/??a/client.js&rev=12e24962dfd7`);
+    assert.equal(combo.headers.get('cache-control'), 'max-age=14400', '非哈希路径不代改上游头');
+    assert.ok(HASHED_ASSET_RE.test('/assets/vendor-CCJJTK99.js'), '命中典型 vendor');
+    assert.ok(!HASHED_ASSET_RE.test('/assets/app.js'), '无哈希后缀不命中');
+    assert.ok(!HASHED_ASSET_RE.test('/plugins/'), 'combo 路径不命中');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});
+
+test('慢加载：gzip JS 在客户端接受 br 时转码 brotli，条件不满足原样透传', async () => {
+  // 高熵内容：重复文本 gzip 后 <4096 会踩到 size floor，测试就没意义了
+  const raw = Array.from({ length: 3000 }, (_, i) => `const v${i} = 0x${(i * 2654435761 >>> 0).toString(16)};`).join('\n');
+  const gz = gzipSync(Buffer.from(raw));
+  const up = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript; charset=utf-8', 'content-encoding': 'gzip', 'content-length': String(gz.length), etag: '"abc123"' });
+    res.end(gz);
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up.address().port } });
+  try {
+    // 客户端接受 br → 转码
+    const brRes = await rawGet(proxy.port, '/plugins/??a/client.js&rev=12e24962dfd7', { 'accept-encoding': 'br, gzip' });
+    assert.equal(brRes.status, 200);
+    assert.equal(brRes.headers['content-encoding'], 'br', '转码为 brotli');
+    assert.equal(brotliDecompressSync(brRes.body).toString('utf8'), raw, '解压后内容一致');
+    assert.equal(brRes.headers.etag, undefined, '转码后字节变了，etag 必须摘掉');
+
+    // 客户端只收 gzip → 原样透传
+    const gzRes = await rawGet(proxy.port, '/plugins/??a/client.js&rev=12e24962dfd7', { 'accept-encoding': 'gzip' });
+    assert.equal(gzRes.headers['content-encoding'], 'gzip', '不支持 br 时不动');
+    assert.equal(gzRes.body.length, gz.length, '字节原样');
+
+    // 小响应（<4096）不折腾转码
+    const up2 = createServer((req, res) => {
+      const small = gzipSync(Buffer.from('tiny'));
+      res.writeHead(200, { 'content-type': 'application/javascript', 'content-encoding': 'gzip', 'content-length': String(small.length) });
+      res.end(small);
+    });
+    await new Promise((r) => up2.listen(0, '127.0.0.1', r));
+    const proxy2 = await createPocketProxy({ port: 0, host: '127.0.0.1', upstream: { host: '127.0.0.1', port: up2.address().port } });
+    try {
+      const smallRes = await rawGet(proxy2.port, '/x.js', { 'accept-encoding': 'br, gzip' });
+      assert.equal(smallRes.headers['content-encoding'], 'gzip', '小响应不转码');
+    } finally {
+      await proxy2.close();
+      await new Promise((r) => up2.close(r));
+    }
   } finally {
     await proxy.close();
     await new Promise((r) => up.close(r));
