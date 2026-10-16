@@ -20,9 +20,14 @@ client/mobile/
 
 ## 同步步骤（上游发新版后）
 
+> 路径一律用 `$env:DSH_HOME`（Windows 下即 `%USERPROFILE%\.dsh`）表达，不写死用户名。
+> ⚠️ `sync-dsh-web-mobile.mjs` 与 `detached-restart.cjs` **不在本仓库里**（`git ls-files`
+> 无此文件），是维护者机器上的外部脚本。换机器前先把它们找回来或重写，否则这套流程
+> 不可复现。
+
 ```powershell
-node C:\Users\daha\.dsh\dsh-pocket\sync-dsh-web-mobile.mjs          # 跟 origin/main
-node C:\Users\daha\.dsh\dsh-pocket\sync-dsh-web-mobile.mjs v2.4.0   # 或指定 tag
+node $env:DSH_HOME\dsh-pocket\sync-dsh-web-mobile.mjs          # 跟 origin/main
+node $env:DSH_HOME\dsh-pocket\sync-dsh-web-mobile.mjs v2.4.0   # 或指定 tag
 ```
 
 脚本会：fetch → 镜像 src/client → **镜像期变换（见下）** → esbuild 重建 client.js →
@@ -42,12 +47,13 @@ node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配�
    变换后脚本断言镜像目录零 `dshWebMobileNav` 残留——**上游新增未跟踪文件**（如
    v3.1.0 的 file-share-locale.ts）git grep 搜不到，断言必须走文件系统遍历。
 
-构建依赖 esbuild：vendored 于 `C:\Users\daha\.dsh\dsh-pocket\vendor\node_modules\`
+构建依赖 esbuild：vendored 于 `$env:DSH_HOME\dsh-pocket\vendor\node_modules\`
 （esbuild@0.28.1 + @esbuild/win32-x64），sync 脚本自动 junction 进包内 node_modules。
 `dsh plugin update dsh-pocket` 重装包后 junction 会丢——重跑 sync 脚本即可恢复。
+（只想重建、不做上游同步时，直接在本仓库 `npm install && npm run build:client` 即可。）
 
 **同步后必做：**
-1. 重启 dsh web（`node C:\Users\daha\.dsh\dsh-pocket\detached-restart.cjs`，注意会断当前会话）。
+1. 重启 dsh web（`node $env:DSH_HOME\dsh-pocket\detached-restart.cjs`，注意会断当前会话）。
    combo URL 的 rev 启动时重分配，无缓存问题。
 2. WebKit（JSC/同 iPhone 引擎）回归：登录 PIN → 开历史会话（对话渲染）→ 抽屉开合 → 左缘右滑。
 3. **对表 inject 硬依赖**：upstream/index.tsx 的 `export const inject` 若增删服务名，
@@ -146,6 +152,189 @@ characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）
     直接 return，不跑 scheduleInject 也不跑 removedMenu 判定——会话菜单是 body 级
     portal，正文内 mutation 不可能含菜单开合。此前它是唯一缺这层过滤的观察者，
     流式期间每条记录都白跑一次 closest('[role="menu"]')。
+15. ~~`effects/composer-keyboard-guard.ts` 的本地补丁~~ —— **2026-10-15 整条退役**，
+     该文件现与上游逐字节一致（upstream/ 零足迹）。来龙去脉留着，因为退役理由不是
+     「重复」而是**「更粗、会误伤」**：
+
+     **当时的问题**：宿主 `dsh-client-ui-conversation` 在 `useEffect(..., [sessionId])`
+     里调 `focusDraftEditor`，手机上点会话名 ⇒ sessionId 变 ⇒ 对 contenteditable 编程
+     focus ⇒ 输入法弹起盖住半屏（issue #140）。基线当时没有上游那条解法，本仓补了一条。
+
+     **上游已有正解**：v3.1.0 起 `effects/session-focus-guard.ts` 针对同一症状，策略更准
+     ——由快照观测会话 id 变更触发（而非「任何编辑面点按开窗」的启发式）、800ms 有限
+     窗口、MutationObserver 补装重挂载的编辑面、pointerdown 早关窗。上游还把
+     `SHADOW_MARKER` 导出给本守卫共用（one marker, one own-property recipe），
+     两条守卫本就设计成互通的。
+
+     **退役的实测理由（两条，Chromium 390×844 + 触摸仿真可复现）**：
+     ① *无差别吞焦*：本地那条的 focusin 兜底只看「意图窗口 + editorFocused」，从不看
+        「守卫窗口是否开着」，于是无 pointerdown 的合法程序化 `focus()` 也被 blur——
+        宿主的 shell.focus() 与 Lexical 内部的 rootElement.focus({preventScroll:true})
+        都在这条路上；
+     ② *B2「长按粘贴被吞」换路径复活*：长按卡片空白 → 引擎触摸校正约 500ms 后聚焦编辑面
+        → markIntent 已因「点按不在编辑面」作废意图窗口 → focusin 命中「无意图 + 本无
+        焦点」当场 blur。上游 2026-10-04 的 B2 修复只挡 onPointerDown 那条影子窗口，
+        挡不住这个**另一个**监听器。
+
+     **教训**：往 upstream/ 镜像里加**长期常驻**的全局拦截层之前，先确认上游是否已有
+     更窄的解法——窗口化的守卫（只在会话切换时开窗）永远优于常驻启发式（按点按开窗）。
+     契约测试已改锚 session-focus-guard.ts 的关键属性（窗口有限性、windowOpen 门控、
+     早关窗、重挂载补装、marker 共享），见 `test/composer-keyboard.test.js`。
+16. `styles/layout.css.ts` — **`[data-seat-panel]` 定位配方（上游已整体重写，严格覆盖
+     本地修法，本地不再单独打补丁）**。本地原补丁只加一条 `transform: none`——旧配方
+     `left:50%; right:auto; transform:translateX(-50%)` 里那条 translateX 就是手机端
+     模型菜单甩出视口左侧 152px 的病因，详见下方「已知陷阱」一节。
+     2026-10-15 rebase 对账：上游配方已把这一族整体重写——根节点改
+     `position:static` 脱出包含块，面板改为卡片锚定居中（`left:0/right:0 !important`
+     + `margin-left/right:auto !important` + `max-width:min(100%,420px)`），
+     `transform: none !important` 压掉杂散位移（`left:0` 必须是 `!important` 才
+     压得过插件的行内 left），并另加三条视口溢出守卫（矮屏 700px / 键盘弹起竖屏 /
+     横屏改底部抽屉）。本地实测结论（`[data-seat-root]` 实测 `w:0 h:0`，卡片锚定
+     不依赖根被撑开）已并入上游规则的注释台账，两边不冲突。
+     **sync 覆盖后若上游配方再变，必须重新对账**（不是「重打」——本地已经不打补丁了，
+     没有重打对象）：先跑 `test/mobile-nav.test.js` 的契约，它已钉死面板
+     `transform:none`、面板 `left:0 !important`、居中 `margin auto`、根节点
+     `position:static` 四项（变异测试确认：改回旧配方、或把根的 position:static 改成
+     relative，都会立刻变红）；再按下方「已知陷阱」一节在真机媒体条件下实测——
+     CSS 字符串断言只能证明那段文字还在，证明不了渲染结果。
+
+### 已知陷阱：不要用 JS 重锚 `[data-seat-panel]`（2026-10-11 踩过，已回滚）
+
+composer 的模型菜单有**两套**，极易混为一谈：
+
+| | 官方菜单 | 席位面板 |
+| --- | --- | --- |
+| 出处 | 宿主 `dsh-client-ui-model-selection` | **第三方插件 `@hytime/dsh-thinking-effort`** |
+| 类名 | `_7KE1Ra_*`（`menu` / `root` / `trigger` …） | `_3_LLuW_*`（`panel` / `root` / `chip` …） |
+| 钩子 | 无 `data-seat-*`，只有 `data-composer-card` 等 4 个 | `data-seat-root` / `data-seat-panel` / `data-seat-range` … |
+| 定位 | `createPortal` 到 `<body>` + `position:fixed` | 席位根内 `position:absolute` + `bottom:calc(100% + 8px)` |
+
+`data-seat-*` **不是宿主提供的**：宿主 `node_modules\@deepseek-ai` 全量 grep 命中 0。
+曾把它误读成「宿主 0.2.1 的新代际」，整条推理跟着跑偏。
+
+席位面板的**位置由第三方插件自己的行内 `left` 决定**（实测 `left:-106px`，落点
+16..352，本身已经摆正）。**本目录的 CSS 不能对它加第二份定位意见**：
+
+- ❌ `transform: translateX(-50%)` —— 2026-10-12 实测这就是**病因本身**。插件行内
+  `left` 已经把面板摆正，`translateX(-50%)` 叠上去变成一次无补偿的纯左移；又因为同一
+  条规则里 `left:50%` 被行内优先级盖掉（死声明）、而上一行的 `flex:1 1 auto` 根本没把
+  `[data-seat-root]` 撑开（实测根 rect `w:0 h:0`），位移没有任何补偿。算式与实测逐字节
+  吻合：`根.x(122) + 行内 left(-106) + (-168) = -152`。**已修为 `transform: none`。**
+- ❌ 从 JS 写它的 `left`/`top` —— 曾按相反方向改过一轮，两路独立只读审查判定净损害、
+  已连同重建产物一并回滚（完整理由见提交「席位面板不再叠 translateX」的正文）：写
+  `left` 压不掉 `transform`；
+  补 `top` 而不清 `bottom` 会因该面板 `height:auto` + `bottom` 锚定而过约束、高度被
+  `bottom - top` 解出而**钉死**，模型列表一变高内容就溢出卡片。
+
+这类「CSS 静默错位」的诊断判据，**必须在真机媒体条件下跑**——桌面 UA 下
+`(max-width:1023px) and (pointer:coarse)` 整块不生效，什么都测不出来（本仓已因此
+误判过两次）。手机 DevTools Console 直接执行；桌面侧可用 CDP
+`Emulation.setEmulatedMedia({features:[{name:'pointer',value:'coarse'}]})` +
+`Emulation.setDeviceMetricsOverride({width:390,height:844,mobile:true})` 模拟：
+
+```js
+const p = document.querySelector('[data-seat-panel]');
+({ rect: p.getBoundingClientRect(), transform: getComputedStyle(p).transform,
+   offsetParent: p.offsetParent?.getBoundingClientRect() })
+// transform 出现 matrix(...) 且 rect.left < 0 → 无补偿左移，clear 掉它
+```
+
+### 宿主 / 插件升级对账（sync 拦不住的两类失效）
+
+sync 只覆盖 `upstream/`。**宿主 DSH 升级、以及第三方插件换代造成的失效，它一个字都拦
+不住**。先查清某个类名/钩子到底出自谁——宿主命中 0 就去 profile 的插件里找：
+
+```powershell
+# 出处核对（PowerShell；$env: 是 PowerShell 的写法）
+Select-String -Path "$env:APPDATA\npm\node_modules\@deepseek-ai\dsh\node_modules\@deepseek-ai\*\*\lib\*.js" -Pattern 'data-seat-' -List
+Select-String -Path "$env:USERPROFILE\.dsh\profiles\web\node_modules\*\*\lib\*.js" -Pattern '_3_LLuW' -List
+```
+
+**DOM 相关的对账不要写 `node -e`**——Node 里没有 `document`，会报
+`ReferenceError: document is not defined`。那些必须在页面 DevTools Console 执行：
+
+```js
+document.querySelectorAll('[data-mobile-nav]').length    // frame 门控是否还在
+document.querySelectorAll('[class*="_7KE1Ra_"]').length  // 官方模型菜单哈希是否已死
+```
+
+立规矩：写死哈希类名是本仓最大的复发面（`_7KE1Ra` → `_3_LLuW` 那次教训的另一半是
+**它们根本不是同一家**）。优先用稳定钩子（`data-*` / `role` / `aria-*`），其次用
+「运行时从一个稳定锚点反推哈希前缀」，实在没有才写死并登记进上面的补丁清单。
+
+#### 判「选择器是否失效」的正确方法（2026-10-12 踩坑后立规）
+
+**不要用「DOM 里 0 命中」判死。** 元素没渲染（抽屉关着、菜单没开、面板在别的 tab）
+和选择器失效，在这一条测量里长得一模一样。本仓已经因此误判过两次：
+
+- 第一次：`[data-mobile-nav]` 0 命中 → 误判「整层惰性」，实际是桌面 UA 下
+  `MOBILE_QUERY` 为 false，整层本来就不该挂载；
+- 第二次：`_viewport` / `_itemIcon` / `_itemLabel` 全 0 → 误判「长按删除菜单坏了」，
+  实际只是会话菜单当时没打开。菜单打开后实测三项全命中、删除项照常注入。
+
+**可靠做法：从样式表反推宿主「能产出」的类名池**，它覆盖未渲染的元素。在页面
+DevTools Console 执行：
+
+```js
+const pool = new Set();
+for (const sh of document.styleSheets) {
+  let rules; try { rules = sh.cssRules; } catch { continue; }
+  for (const r of rules) for (const m of (r.cssText || '').matchAll(/\.((?:_)?[A-Za-z][A-Za-z0-9_-]*)/g)) pool.add(m[1]);
+}
+[...pool].find(c => c.includes('_viewport'));   // 命中 = 宿主仍能产出该本地名
+```
+
+注意：子串命中只证明「宿主能产出」，不证明「命中的是你以为的那个组件」——例如
+`_stat` 会匹配到 `_status_…`、`_dock` 会匹配到 `_dockScrim_…`。判定某个具体选择器是否
+有效，仍需**先把目标元素渲染出来**再测。
+
+**必做的自证**（四条全绿才算环境到位，否则测出来的任何结论都无效）：
+
+```js
+matchMedia('(pointer: coarse)').matches                      // true
+matchMedia('(max-width: 1023px) and (pointer: coarse)').matches  // true
+document.body.getAttribute('data-dsh-pocket-layout')         // 'mobile'
+document.querySelectorAll('[data-mobile-nav]').length        // > 0
+```
+
+桌面侧用 CDP 模拟：`Emulation.setEmulatedMedia({features:[{name:'pointer',value:'coarse'}]})`
++ `setDeviceMetricsOverride({width:390,height:844,mobile:true})` + `setTouchEmulationEnabled`，
+再访问 `?dsh-layout=mobile`。**只改 viewport 宽度没用**，`(pointer: coarse)` 不成立时
+整层不挂载。
+
+#### 0.2.1-alpha.2 全量审计结论（2026-10-12）
+
+环境自证：四条全绿，`[data-mobile-nav]` 命中 4（`frame` / `drawer-actions` /
+`session-log` / `fab`）。类名池 4016 条。
+
+**承重墙全部存活**（抽样实测）：`_frame` `_sidebarCol` `_centerCol` `_card` `_row`
+`_trailing` `_composerSeat` `_composerStack` `_panel`(11) `_root`(12) `_overlay`(2)
+`_header`(4) `_menu` `_search` `_newSession`(3) `_logoRow` `_settingsArea`
+`_headerActions` `_dock` `_overlayLayer` `_sessionRow`(7) `_projectRow`(6)
+`_rowActions`(12) `_groupSection`(6) `_tabBar`(2) `_titleRow`，另有
+`hHd-Xa_toggle` `iWlSmW_trigger` `wSkVaW_*` `ZKlsPq_*` `nL4_yW_moreButton`。
+宿主同时存在三种命名法（`pI_x6G_frame` 前缀哈希、`_viewport_4ub78_19` 本地名在前、
+`hHd-Xa_root`），本地名子串匹配对三者都成立——这正是本仓选择器策略的价值。
+
+**失效 13 条，逐条判定后无需修**：
+
+| 选择器 | 位置 | 判定 |
+| --- | --- | --- |
+| `_7KE1Ra_menu` / `_trigger` / `_chevron` / `_triggerLabel` | model-menu-anchor.ts | 已知失效；该模块的 JS 重锚方案已回滚，面板改由 seat 插件 + layout.css 规则定位 |
+| `h8S2Va_root` / `_menu` | subagent-chip-touch.ts:58 | **JS，但在多代备选 union 里**，`ZKlsPq_root` / `ZKlsPq_menu` 分支存活，功能正常 |
+| `ZuhsRW` | layout/misc.css 多处 | 用在 `:not(:has(…))` **排除**里；类不存在时 `:not` 恒真 = 规则按预期生效，**无害** |
+| `_searchBox` / `_tabBtn` | compat.css.ts:524-529 | 作用域是 `[data-aionui-explorer-col]`，官方 DSH 无 explorer → **无关** |
+| `usg_` / `_statsRow` | compat.css.ts:439-442 | 用量统计行，属官方未内置的组件 → **无关** |
+| `_sprite` | compat.css.ts:572-579 | 浮球隐藏规则失效，值得真机扫一眼有没有杂散浮球 |
+| `QsffPG_root` | layout.css.ts 多处 `:has()` | header 给后台任务 chip 让位的装饰性规则失效 → 影响观感，不影响功能 |
+
+**`data-dsh-responsive-part` 确认已从宿主消失**（`responsive-part` / `sidebar-toggle`
+一并 0 命中），但**这是设计好的降级**：`phone-chrome.ts:120` 的 `HOST_TOGGLE_SELECTOR`
+找不到真实 toggle 时，`ensureDismissShadow()` 会移除影子、把 dismiss 归属交回本仓
+自己的路径（导航观察器 + backdrop 捕获点击）。实测点会话行抽屉正确收起
+（`data-sidebar-collapsed` 置位、`transform: translateX(-308px)`）。
+
+**结论：0.2.1-alpha.2 上移动端层无功能性损坏**，只剩上表里几条无害/无关的死规则。
 
 ### 适配器层的宿主侧配套（不在 upstream/ 内，但同一次合并引入）
 
