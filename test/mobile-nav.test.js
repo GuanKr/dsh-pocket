@@ -13,7 +13,35 @@ const {
 } = await import('../client/mobile/layout-mode.mjs');
 
 const apply = readFileSync(new URL('../client/mobile/mobile-apply.tsx', import.meta.url), 'utf8');
+const layoutCss = readFileSync(new URL('../client/mobile/upstream/styles/layout.css.ts', import.meta.url), 'utf8');
 const bundle = readFileSync(new URL('../client/client.js', import.meta.url), 'utf8');
+
+test('席位面板不得叠位移（2026-10-12 真机实测：translateX(-50%) 把面板甩出视口左侧 152px）', () => {
+  // 2026-10-15 rebase 对账：本地原补丁只加一条 transform:none——清掉旧配方
+  // left:50%+translateX(-50%) 里的杂散位移，那正是甩出视口左侧 152px 的病因。
+  // 上游已把这一族整体重写并严格覆盖本地修法：根节点 position:static 脱出包含块，
+  // 面板改为卡片锚定居中；left:0/right:0 必须 !important 才压得过插件的行内 left。
+  const rule = layoutCss.match(/\[data-seat-root\] > \[data-seat-panel\]\s*\{[\s\S]*?\n\s*\}/)?.[0];
+  assert.ok(rule, '必须存在 [data-seat-panel] 的规则');
+  const body = rule.replace(/\/\*[\s\S]*?\*\//g, ''); // 剥掉块注释再断言，否则命中注释正文
+  assert.match(body, /transform:\s*none\s*(?:!\s*important\s*)?;/, '面板必须显式 transform:none（允许 !important）');
+  assert.ok(!/translateX/.test(body),
+    '不得再叠 translateX：席位根实测 w:0 h:0，translateX(-50%) 会变成无补偿纯左移（根.x 122 + 行内 left -106 - 168 = -152）');
+  assert.ok(!/left:\s*50%/.test(body),
+    '不得再写 left:50%：已被卡片锚定的 left:0 取代，旧配方在插件行内 left 下是死声明');
+  assert.match(body, /left:\s*0\s*!important/,
+    '卡片锚定必须用 !important 压过插件行内 left（实测行内 left:-106px）');
+  assert.match(body, /margin-left:\s*auto/,
+    '卡片锚定居中靠 auto margin，且不依赖被撑开的 [data-seat-root]（实测根 w:0 h:0）');
+  // 承重项：根节点必须 position:static 脱出包含块，面板才锚得到卡片 padding box。
+  // 本条原先缺失——变异测试（删掉全部 position: static !important）契约仍 6/6 全绿，
+  // 而少了它面板会重新锚到实测 w:0 h:0 的根上，正是原症状的根因。
+  const rootRule = (layoutCss.match(/\[data-seat-root\]\s*\{[^}]*\}/g) ?? [])
+    .find((r) => r.includes('position: static !important'));
+  assert.ok(rootRule, '[data-seat-root] 必须有 position: static !important —— 否则绝对定位的面板锚到 0×0 的根上');
+  // 产物侧同样钉死，防止只改源码忘了重建
+  assert.ok(/\[data-seat-panel\][^{]*\{[^}]*transform:\s*none/.test(bundle), '产物必须含清位移规则');
+});
 
 test('layout-mode：URL 参数 > localStorage > auto 的优先级（issue #74）', () => {
   assert.equal(resolveLayout({ urlValue: 'desktop', stored: 'mobile', narrowMatch: true }), 'desktop');
