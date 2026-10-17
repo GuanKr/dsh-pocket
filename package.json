@@ -81,7 +81,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "2.10.8",
+  "version": "2.10.9",
   "allowScripts": {
     "esbuild@0.25.12": true
   }
