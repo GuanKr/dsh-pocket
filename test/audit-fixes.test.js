@@ -1,7 +1,9 @@
 // 审计修复回归测试（2026-10）：
 //  1) fileRead 权限边界：凭据/密钥类路径一律拒绝；能枚举工作区时只允许工作区内；
 //  2) isTrustedLoopbackRequest 的 IPv6 / 127.0.0.0/8 判定；
-//  3) 登录限速的全局锁不连坐「成功登录过的来源」（防被攻击者刷成 DoS）。
+//  3) 登录限速的全局锁不连坐「成功登录过的来源」（防被攻击者刷成 DoS）；
+//  4) 第二轮审计修复：取不到 PIN 时 fail-closed（503）、超长登录体 413、
+//     fileRead 相对路径按工作区根回退、设置缓存不跨 DSH_HOME 串味。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
@@ -11,6 +13,7 @@ import { mkdtempSync, writeFileSync, unlinkSync } from 'node:fs';
 import { installPocketRpc, isTrustedLoopbackRequest } from '../lib/web-rpc.js';
 import { createPocketProxy } from '../lib/proxy.mjs';
 import { POCKET_ENDPOINTS } from '../client/api.js';
+import { lanEnabled, setLanEnabled } from '../lib/settings.mjs';
 
 /** mock ctx：抓 RPC 处理函数，并可按需提供工作区服务。 */
 function makeCtx(services = {}) {
@@ -115,5 +118,102 @@ test('登录限速：全局锁豁免已成功登录过的来源，仍拦没成�
   } finally {
     await proxy.close();
     await new Promise((r) => up.close(r));
+  }
+});
+
+/** 简单 GET，返回状态码与正文。 */
+function get(port, path, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ host: '127.0.0.1', port, method: 'GET', path, headers }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf8') }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+test('认证：protectedHost 取不到 PIN 时 fail-closed（503，不透传到上游）', async () => {
+  let upstreamHits = 0;
+  const up = createServer((_req, res) => {
+    upstreamHits += 1;
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<html><body>dsh</body></html>');
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({
+    port: 0,
+    host: '127.0.0.1',
+    upstream: { host: '127.0.0.1', port: up.address().port },
+    auth: { getToken: () => null, isProtected: () => true },
+  });
+  try {
+    const res = await get(proxy.port, '/', { Host: 'abc.trycloudflare.com' });
+    assert.equal(res.status, 503, '取不到 PIN 必须拒绝，不能静默裸奔到上游');
+    assert.equal(upstreamHits, 0, '上游不应收到任何请求');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});
+
+test('登录：超长请求体返回 413（此前直接断连，浏览器只看到连接被重置）', async () => {
+  const up = createServer((_req, res) => { res.writeHead(200); res.end('x'); });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({
+    port: 0,
+    host: '127.0.0.1',
+    upstream: { host: '127.0.0.1', port: up.address().port },
+    auth: { getToken: () => '12345678', isProtected: () => true },
+  });
+  try {
+    const body = 'token=' + 'a'.repeat(4000);
+    const status = await new Promise((resolve, reject) => {
+      const req = httpRequest({
+        host: '127.0.0.1', port: proxy.port, method: 'POST', path: '/pocket-login',
+        headers: {
+          Host: 'abc.trycloudflare.com',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': String(Buffer.byteLength(body)),
+        },
+      }, (res) => { res.resume(); resolve(res.statusCode); });
+      req.on('error', (err) => { if (err?.code !== 'ECONNRESET') reject(err); });
+      req.end(body);
+    });
+    assert.equal(status, 413, '超长登录体应回 413');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});
+
+test('fileRead：客户端 cwd 不匹配时相对路径按工作区根回退', async () => {
+  const inside = tmpFile('rel.txt', 'relative-content\n');
+  const { ctx, call } = makeCtx({ workspaceRegistry: { list: [{ cwd: inside.dir }] } });
+  installPocketRpc(ctx, { service: { status: async () => ({}) } });
+  try {
+    const res = await call(POCKET_ENDPOINTS.fileRead, { path: 'rel.txt', cwd: tmpdir() });
+    assert.equal(res.ok, true, '应回退到工作区根解析，而不是直接拒绝');
+    assert.equal(res.value.content, 'relative-content\n');
+  } finally {
+    try { unlinkSync(inside.file); } catch { /* ignore */ }
+  }
+});
+
+test('设置缓存：切换 DSH_HOME 后不串味（测试隔离依赖路径键）', () => {
+  const homeA = mkdtempSync(join(tmpdir(), 'pocket-home-a-'));
+  const homeB = mkdtempSync(join(tmpdir(), 'pocket-home-b-'));
+  const prev = process.env.DSH_HOME;
+  try {
+    process.env.DSH_HOME = homeA;
+    assert.equal(lanEnabled(), true, '默认开启');
+    setLanEnabled(false);
+    assert.equal(lanEnabled(), false, 'A 已关闭');
+    process.env.DSH_HOME = homeB;
+    assert.equal(lanEnabled(), true, 'B 必须回到默认，不能读到 A 的缓存');
+  } finally {
+    if (prev === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = prev;
   }
 });

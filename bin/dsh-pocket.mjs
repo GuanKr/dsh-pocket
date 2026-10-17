@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
 import { randomBytes, randomInt } from 'node:crypto';
 import { createPocketProxy, classifyHost } from '../lib/proxy.mjs';
 import { startQuickTunnel } from '../lib/tunnel.mjs';
+import { selectLanIPv4 } from '../lib/service.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -118,13 +119,9 @@ function printHelp() {
 }
 
 function lanIPv4() {
-  const addrs = [];
-  for (const ifaces of Object.values(networkInterfaces())) {
-    for (const i of ifaces ?? []) {
-      if (i.family === 'IPv4' && !i.internal) addrs.push(i.address);
-    }
-  }
-  return addrs[0] ?? null;
+  // 与插件模式共用同一套网卡打分（私网优先、物理网卡优先、VPN 降权），
+  // 此前这里取第一个非 internal IPv4，装了 Tailscale/VMware 时会选到 100.x 或虚拟网卡。
+  return selectLanIPv4(networkInterfaces());
 }
 
 function printQr(url, label) {
@@ -184,6 +181,10 @@ async function main() {
     console.log('🌐 正在建立公网隧道（cloudflared）…');
     try {
       tunnel = await startQuickTunnel({ port, signal: controller.signal });
+      // 隧道进程跑着跑着挂了：CLI 没有状态轮询，只能靠这个回调提示，否则二维码一直挂着死链接
+      tunnel.onExit?.((code) => {
+        console.error(`\n⚠️  公网隧道已断开（code=${code}）。局域网二维码仍可用；要恢复公网请重启 dsh-pocket。`);
+      });
       printQr(entryUrl(tunnel.url, pin), '🌐 公网访问（人在外面也能用）：');
       console.log('   隧道会持续运行；Ctrl+C 退出（下次启动会换新 URL）');
     } catch (err) {
