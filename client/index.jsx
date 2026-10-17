@@ -104,6 +104,12 @@ function PocketSettingsTab({ rpcCall, t }) {
   const [isDesktop, setIsDesktop] = useState(false); // DSH Desktop（Electron）环境：更新/重启由桌面版管理
   const [now, setNow] = useState(Date.now()); // 每秒 tick，驱动倒计时
   const [pinShown, setPinShown] = useState({}); // 密码明文开关 { lan?: true, public?: true }——默认遮罩
+  const [autoReloadFailed, setAutoReloadFailed] = useState(false); // 重启后自动刷新失败
+
+  // status 首帧还没回来时，setStatus((s) => ({ ...s, ... })) 会把 null 展开成 {}
+  // —— 界面字段短暂变 undefined。统一走这里：没数据就丢弃这次局部更新，
+  // 下一次 status 轮询会带回真实值。
+  const patchStatus = (patch) => setStatus((s) => (s ? { ...s, ...patch } : s));
 
   // 进行中操作的「已等待 X 秒」倒计时——只在有活跃倒计时（更新/重启进行中、隧道
   // 连接中）时才挂每秒 tick，操作结束即卸载；空闲设置页不再无条件每秒重渲染
@@ -123,6 +129,21 @@ function PocketSettingsTab({ rpcCall, t }) {
     return res.value;
   };
 
+  // 重启后自动刷新：旧进程退出到新进程开始监听之间有数秒空窗（helper 还要等端口
+  // 释放、dsh web 还要启动），固定 2 秒 reload 会撞上 ERR_CONNECTION_REFUSED 白屏。
+  // 改成轮询本页地址直到真的能连上再刷新；30 秒还没起来就交给用户点「刷新页面」。
+  const waitForHostThenReload = async () => {
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch(location.href, { method: 'GET', cache: 'no-store' });
+        if (res.ok) { location.reload(); return; }
+      } catch { /* 新进程还没起来 */ }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    setAutoReloadFailed(true);
+  };
+
   const load = async () => {
     try {
       const s = await call(POCKET_ENDPOINTS.status, {});
@@ -138,7 +159,7 @@ function PocketSettingsTab({ rpcCall, t }) {
         setUpdateInfo(null);
         if (!sessionStorage.getItem('dshp-auto-reloaded')) {
           sessionStorage.setItem('dshp-auto-reloaded', '1');
-          setTimeout(() => { try { location.reload(); } catch { /* 忽略 */ } }, 2000);
+          waitForHostThenReload();
         }
       }
     } catch { /* 忽略瞬时失败 */ }
@@ -146,8 +167,9 @@ function PocketSettingsTab({ rpcCall, t }) {
 
   useEffect(() => {
     load();
-    // 页面不可见时跳过 status 轮询，回到前台后下一拍（≤3s）自动恢复
-    const t = setInterval(() => { if (!document.hidden) load(); }, 3000);
+    // 页面不可见时跳过 status 轮询，回到前台后下一拍（≤10s）自动恢复。
+    // 10s 而非 3s：每次 status 都带两张二维码 data URL，常开设置页没必要这么频繁。
+    const t = setInterval(() => { if (!document.hidden) load(); }, 10000);
     return () => clearInterval(t);
   }, []);
 
@@ -312,7 +334,7 @@ function PocketSettingsTab({ rpcCall, t }) {
   const refreshLanPin = async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.lanTokenRefresh, {});
-      setStatus((s) => ({ ...s, lanToken: r.lanToken }));
+      setStatus((s) => (s ? { ...s, lanToken: r.lanToken } : s));
     } catch { /* 忽略 */ }
   };
 
@@ -320,7 +342,7 @@ function PocketSettingsTab({ rpcCall, t }) {
   const setLanAuth = async (on) => {
     try {
       const r = await call(POCKET_ENDPOINTS.lanAuthSetEnabled, { on });
-      setStatus((s) => ({ ...s, lanAuthEnabled: r.lanAuthEnabled }));
+      setStatus((s) => (s ? { ...s, lanAuthEnabled: r.lanAuthEnabled } : s));
     } catch { /* 忽略 */ }
   };
 
@@ -328,7 +350,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     try {
       const r = await call(POCKET_ENDPOINTS.mobileRightbarSetEnabled, { on });
       const enabled = r.mobileRightbarEnabled === true;
-      setStatus((s) => ({ ...s, mobileRightbarEnabled: enabled }));
+      patchStatus({ mobileRightbarEnabled: enabled });
       applyMobileRightbarSetting(enabled);
     } catch (err) {
       setError(err.message);
@@ -339,7 +361,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     try {
       const r = await call(POCKET_ENDPOINTS.mobilePinchZoomSetEnabled, { on });
       const enabled = r.mobilePinchZoomEnabled === true;
-      setStatus((s) => ({ ...s, mobilePinchZoomEnabled: enabled }));
+      patchStatus({ mobilePinchZoomEnabled: enabled });
       applyMobilePinchZoomSetting(enabled);
     } catch (err) {
       setError(err.message);
@@ -356,7 +378,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     if (on === null) return;
     try {
       const r = await call(POCKET_ENDPOINTS.lanSetEnabled, { on });
-      setStatus((s) => ({ ...s, lanEnabled: r.lanEnabled }));
+      setStatus((s) => (s ? { ...s, lanEnabled: r.lanEnabled } : s));
     } catch (err) {
       setError(err.message);
     }
@@ -377,13 +399,13 @@ function PocketSettingsTab({ rpcCall, t }) {
   const saveCustomPin = async (which) => {
     try {
       const r = await call(POCKET_ENDPOINTS.pinSetCustom, { which, value: customPin?.value ?? '' });
-      setStatus((s) => ({
+      setStatus((s) => (s ? {
         ...s,
         accessToken: which === 'public' ? r.pin : s.accessToken,
         lanToken: which === 'lan' ? r.pin : s.lanToken,
         publicPinCustom: which === 'public' ? true : s.publicPinCustom,
         lanPinCustom: which === 'lan' ? true : s.lanPinCustom,
-      }));
+      } : s));
       setCustomPin(null);
     } catch (err) {
       setCustomPin((c) => ({ ...c, err: err.message }));
@@ -531,9 +553,16 @@ function PocketSettingsTab({ rpcCall, t }) {
     // 桌面端不显示更新/重启横幅（更新由 DSH Desktop 管理），也不需要额外提示
     !isDesktop && restartNotice ? Alert('info',
       h('div', { style: { flex: 1, minWidth: 0 } },
-        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' } },
           h('span', { style: { fontWeight: 600 } }, t('restarted')),
-          h('button', { style: styles.mini, onClick: () => setRestartNotice(false) }, t('ok'))),
+          h('div', { style: { display: 'flex', gap: 6 } },
+            autoReloadFailed
+              ? h('button', { style: styles.mini, onClick: () => { setAutoReloadFailed(false); waitForHostThenReload(); } }, t('reloadNow'))
+              : null,
+            h('button', { style: styles.mini, onClick: () => setRestartNotice(false) }, t('ok')))),
+        autoReloadFailed
+          ? h('div', { style: { color: 'var(--dsw-alias-label-tertiary,#8b93a1)', marginTop: 2 } }, t('reloadFailed'))
+          : null,
         h('div', { style: { color: 'var(--dsw-alias-label-tertiary,#8b93a1)', wordBreak: 'break-all' } },
           fmt(t, 'bgHint', { cmd: status?.killHint ?? `lsof -ti :${status?.dshPort ?? 3080} | xargs kill -9` }))),
       { marginTop: 14 }) : null,

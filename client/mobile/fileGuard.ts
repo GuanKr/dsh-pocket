@@ -317,6 +317,11 @@ export function startFileGuard(
       hideWsEntries(el)
     }
     pending.clear()
+    // 被 React 卸载的入口还留在 backup 里（Map 强引用 DOM），卸载回调又只会
+    // 扫仍连接的节点：这里顺手回收，否则长会话反复开合菜单会持续堆积。
+    for (const el of hiddenDisplayBackup.keys()) {
+      if (!el.isConnected) hiddenDisplayBackup.delete(el)
+    }
   }
   injectCopyButtons()
   hideWsEntries(document)

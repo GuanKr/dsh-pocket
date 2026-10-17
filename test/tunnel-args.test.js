@@ -35,7 +35,13 @@ function withFakeBin(bin, fn) {
   });
 }
 
-test('issue #78: 快速隧道 --no-autoupdate 在全局位置（argv[0]）', async () => {
+// 假 cloudflared 是 `#!/usr/bin/env node` 的无扩展名脚本，Windows 的 spawn 无法直接
+// 执行（需要 .exe/.cmd，或 shell:true）；生产路径也不依赖它，CI 在 ubuntu 上覆盖。
+const POSIX_ONLY = process.platform === 'win32'
+  ? '需要 POSIX shebang 假二进制；Windows spawn 无扩展名脚本会 ENOENT'
+  : false;
+
+test('issue #78: 快速隧道 --no-autoupdate 在全局位置（argv[0]）', { skip: POSIX_ONLY }, async () => {
   const { bin, record, dir } = await makeFakeCloudflared();
   try {
     await withFakeBin(bin, async () => {
@@ -53,7 +59,7 @@ test('issue #78: 快速隧道 --no-autoupdate 在全局位置（argv[0]）', asy
   }
 });
 
-test('issue #78: 命名隧道 --no-autoupdate 在全局位置（argv[0]，含 run）', async () => {
+test('issue #78: 命名隧道 --no-autoupdate 在全局位置（argv[0]，含 run）', { skip: POSIX_ONLY }, async () => {
   const { bin, record, dir } = await makeFakeCloudflared();
   try {
     await withFakeBin(bin, async () => {
