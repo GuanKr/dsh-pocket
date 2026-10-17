@@ -315,6 +315,42 @@ test('RPC：mobile.rightbar.setEnabled 默认开启并回写到 status', async (
   await service.dispose();
 });
 
+test('RPC：mobile.font.setSize 持久化并回写到 status', async () => {
+  const internals = stubInternals();
+  let size = 0;
+  const service = createPocketService({ dshPort: 3080, port: 3081, internals });
+  const conn = fakeCtxConnection();
+  installPocketRpc({ connection: conn }, {
+    service,
+    getMobileFontSize: () => size,
+    setMobileFontSize: (next) => {
+      if (!Number.isInteger(next) || (next !== 0 && (next < 12 || next > 22))) throw new Error('invalid size');
+      size = next;
+      return size;
+    },
+    log: { error() {}, warn() {} },
+  });
+
+  const initial = await conn.handler(POCKET_ENDPOINTS.status, {});
+  assert.equal(initial.ok, true);
+  assert.equal(initial.value.mobileFontSize, 0, '默认 0 = 跟随桌面');
+
+  const set = await conn.handler(POCKET_ENDPOINTS.mobileFontSetSize, { size: 18 });
+  assert.equal(set.ok, true);
+  assert.equal(set.value.mobileFontSize, 18, '设置成功并回传');
+  assert.equal((await conn.handler(POCKET_ENDPOINTS.status, {})).value.mobileFontSize, 18, 'status 反映新字号');
+
+  const bad = await conn.handler(POCKET_ENDPOINTS.mobileFontSetSize, { size: 99 });
+  assert.equal(bad.ok, false, '越界值回 ok:false');
+  assert.equal(bad.error?.code, 'bad-request', '错误信封带 bad-request');
+
+  const back = await conn.handler(POCKET_ENDPOINTS.mobileFontSetSize, { size: 0 });
+  assert.equal(back.ok, true);
+  assert.equal(back.value.mobileFontSize, 0, '0 恢复跟随桌面');
+
+  await service.dispose();
+});
+
 test('RPC：status 携带重启提示（restartNotice）', async () => {
   const internals = stubInternals();
   const service = createPocketService({ dshPort: 3080, port: 3081, internals });

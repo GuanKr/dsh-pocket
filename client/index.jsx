@@ -15,7 +15,7 @@
 
 import { createElement as h, useEffect, useRef, useState } from 'react';
 
-import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, redactStatus, compareVersions, isSameRepo } from './api.js';
+import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, MOBILE_FONT_ATTRIBUTE, MOBILE_FONT_EVENT, MOBILE_FONT_SIZE_VAR, MOBILE_FONT_MIN, MOBILE_FONT_MAX, redactStatus, compareVersions, isSameRepo } from './api.js';
 import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as POCKET_NS, zh as POCKET_ZH, en as POCKET_EN } from './pocket-locales.js';
 
@@ -70,6 +70,23 @@ function applyMobilePinchZoomSetting(enabled) {
   const on = enabled === true;
   document.body?.setAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE, on ? 'on' : 'off');
   window.dispatchEvent(new CustomEvent(MOBILE_PINCH_ZOOM_EVENT, { detail: { enabled: on } }));
+}
+
+// 手机端独立字号：0 = 跟随桌面。落 body 属性 + CSS 变量，由 POCKET_EXTRA_CSS
+// 只在手机布局下覆盖宿主的内容字号轴（桌面布局选择器不命中）。
+const MOBILE_FONT_OPTIONS = [0, ...Array.from({ length: MOBILE_FONT_MAX - MOBILE_FONT_MIN + 1 }, (_, i) => MOBILE_FONT_MIN + i)];
+
+function applyMobileFontSize(size) {
+  const px = Number(size);
+  const valid = Number.isInteger(px) && px >= MOBILE_FONT_MIN && px <= MOBILE_FONT_MAX;
+  if (valid) {
+    document.body?.style.setProperty(MOBILE_FONT_SIZE_VAR, `${px}px`);
+    document.body?.setAttribute(MOBILE_FONT_ATTRIBUTE, String(px));
+  } else {
+    document.body?.style.removeProperty(MOBILE_FONT_SIZE_VAR);
+    document.body?.removeAttribute(MOBILE_FONT_ATTRIBUTE);
+  }
+  window.dispatchEvent(new CustomEvent(MOBILE_FONT_EVENT, { detail: { size: valid ? px : 0 } }));
 }
 
 // 剪贴板：优先 Clipboard API（需安全上下文），LAN http 场景回退 execCommand
@@ -150,6 +167,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       setStatus(s);
       applyMobileRightbarSetting(s.mobileRightbarEnabled);
       applyMobilePinchZoomSetting(s.mobilePinchZoomEnabled);
+      applyMobileFontSize(s.mobileFontSize);
       setTunnelState(s.tunnelState ?? null);
       if (s.desktop) setIsDesktop(true);
       if (s.restartNotice) {
@@ -188,6 +206,8 @@ function PocketSettingsTab({ rpcCall, t }) {
     if (isDesktop) return;
     let alive = true;
     const check = async () => {
+      // 手机端切后台时定时器本就会被节流；显式跳过，避免标签页恢复瞬间打一次外网请求。
+      if (document.hidden) return;
       try {
         const v = await call(POCKET_ENDPOINTS.version, {});
         const meta = await (await fetch('https://registry.npmjs.org/dsh-pocket/latest', { cache: 'no-store' })).json();
@@ -205,9 +225,15 @@ function PocketSettingsTab({ rpcCall, t }) {
         }
       } catch { /* 网络失败静默 */ }
     };
+    const onVisible = () => { if (!document.hidden) void check(); };
+    document.addEventListener('visibilitychange', onVisible);
     check();
-    const t = setInterval(check, 5 * 60 * 1000);
-    return () => { alive = false; clearInterval(t); };
+    const t = setInterval(check, 15 * 60 * 1000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [isDesktop]);
 
   // 重启宿主（更新生效必需：刷新页面不会重载服务端代码）
@@ -317,6 +343,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       setStatus(next);
       applyMobileRightbarSetting(next.mobileRightbarEnabled);
       applyMobilePinchZoomSetting(next.mobilePinchZoomEnabled);
+      applyMobileFontSize(next.mobileFontSize);
       setTunnelCfg(null);
       setCustomPin(null);
       setAdvOpen(false);
@@ -363,6 +390,17 @@ function PocketSettingsTab({ rpcCall, t }) {
       const enabled = r.mobilePinchZoomEnabled === true;
       patchStatus({ mobilePinchZoomEnabled: enabled });
       applyMobilePinchZoomSetting(enabled);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const setMobileFontSize = async (size) => {
+    try {
+      const r = await call(POCKET_ENDPOINTS.mobileFontSetSize, { size });
+      const px = Number(r.mobileFontSize) || 0;
+      patchStatus({ mobileFontSize: px });
+      applyMobileFontSize(px);
     } catch (err) {
       setError(err.message);
     }
@@ -728,6 +766,15 @@ function PocketSettingsTab({ rpcCall, t }) {
         t('mobilePinchZoom'),
         Switch(status?.mobilePinchZoomEnabled === true, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled !== true)),
         h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobilePinchZoomHint')),
+      ),
+      row(
+        t('mobileFontSize'),
+        h('select', {
+          style: { font: 'inherit', fontSize: 13, height: 28, padding: '0 8px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', background: 'var(--dsw-alias-bg-layer-1,#fff)', color: 'inherit' },
+          value: String(Number(status?.mobileFontSize) || 0),
+          onChange: (e) => setMobileFontSize(Number(e.target.value)),
+        }, MOBILE_FONT_OPTIONS.map((px) => h('option', { key: px, value: String(px) }, px === 0 ? t('mobileFontFollow') : `${px} px`))),
+        h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobileFontSizeHint')),
       )],
       'prefs'),
 

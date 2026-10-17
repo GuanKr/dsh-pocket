@@ -235,3 +235,19 @@ test('写失败不再被吞：settings 目录建不起来时 setter 抛错（P1-
   // 旧实现 catch 吞错返回原值，调用方以为已保存；现在必须抛错让 RPC 回 ok:false
   assert.throws(() => setLanEnabled(false), (err) => err instanceof Error);
 }));
+
+test('手机端独立字号：默认跟随桌面（0）、可设可清、非法值抛错', async () => withHome(async () => {
+  const { mobileFontSize, setMobileFontSize, settingsPath } = await import('../lib/settings.mjs');
+  assert.equal(mobileFontSize(), 0, '默认 0 = 跟随桌面');
+  assert.equal(setMobileFontSize(16), 16, '设置后立即返回');
+  assert.equal(mobileFontSize(), 16, '重新读取生效');
+  assert.equal(JSON.parse(readFileSync(settingsPath(), 'utf8')).mobileFontSize, 16, 'settings.json 字段正确');
+  assert.equal(setMobileFontSize(0), 0, '传 0 恢复跟随桌面');
+  assert.equal(mobileFontSize(), 0, '清除后回到默认');
+  assert.equal(JSON.parse(readFileSync(settingsPath(), 'utf8')).mobileFontSize, undefined, '清除后字段被删除');
+  // 非法值（越界/小数/非数字）一律拒绝，不静默落盘
+  assert.throws(() => setMobileFontSize(11), (err) => err instanceof Error, '小于下限抛错');
+  assert.throws(() => setMobileFontSize(23), (err) => err instanceof Error, '大于上限抛错');
+  assert.throws(() => setMobileFontSize(15.5), (err) => err instanceof Error, '小数抛错');
+  assert.throws(() => setMobileFontSize('garbage'), (err) => err instanceof Error, '非数字抛错');
+}));

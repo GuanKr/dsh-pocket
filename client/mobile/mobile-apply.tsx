@@ -14,7 +14,7 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { apply as upstreamApply } from './upstream/index.tsx'
 import { startFileGuard } from './fileGuard.ts'
 import { resolveLayout, persistLayoutFromUrl } from './layout-mode.mjs'
-import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT } from '../api.js'
+import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, MOBILE_FONT_ATTRIBUTE, MOBILE_FONT_EVENT, MOBILE_FONT_SIZE_VAR, MOBILE_FONT_MIN, MOBILE_FONT_MAX } from '../api.js'
 // H4：fileGuard 的用户可见文案迁入词典（client/pocket-locales.js，NS='pocket'）。
 // 这里只导入命名空间 id；词典本体由 client/index.jsx 统一注册（bind 是惰性取词，
 // 注册顺序在 mobileApply 之后也不影响）。
@@ -134,6 +134,15 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
   }
   body[data-dsh-pocket-layout="mobile"]:not([data-dsh-pocket-mobile-rightbar="off"]) [data-mobile-nav="files"] {
     right: 44px !important;
+  }
+
+  /* ---------- 移动端独立字号（2026-10-18 用户要求：手机调字号不影响桌面） ----------
+     宿主把「字号大小」写在 body 的 --dsh-content-font-size 上，delta / secondary /
+     markdown 字号 token 等派生值全部由它 calc。这里只在「手机布局 + 用户选了独立
+     字号」两个条件同时成立时替换这一个轴；!important 用于压过宿主写在 body 上的
+     内联值，桌面布局选择器不命中，桌面字号保持原样。 */
+  body[data-dsh-pocket-layout="mobile"][data-dsh-pocket-mobile-font] {
+    --dsh-content-font-size: var(--dsh-pocket-mobile-font-size) !important;
   }
 
   /* ---------- 会话行悬停卡片 ----------
@@ -484,6 +493,47 @@ export function mobileApply(ctx: ClientContext): void {
       document.body?.removeAttribute(MOBILE_PINCH_ZOOM_ATTRIBUTE)
     }
   }, 'dsh-pocket: pinch-zoom setting')
+
+  // 移动端独立字号（2026-10-18）：与上面两个开关同一套模式——手机壳层自己拉
+  // status 落 body 标记（不依赖设置页被打开过），并监听设置页广播的事件实时更新。
+  // 具体覆盖规则在 POCKET_EXTRA_CSS（只在手机布局命中）。
+  ctx.effect(() => {
+    let active = true
+    const applySize = (size: number): void => {
+      const body = document.body
+      if (!body) return
+      const px = Number(size)
+      if (Number.isInteger(px) && px >= MOBILE_FONT_MIN && px <= MOBILE_FONT_MAX) {
+        body.style.setProperty(MOBILE_FONT_SIZE_VAR, `${px}px`)
+        body.setAttribute(MOBILE_FONT_ATTRIBUTE, String(px))
+      } else {
+        body.style.removeProperty(MOBILE_FONT_SIZE_VAR)
+        body.removeAttribute(MOBILE_FONT_ATTRIBUTE)
+      }
+    }
+    const onChange = (event: Event): void => {
+      applySize(Number((event as CustomEvent<{ size?: number }>).detail?.size) || 0)
+    }
+    const load = async (): Promise<void> => {
+      try {
+        const result = await ctx.connection.rpc.call(POCKET_RPC_CHANNEL, POCKET_ENDPOINTS.status, {}) as {
+          ok?: boolean
+          value?: { mobileFontSize?: number }
+        }
+        if (active) applySize(result?.ok === true ? Number(result.value?.mobileFontSize) || 0 : 0)
+      } catch {
+        if (active) applySize(0)
+      }
+    }
+    window.addEventListener(MOBILE_FONT_EVENT, onChange)
+    void load()
+    return () => {
+      active = false
+      window.removeEventListener(MOBILE_FONT_EVENT, onChange)
+      document.body?.style.removeProperty(MOBILE_FONT_SIZE_VAR)
+      document.body?.removeAttribute(MOBILE_FONT_ATTRIBUTE)
+    }
+  }, 'dsh-pocket: mobile font size')
 
   // 缩放控制（2026-09-14 用户要求：禁双击放大与捏合缩放），手段分工：
   //  - 双击放大：上游根样式 html,body{touch-action:pan-y pinch-zoom!important}

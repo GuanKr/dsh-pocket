@@ -328,9 +328,10 @@ export function startFileGuard(
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'characterData') {
-        // 文本节点原地改写（React 更新文案时改的是 node.data，不产生 childList 记录）
+        // 文本节点原地改写（React 更新文案时改的是 node.data，不产生 childList 记录）。
+        // 纯文本容器里没有任何 button/a，流式 token 刷新时不必每帧重扫——长回答的主要开销。
         const parent = m.target.parentElement
-        if (parent !== null) pending.add(parent)
+        if (parent !== null && parent.childElementCount > 0) pending.add(parent)
         continue
       }
       m.addedNodes.forEach((n) => {

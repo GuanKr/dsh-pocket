@@ -7,11 +7,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
+import { gzipSync, brotliCompressSync, brotliDecompressSync } from 'node:zlib';
+import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdtempSync, writeFileSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, unlinkSync, mkdirSync, existsSync, utimesSync } from 'node:fs';
 import { installPocketRpc, isTrustedLoopbackRequest } from '../lib/web-rpc.js';
 import { createPocketProxy } from '../lib/proxy.mjs';
+import { purgeSessionTrash } from '../lib/delete-session.mjs';
 import { POCKET_ENDPOINTS } from '../client/api.js';
 import { lanEnabled, setLanEnabled } from '../lib/settings.mjs';
 
@@ -215,5 +218,115 @@ test('设置缓存：切换 DSH_HOME 后不串味（测试隔离依赖路径键�
   } finally {
     if (prev === undefined) delete process.env.DSH_HOME;
     else process.env.DSH_HOME = prev;
+  }
+});
+
+test('上游中途断开：错误文案不得拼进已发出的响应正文', async () => {
+  const up = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.write('<html><body>partial-content');
+    setTimeout(() => res.destroy(), 10);
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({
+    port: 0,
+    host: '127.0.0.1',
+    upstream: { host: '127.0.0.1', port: up.address().port },
+  });
+  try {
+    const body = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(''), 3_000);
+      const req = httpRequest({ host: '127.0.0.1', port: proxy.port, method: 'GET', path: '/' }, (res) => {
+        let data = '';
+        const done = () => { clearTimeout(timer); resolve(data); };
+        res.on('data', (c) => { data += c; });
+        res.on('end', done);
+        res.on('error', done);
+        res.on('aborted', done);
+      });
+      req.on('error', () => { clearTimeout(timer); resolve(''); });
+      req.end();
+    });
+    assert.ok(!body.includes('无法连接上游'), `响应正文混入了上游错误说明: ${body.slice(-120)}`);
+    assert.ok(!body.includes('upstream unreachable'), '英文错误文案同样不应出现');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
+  }
+});
+
+test('回收站：启动清理只删过期条目，保留新条目', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'pocket-trash-'));
+  const trash = join(root, '.sessions-trash');
+  const oldDir = join(trash, 'old-entry');
+  const newDir = join(trash, 'new-entry');
+  mkdirSync(oldDir, { recursive: true });
+  mkdirSync(newDir, { recursive: true });
+  const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
+  utimesSync(oldDir, stale, stale);
+  const ctx = { get: (name) => (name === 'sessionPersistence' ? { config: { root } } : undefined) };
+  await purgeSessionTrash(ctx);
+  assert.equal(existsSync(oldDir), false, '超过 24h 的回收站条目应被清理');
+  assert.equal(existsSync(newDir), true, '未过期条目必须保留');
+  await purgeSessionTrash({ get: () => undefined });
+});
+
+test('转码缓存：不可变资产第二次请求不再回源，普通路径不受影响', async () => {
+  // 十六进制随机串压不动，保证 gzip 后长度仍 ≥4096（转码分支要求）
+  const payload = randomBytes(8192).toString('hex');
+  const gz = gzipSync(payload);
+  const br = brotliCompressSync(payload);
+  let hits = 0;
+  const up = createServer((req, res) => {
+    hits += 1;
+    // gzip 源走「转码成 br」分支；br 源走「原样透传」分支，两条都要能缓存
+    const encoding = req.url.includes('gzip') ? 'gzip' : 'br';
+    res.writeHead(200, { 'content-type': 'application/javascript', 'content-encoding': encoding });
+    res.end(encoding === 'gzip' ? gz : br);
+  });
+  await new Promise((r) => up.listen(0, '127.0.0.1', r));
+  const proxy = await createPocketProxy({
+    port: 0,
+    host: '127.0.0.1',
+    upstream: { host: '127.0.0.1', port: up.address().port },
+  });
+  const fetchPath = (path) => new Promise((resolve, reject) => {
+    const req = httpRequest({
+      host: '127.0.0.1', port: proxy.port, method: 'GET', path, headers: { 'accept-encoding': 'br' },
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve({ status: res.statusCode, encoding: res.headers['content-encoding'], body: Buffer.concat(chunks) }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+  try {
+    const first = await fetchPath('/assets/app-abcdefgh1234-gzip.js');
+    assert.equal(first.status, 200);
+    assert.equal(first.encoding, 'br', '首次应被转码成 br');
+    assert.equal(brotliDecompressSync(first.body).toString('utf8'), payload);
+    assert.equal(hits, 1);
+
+    const second = await fetchPath('/assets/app-abcdefgh1234-gzip.js');
+    assert.equal(second.encoding, 'br');
+    assert.equal(brotliDecompressSync(second.body).toString('utf8'), payload);
+    assert.equal(hits, 1, '第二次应命中缓存，不再回源');
+
+    // 上游本来就是 br：原样透传分支也要回填缓存
+    const passthroughFirst = await fetchPath('/assets/vendor-ijklmnop5678.js');
+    assert.equal(passthroughFirst.encoding, 'br');
+    assert.equal(brotliDecompressSync(passthroughFirst.body).toString('utf8'), payload);
+    assert.equal(hits, 2);
+    const passthroughSecond = await fetchPath('/assets/vendor-ijklmnop5678.js');
+    assert.equal(passthroughSecond.encoding, 'br');
+    assert.equal(hits, 2, '透传分支第二次也应命中缓存');
+
+    await fetchPath('/api/data.js');
+    await fetchPath('/api/data.js');
+    assert.equal(hits, 4, '非不可变路径每次都回源');
+  } finally {
+    await proxy.close();
+    await new Promise((r) => up.close(r));
   }
 });

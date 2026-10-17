@@ -4,6 +4,13 @@ export const MOBILE_RIGHTBAR_ATTRIBUTE = 'data-dsh-pocket-mobile-rightbar';
 export const MOBILE_RIGHTBAR_EVENT = 'dsh-pocket:mobile-rightbar';
 export const MOBILE_PINCH_ZOOM_ATTRIBUTE = 'data-dsh-pocket-pinch-zoom';
 export const MOBILE_PINCH_ZOOM_EVENT = 'dsh-pocket:mobile-pinch-zoom';
+// 移动端独立字号（2026-10-18）：宿主把「字号大小」写在 body 的
+// --dsh-content-font-size 上，手机布局下只覆盖这一个轴，桌面布局不受影响。
+export const MOBILE_FONT_ATTRIBUTE = 'data-dsh-pocket-mobile-font';
+export const MOBILE_FONT_EVENT = 'dsh-pocket:mobile-font-size';
+export const MOBILE_FONT_SIZE_VAR = '--dsh-pocket-mobile-font-size';
+export const MOBILE_FONT_MIN = 12;
+export const MOBILE_FONT_MAX = 22;
 
 export const POCKET_ENDPOINTS = Object.freeze({
   status: 'pocket.status',
@@ -19,6 +26,7 @@ export const POCKET_ENDPOINTS = Object.freeze({
   lanSetEnabled: 'lan.setEnabled',
   mobileRightbarSetEnabled: 'mobile.rightbar.setEnabled',
   mobilePinchZoomSetEnabled: 'mobile.pinchZoom.setEnabled',
+  mobileFontSetSize: 'mobile.font.setSize',
   pinSetCustom: 'pin.setCustom',
   pocketReset: 'pocket.reset',
   // 移动端「复制文件内容」（issue #17）：手机经此 RPC 让主机读取文件正文，
