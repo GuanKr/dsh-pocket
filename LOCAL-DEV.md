@@ -14,7 +14,7 @@
 >
 > 本机（Windows）目前实际用的是**打包安装**那条路，完整流程见 [`AGENTS.md`](./AGENTS.md) 第一节。
 >
-> 注意：本文档的示例命令是 POSIX 写法（`lsof`、`shasum`、`~/.dsh`、`/tmp`），在 Windows 上要换成对应命令。
+> 本文第一~四节是 POSIX 写法；**Windows / PowerShell 的对应命令见[第五节](#五windows-写法powershell)**。
 
 ---
 
@@ -103,6 +103,111 @@ ls -l ~/.dsh/profiles/web/node_modules/dsh-pocket
 
 ---
 
+## 五、Windows 写法（PowerShell）
+
+上面各节的命令是 POSIX 写法（`lsof` / `shasum` / `~/.dsh` / `/tmp`）。Windows 上对应如下。
+
+> ⚠️ **PowerShell 里 `$HOME` 是只读自动变量**，不要拿它当临时变量赋值——会报
+> `无法覆盖变量 HOME，因为它是只读变量或常量`。用 `$dshHome` 之类的名字。
+
+### 路径
+
+```powershell
+$dshHome = if ($env:DSH_HOME) { $env:DSH_HOME } else { "$env:USERPROFILE\.dsh" }
+```
+
+### 建立软链
+
+```powershell
+$link = "$dshHome\profiles\web\node_modules\dsh-pocket"
+
+# 移走已安装的目录（pnpm 装的是 .pnpm 里的实体）
+if (Test-Path $link) { Remove-Item -LiteralPath $link -Recurse -Force }
+
+# 建符号链接指向本地仓库
+New-Item -ItemType SymbolicLink -Path $link -Target "<repo-path>"
+
+# 确认
+(Get-Item $link -Force).LinkType   # 期望输出 SymbolicLink
+(Get-Item $link -Force).Target     # 期望输出你的仓库路径
+```
+
+> **软链需要权限**：Windows 建符号链接要求「开发者模式」或管理员权限，否则报
+> `需要管理员权限`。创建失败就直接走打包安装那条路（见 [`AGENTS.md`](./AGENTS.md) 第一节）——
+> 本机目前用的就是那条。
+
+### 停止占用端口的进程
+
+```powershell
+Get-NetTCPConnection -LocalPort 3080 -State Listen |
+  ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+```
+
+### detached 重启（不随终端关闭被回收）
+
+`dsh` 在 Windows 上是 PowerShell 脚本（`dsh.ps1`），`Start-Process` 不能直接执行 `.ps1`，
+必须经由 `dsh.cmd` 或 `cmd.exe`：
+
+```powershell
+$log    = "$env:TEMP\dsh-web-dev.log"
+$errLog = "$env:TEMP\dsh-web-dev.err.log"
+$dshCmd = "$env:APPDATA\npm\dsh.cmd"
+
+Start-Process -FilePath "cmd.exe" `
+  -ArgumentList "/c", "`"$dshCmd`" web" `
+  -WindowStyle Hidden `
+  -RedirectStandardOutput $log `
+  -RedirectStandardError $errLog
+```
+
+三个要点：
+
+1. **stdout 与 stderr 必须重定向到两个不同文件**。指向同一个文件 PowerShell 会直接报错。
+2. `-WindowStyle Hidden` 让它没有可见窗口；`Start-Process` 起的是独立进程，不会随当前
+   PowerShell 会话结束而被回收。
+3. 日志在 `$env:TEMP\dsh-web-dev.log`（POSIX 版是 `/tmp/dsh-web-dev.log`）。
+
+等端口起来：
+
+```powershell
+# dsh-pocket 代理在 3081 被占时会自动顺延，所以按实际端口查
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 3080,3081 } |
+  Select-Object LocalPort, OwningProcess
+```
+
+### 确认加载的确实是本地代码
+
+页面在 PIN 门禁之后（`Invoke-WebRequest http://127.0.0.1:3080/` 会返回 **401**），
+所以别去抓 HTML 里的 `?rev=`，直接比对安装件与工作区：
+
+```powershell
+# 软链法：看链接指向
+(Get-Item "$dshHome\profiles\web\node_modules\dsh-pocket" -Force).Target
+
+# 两种方式通用：比对已安装副本与工作区是否逐字节一致
+$installed = "$dshHome\profiles\web\node_modules\dsh-pocket"
+foreach ($f in 'client\client.js', 'lib\index.js') {
+  $a = (Get-FileHash "$installed\$f" -Algorithm SHA256).Hash
+  $b = (Get-FileHash ".\$f" -Algorithm SHA256).Hash
+  "{0,-24} 一致={1}" -f $f, ($a -eq $b)
+}
+```
+
+产物变了但界面没变，先确认 `client/client.js` 是否已重新打包：
+
+```powershell
+(Get-FileHash .\client\client.js -Algorithm SHA1).Hash.Substring(0,12)
+```
+
+### 查端口占用（对应「常见问题」里的 lsof）
+
+```powershell
+Get-NetTCPConnection -LocalPort 3080 -State Listen | Select-Object LocalPort, OwningProcess
+Get-NetTCPConnection -LocalPort 3081 -State Listen | Select-Object LocalPort, OwningProcess
+```
+
+---
+
 ## 注意事项
 
 - **软链期间，你日常用的 dsh web 跑的都是本地仓库代码**（包括未提交的改动），而别人通过 npm 装到的仍是发布版——两边互不影响。
@@ -112,8 +217,8 @@ ls -l ~/.dsh/profiles/web/node_modules/dsh-pocket
 
 ## 常见问题
 
-**手机页面没变化**：多半是忘了 `node client/build.mjs`，或 dsh web 没重启成功（看 `/tmp/dsh-web-dev.log`）。
+**手机页面没变化**：多半是忘了 `node client/build.mjs`，或 dsh web 没重启成功。日志在 `/tmp/dsh-web-dev.log`（Windows：`$env:TEMP\dsh-web-dev.log`，错误日志是同目录的 `dsh-web-dev.err.log`）。
 
-**代理端口 3081 起不来**：插件没加载成功。检查软链路径是否正确、仓库依赖是否装好；也可以 `curl -s http://127.0.0.1:3080/` 看返回的 HTML 里有没有 `dsh-pocket/client.js`。
+**代理端口 3081 起不来**：插件没加载成功。检查安装路径是否正确、仓库依赖是否装好。注意 `curl http://127.0.0.1:3080/` 在 PIN 门禁下会返回 **401**，所以「HTML 里有没有 `dsh-pocket/client.js`」不能当判据——改用第五节的安装件比对法，或直接看启动日志里的报错。
 
 **端口被占**：`lsof -ti :3080` 或 `lsof -ti :3081` 查占用进程；dsh-pocket 的代理在 3081 被占时会自动顺延到下一个端口。
