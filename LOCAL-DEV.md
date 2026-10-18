@@ -4,6 +4,18 @@
 
 原理：dsh 的插件装在 profile 的 `node_modules` 里（pnpm 软链），我们把它重新指向本地仓库目录，dsh web 重启后就加载本地代码。
 
+> **两种本地联调方式，按场景选：**
+>
+> | | 软链（本文档） | 打包安装 |
+> | --- | --- | --- |
+> | 生效粒度 | 改完即生效 | 需重新 `npm pack` + 安装 |
+> | 适合 | 日常快速改代码验证 | 要留存一个可复现的构建 |
+> | 安装形态 | `node_modules/dsh-pocket` 是符号链接 | profile 用 `file:` specifier 指向 `.tgz` |
+>
+> 本机（Windows）目前实际用的是**打包安装**那条路，完整流程见 [`AGENTS.md`](./AGENTS.md) 第一节。
+>
+> 注意：本文档的示例命令是 POSIX 写法（`lsof`、`shasum`、`~/.dsh`、`/tmp`），在 Windows 上要换成对应命令。
+
 ---
 
 ## 一、建立软链（只需做一次）
@@ -32,7 +44,7 @@ ls -l dsh-pocket
 
 ```sh
 node client/build.mjs     # 只改后端可跳过
-npm test                  # 建议顺手跑一遍（当前 109 个用例）
+npm test                  # 建议顺手跑一遍（当前 218 个用例）
 ```
 
 ### 重启 dsh web
