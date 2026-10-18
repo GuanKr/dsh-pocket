@@ -2,3 +2,6 @@ node_modules/
 *.log
 .DS_Store
 .workbuddy/
+# npm pack 产物：由 profile 的 pnpm-lock.yaml 以 file: specifier 指向，不进版本库。
+# 同名同版本覆盖还会撞锁文件里钉死的 sha512 integrity（静默不更新），所以尤其不能提交。
+*.tgz
