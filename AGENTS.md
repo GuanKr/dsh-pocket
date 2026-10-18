@@ -7,7 +7,7 @@
 
 | 远端 | 指向 | 角色 |
 | --- | --- | --- |
-| `origin` | `daha1216/dsh-pocket` | **本 fork，日常 rebase 的目标** |
+| `origin` | `daha1216/dsh-pocket` | **本 fork，日常同步上游的目标**（见第五节） |
 | `upstream` | `shaobeichen/dsh-pocket` | 原作者仓库 |
 
 npm 上的 `dsh-pocket` 包归原作者（`leachzhou`）所有，本 fork **没有也不应该获得发布权限**。
@@ -130,21 +130,101 @@ npm test          # 218 个用例
 
 ---
 
-## 五、rebase 惯例
+## 五、同步上游：用 squash-merge，不要 rebase
 
-- rebase 目标是 `origin/main`，**不是** `upstream/main`（fork 已把需要的东西同步过来了）。
-- 本仓足迹只有下面这些文件，都不会被 sync 覆盖，因此基本不会冲突：
+### 为什么不是 rebase
 
-  | 文件 | 性质 |
-  | --- | --- |
-  | `.gitignore` | 仓库配置 |
-  | `package.json` / `package-lock.json` | 版本与依赖 |
-  | `client/mobile/PORTING.md` | 本仓文档 |
-  | `test/composer-keyboard.test.js` | 本仓测试 |
-  | `test/mobile-nav.test.js` | 本仓测试 |
+`local` 只存在于本机（未推送、无任何远端引用其 SHA），所以 rebase 重写 SHA 的唯一硬伤不成立；
+而它的「线性历史」收益，在足迹几乎零冲突时也有限。真正需要的是**一条可审计的同步痕迹** ——
+「我什么时候合到了上游的哪个位置」。
 
-- **版本号是唯一会反复冲突的地方**，解成 `<对方版本>-local.<递增>` 即可。这个冲突是有用的
-  —— 它逼你在每次同步时确认一次版本口径。
+squash-merge 同时给出三样东西：线性历史、不重写 SHA（备份分支 / tag / 过去的 `git bisect`
+永远有效）、每次同步产出一个自己写的提交。唯一的成本是 sync 提交会累积 —— 但那正是审计日志：
+
+```
+a1b2c3 chore(sync): 同步 origin/main 至 ba2f53d（2.10.9）
+f9e2008 chore: 删除 semantic-release 发布链路 —— 本 fork 不发 npm 包
+26832ef chore: 版本 bump 到 2.10.9-local.1 + 忽略 npm pack 产物
+1b844fd docs(PORTING): 补丁台账第 15/16 条改写 + 真机诊断方法论
+094457f test(mobile): 席位面板定位契约同步上游重写后的配方
+8b8fcd4 test(mobile): 键盘守卫契约改锚上游 session-focus-guard
+```
+
+### 三层职责边界
+
+```
+upstream/main (shaobeichen)  ──sync 脚本──▶  origin/main (daha1216)  ──你──▶  local
+```
+
+- **你只负责 `origin/main` → `local`。**
+- **不要自己去合 `upstream/main`。** 那需要跑 dsh-web-mobile 的同步脚本（整目录镜像 + 镜像期
+  变换），是上游维护者的职责。`origin/main` 落后 `upstream/main` 十几个提交是正常状态。
+- 需要上游的修复时：等它进 `origin/main`；急的话在 `local` 打补丁并登记进
+  `client/mobile/PORTING.md` 的补丁台账，或推给 fork。
+
+### 一次性配置
+
+```sh
+git config rerere.enabled true      # 记住冲突解法，下次自动重放
+git config rerere.autoupdate true
+```
+
+写在 `.git/config`（仓库级，不进版本库）。换机器重克隆时要重新执行一次。
+
+### 每次同步的流程
+
+```sh
+git fetch origin
+
+# 1. 先看清这次上游变了什么（不要跳过）
+git log --oneline HEAD..origin/main
+git diff --stat HEAD origin/main
+
+# 2. 可选留个备份引用（不重写历史，所以成本为零）
+git branch backup/pre-sync-$(git rev-parse --short HEAD)
+
+# 3. squash 合入
+git merge --squash origin/main
+
+# 4. 解冲突 —— 实际只有一处需要判断
+#    package.json 的 version → <对方版本>-local.<递增序号>，例：2.10.9-local.2
+#    package-lock.json 不要手解，直接重生成：
+npm install --package-lock-only
+
+# 5. 验证
+npm test
+
+# 6. 提交
+git commit -m "chore(sync): 同步 origin/main 至 <短 sha>（<上游版本>）"
+```
+
+**要退出**：第 6 步提交之前，任何时候 `git reset --hard HEAD` 都能干净回退，不影响已有历史。
+
+### rerere 为什么值得开
+
+本仓每次同步需要**人工判断**的冲突只有 `package.json` 的 `version` 一处，且每次解法完全相同
+（解成 `<对方版本>-local.<递增>`）。这正是 rerere 最理想的场景：第一次手工解，之后自动重放；
+配合 `autoupdate`，连 `git add` 都省了。
+
+`package-lock.json` 那 6000 行冲突是机械的，**永远**用 `npm install --package-lock-only` 重生成，
+不要手解。
+
+### 本仓足迹（都不会被 sync 覆盖，故冲突面极小）
+
+| 文件 | 性质 |
+| --- | --- |
+| `.gitignore` / `package.json` / `package-lock.json` | 配置与版本 |
+| `AGENTS.md` / `LOCAL-DEV.md` / `client/mobile/PORTING.md` | 本仓文档 |
+| `test/composer-keyboard.test.js` / `test/mobile-nav.test.js` | 本仓测试 |
+
+**足迹里没有生产代码** —— 全部是文档、测试与配置。这既是冲突面极小的原因，也是维护成本低的
+原因。
+
+### 什么时候该换回 rebase
+
+- `local` 开始推送或被他人引用 → 仍用 squash-merge，但要重新想清楚远端语义
+- **足迹里开始出现生产代码** → 那时 rebase 的「小步线性提交」价值才真正回来
+- 需要在多个长期分支间来回 → 结论不变，sync 提交的价值反而更大
 
 ---
 
