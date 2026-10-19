@@ -104,6 +104,36 @@ test('selectLanIPv4：空接口表返回 null', () => {
   assert.equal(selectLanIPv4({}), null);
 });
 
+test('selectLanIPv4（issue #176）：Windows 移动热点/ICS 虚拟网卡不遮蔽真实 Wi-Fi', () => {
+  // 手机连真实 Wi-Fi 时与 192.168.137.1（ICS 共享网段）不同网段，扫码不可达
+  assert.equal(
+    selectLanIPv4(ifaces([
+      ['本地连接* 12', '192.168.137.1'],
+      ['WLAN', '192.168.1.50'],
+    ])),
+    '192.168.1.50',
+    '本地连接*（ICS）被识别为虚拟网卡，物理 WLAN 优先',
+  );
+  // 只有 ICS 网卡时仍返回它（总比没有地址可用强），但同分排序时排后
+  assert.equal(
+    selectLanIPv4(ifaces([
+      ['本地连接* 12', '192.168.137.1'],
+      ['以太网 2', '192.168.137.20'],
+    ])),
+    '192.168.137.20',
+    '同为 ICS 网段时仍优先名称像物理网卡的接口',
+  );
+  // hostednetwork / Wi-Fi Direct 也按虚拟网卡处理
+  assert.equal(
+    selectLanIPv4(ifaces([
+      ['Microsoft Wi-Fi Direct Virtual Adapter', '192.168.137.1'],
+      ['Wi-Fi', '10.0.0.8'],
+    ])),
+    '10.0.0.8',
+    'Wi-Fi Direct 虚拟适配器不遮蔽真实 Wi-Fi',
+  );
+});
+
 test('service：lanIpOverride 优先于自动选择，status 返回候选地址', async () => {
   const internals = stubInternals();
   let override = '';

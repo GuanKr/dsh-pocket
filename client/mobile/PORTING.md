@@ -67,7 +67,15 @@ node --check。产物 `client/client.js` 由 esbuild 打包 upstream/ + 适配�
 组件闭包/reconciler 回调/slot 组件），每次 `sync-dsh-web-mobile.mjs` 会把它们
 整目录冲掉。按序号逐个施加，施加完用 `git diff client/mobile/upstream` 复核。
 
-**2026-10-14 对账基线：v3.1.0 (ab3a85b)。** v3.0.3 清单 13 条的去向：#1 脏键豁免
+**2026-10-19 对账基线：v3.2.0 (473a78b)。** 相对 v3.1.0 的 14 条补丁：#12
+`effects/reasoning-defaults.ts` 随上游 v3.2.0 退休整份删除、补丁作废；#13 的
+stats-line 部分已按上游新 `locateRing` 代码重放；其余 12 条原样重打。v3.2.0
+还吸收了本仓此前的两个真机修复点（viewport `interactive-widget=resizes-content`、
+swipe `if (!tracking) return`），并新增 `effects/drawer-session-log.ts`（抽屉品牌行
+图标，替代旧 `sidebar.footer.action` 胶囊）——本仓 POCKET_EXTRA_CSS 里对应的
+`[data-mobile-nav="session-log"]` 触控高度规则已删除。
+
+**历史（2026-10-14 对账基线 v3.1.0 (ab3a85b)）：** v3.0.3 清单 13 条的去向：#1 脏键豁免
 （上游 reconciler 拆分——adapter 过滤 [data-chat-flow] 内全部记录 + core 的
 characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）、#5 gesture-guard
 清扫（上游 consumed 改 WeakMap，detached 节点天然可回收）**已被上游吸收**；NS 改名
@@ -118,9 +126,9 @@ characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）
      重挂会把旧 frame 从文档摘除，裸缓存会让后续轮询一直对着游离节点打标。上游
      v3.1.0 仍是裸缓存（audit 2026-10-14 复核），勿信「已吸收」旧说。
 
-2026-10-15 性能批新增 12–14（流式每-flush 固定税 + 轮询退避）：
+2026-10-15 性能批新增 12–14（流式每-flush 固定税 + 轮询退避；#12 已于 v3.2.0 作废）：
 
-12. `effects/reasoning-defaults.ts` — 固定 10s describe 轮询改自调度退避：10s→60s→
+12. ~~`effects/reasoning-defaults.ts`~~（**已作废**：v3.2.0 上游退休该文件） — 固定 10s describe 轮询改自调度退避：10s→60s→
     300s 封顶，describe 回合成功（ok=true）步进、失败（超时/拒绝/无 remote/上轮
     未完）回 10s。settings/document-updated 订阅已即时 fill，稳态每 10s 一次全量
     settings describe RPC 属重复劳动。fill 加可选 onDone(ok) 回调上报结果；2s
@@ -202,6 +210,19 @@ characterData 脏键取代）、#4③ dispose 清注入（上游 injected Set）
   - pocket 侧配套：sync 脚本新增镜像期变换 + 残留断言（见「同步步骤」节）；
     13 条补丁对账重打（4 条被上游吸收、存活 10 条重编号）；gesture-guard 的
     WeakMap 化使清扫补丁作废；session-menu ③ 上游 injected Set 化
+- **2026-10-19 同步到 v3.2.0 @473a78b**（三方合并：变换后 v3.1.0 → 本仓补丁 diff →
+  cherry-pick 到变换后 v3.2.0；唯一冲突 `styles/base.css.ts` 的 hover 规则按补丁形态解）：
+  - 上游要点：#226 viewport 补 `interactive-widget=resizes-content`（Android 键盘
+    不再把整页 pan 上去）、#223 iOS 首个 preventDefault 的 touchmove 取消整笔滚动
+    导致左右死区、#227 抽屉「导出会话日志」从 footer 胶囊迁到品牌行 28×28 图标
+    （新增 `effects/drawer-session-log.ts`，删 `components/MobileDrawerFooter.tsx`
+    引用；镜像里该组件文件上游仍保留但已无引用）、#229 壁纸插件把侧栏底色置
+    transparent 的补回、#216 宿主 0.2.1 stats 双档锚 + `locateRing`、#217 后台任务
+    chip 形状锚、#214/#221 第三方卡顿与 z-index、#218 退休 reasoning-defaults、
+    #219 退休 model-capabilities 面板适配
+  - pocket 侧配套：14 条补丁三方合并（#12 作废、13 条存活）；POCKET_EXTRA_CSS
+    删除旧 `[data-mobile-nav="session-log"]` 触控高度规则；`client/repro-activate.mjs`
+    的 DOM 桩补 `querySelector` 等形状（新任务会查 frame 品牌行）
 
 ## pocket 附加层（适配器 mobile-apply.tsx 负责，上游没有的）
 

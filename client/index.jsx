@@ -480,12 +480,14 @@ function PocketSettingsTab({ rpcCall, t }) {
 
   // ── v2 视图件 ──────────────────────────────────────────────────────────────
   // iOS 风格小开关：局域网总开关 / 公网总开关 / 局域网密码开关 / 手机端右边栏；
-  // disabled 态用于操作进行中（如隧道连接），视觉半透明且不可点
+  // disabled 态用于操作进行中（如隧道连接），视觉半透明且不可点。
+  // 尺寸/颜色跟宿主 0.2.x 的 Switch 对齐（上游 2.12.0 f24c6de）：36×20 轨道、
+  // 16×16 圆钮、圆钮不再用死白（深色主题下改用 label-primary-foreground）。
   const Switch = (on, onClick, disabled) => h('button', {
     role: 'switch', 'aria-checked': !!on, disabled: disabled === true,
-    style: { flexShrink: 0, width: 40, height: 22, borderRadius: 11, border: 'none', padding: 0, position: 'relative', cursor: disabled === true ? 'default' : 'pointer', font: 'inherit', opacity: disabled === true ? 0.55 : 1, background: on ? 'var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary,#4f6ef7))' : 'var(--dsw-alias-border-l2,#d1d5db)', transition: 'background .15s ease' },
+    style: { flexShrink: 0, width: 36, height: 20, borderRadius: 999, border: 'none', padding: 2, position: 'relative', boxSizing: 'border-box', cornerShape: 'round', cursor: disabled === true ? 'default' : 'pointer', font: 'inherit', opacity: disabled === true ? 0.55 : 1, background: on ? 'var(--dsw-alias-brand-primary, var(--dsw-alias-button-primary-fill,#4f6ef7))' : 'var(--dsw-alias-border-l3, var(--dsw-alias-border-l2,#d1d5db))', transition: 'background .12s ease' },
     onClick: disabled === true ? undefined : onClick,
-  }, h('span', { style: { position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,.18)', transition: 'left .15s ease' } }));
+  }, h('span', { style: { position: 'absolute', top: 2, left: 2, width: 16, height: 16, borderRadius: '50%', background: on ? 'var(--dsw-alias-label-primary-foreground,#fff)' : 'var(--dsw-alias-switch-thumb,#fff)', boxShadow: '0 1px 2px rgba(0,0,0,.18)', transform: on ? 'translateX(16px)' : 'translateX(0)', transition: 'transform .12s ease, background .12s ease' } }));
 
   // 通道小节：标题行（状态点 + 名称 + 右侧控件）+ 内容；小节之间只靠留白，不再画粗边框
   // children 只有一个槽——再加行必须包成数组传入，多余的 row 会落进 key 槽被静默丢弃
