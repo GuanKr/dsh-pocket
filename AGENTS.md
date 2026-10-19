@@ -33,6 +33,10 @@ npm 上的 `dsh-pocket` 包归原作者（`leachzhou`）所有，本 fork **没�
 ```sh
 # 1. 改 package.json 的 version —— 必须 bump，不能复用旧版本号
 #    本仓惯例：<对方当前发布号>-local.<递增序号>，例如 2.10.9-local.1
+#    序号只在「对方发布号不变」时递增 —— 对方发布号一变就回到 1。
+#    先例：2.10.7-local.4 → 升到 2.10.9 时写成 2.10.9-local.1（提交 26832ef）。
+#    判定基准是 origin/main 的 package.json 的 version —— 提交信息里写的上游版本号
+#    可能与之不一致（如 2.11.0 那次提交写着「吸收上游 dsh-pocket 2.12.0」），以 package.json 为准。
 # 2. 同步 lock（只解析 registry 元数据，不下载包、不动 node_modules）
 npm install --package-lock-only
 
@@ -117,11 +121,12 @@ cp "$DSH_HOME/profiles/web/pnpm-lock.yaml" "$DSH_HOME/profiles/web/pnpm-lock.yam
 ## 四、测试
 
 ```sh
-npm test          # 218 个用例
+npm test          # 221 个用例（218 pass / 3 skip）
 ```
 
-- Windows 上 `test/tunnel-args.test.js` 有 2 条会 **skip**（依赖 POSIX shebang 的隧道参数
-  测试），这是上游的预期行为，不是回归。
+- `test/tunnel-args.test.js` 有 2 条在 Windows 上 **skip**（依赖 POSIX shebang 的隧道参数
+  测试），这是上游的预期行为，不是回归。另有 `test/download.test.js` 1 条**非 Linux 一律
+  skip**（Windows 与 macOS 都算），合计 3 条。
 - 改 CSS 或样式时，**契约测试只证明字符串还在、不证明渲染结果**。这类改动必须在真机媒体
   条件下实测 —— 桌面 UA 下 `(max-width:1023px) and (pointer:coarse)` 整块不生效，什么都测不出来。
   方法论见 `client/mobile/PORTING.md` 的「判『选择器是否失效』的正确方法」一节。
@@ -187,9 +192,15 @@ git branch backup/pre-sync-$(git rev-parse --short HEAD)
 git merge --squash origin/main
 
 # 4. 解冲突 —— 实际只有一处需要判断
-#    package.json 的 version → <对方版本>-local.<递增序号>，例：2.10.9-local.2
-#    package-lock.json 不要手解，直接重生成：
+#    (a) package-lock.json 不要手解：先取回本地那份（保证是合法 JSON），并清掉冲突态
+git checkout --ours -- package-lock.json
+git add package-lock.json     # 缺这句索引仍停在 stage 1/2/3，冲突并没有解开
+#    (b) package.json 只改 version 一行 → <对方版本>-local.<序号>
+#        序号在对方版本变化时回到 1（先例：2.10.7-local.4 → 2.10.9-local.1）
+#        顺手确认没把 release 脚本 / semantic-release devDeps 带回来
+#    (c) 再让 npm 重算 lock（最终通常只剩 lock 里 2 个 version 字段）
 npm install --package-lock-only
+git add package-lock.json
 
 # 5. 验证
 npm test
@@ -200,20 +211,28 @@ git commit -m "chore(sync): 同步 origin/main 至 <短 sha>（<上游版本>）
 
 **要退出**：第 6 步提交之前，任何时候 `git reset --hard HEAD` 都能干净回退，不影响已有历史。
 
-### rerere 为什么值得开
+### rerere 开着无害，但**别指望它替你解 version 冲突**（2026-10-19 订正）
 
-本仓每次同步需要**人工判断**的冲突只有 `package.json` 的 `version` 一处，且每次解法完全相同
-（解成 `<对方版本>-local.<递增>`）。这正是 rerere 最理想的场景：第一次手工解，之后自动重放；
-配合 `autoupdate`，连 `git add` 都省了。
+本节原文写「每次解法完全相同，正是 rerere 最理想场景，第一次手工解之后自动重放」——**这条是错的，
+而且两处都错**：
 
-`package-lock.json` 那 6000 行冲突是机械的，**永远**用 `npm install --package-lock-only` 重生成，
-不要手解。
+1. rerere 的冲突 ID 是**冲突内容本身**的哈希，而冲突内容里就含版本号。下次同步时
+   `2.10.9-local.1 / 2.11.0` 会变成 `2.11.0-local.1 / 2.12.0`，ID 不同 → **根本不会重放**。
+   （实测：冲突后 `.git/rr-cache` 里只有 `preimage`，且每轮同步各是一份新条目。）
+2. **即便真重放了也是错的**：记下来的 postimage 是**上一次**的版本号（`2.10.9-local.1`），
+   而这一次正确答案必须是 `2.11.0-local.1`。自动重放等于把版本号写回旧值。
+
+保留 `rerere.enabled`（对其它偶发冲突仍有价值）没问题，但 version 那一行**每次都要人工改**。
+
+`package-lock.json` 的冲突是机械的，**永远**用「`git checkout --ours` +
+`npm install --package-lock-only`」重生成，不要手解。
 
 ### 本仓足迹（都不会被 sync 覆盖，故冲突面极小）
 
 | 文件 | 性质 |
 | --- | --- |
 | `.gitignore` / `package.json` / `package-lock.json` | 配置与版本 |
+| `.releaserc.cjs` | **已删除**（f9e2008）—— sync 时不要让它回来 |
 | `AGENTS.md` / `LOCAL-DEV.md` / `client/mobile/PORTING.md` | 本仓文档 |
 | `test/composer-keyboard.test.js` / `test/mobile-nav.test.js` | 本仓测试 |
 

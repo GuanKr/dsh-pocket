@@ -44,7 +44,7 @@ ls -l dsh-pocket
 
 ```sh
 node client/build.mjs     # 只改后端可跳过
-npm test                  # 建议顺手跑一遍（当前 218 个用例）
+npm test                  # 建议顺手跑一遍（当前 221 个用例：218 pass / 3 skip）
 ```
 
 ### 重启 dsh web
