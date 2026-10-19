@@ -117,6 +117,14 @@ test('setCustomPin / rotateAccessToken（issue #33）：8–64 位字母数字�
   // 合法自定义：局域网
   assert.equal(setCustomPin('lan', '77775555'), '77775555', '局域网自定义成功');
   assert.equal(pinCustom('lan'), true, '局域网标记自定义');
+  // 清除自定义 PIN → 回退随机轮换（issue #166）
+  const cleared = setCustomPin('public', '');
+  assert.equal(pinCustom('public'), false, '清除公网自定义标记');
+  assert.ok(cleared.length === 8 && /^\d+$/.test(cleared), '重置为随机 8 位 PIN');
+  assert.equal(getAccessToken(), cleared, '新随机 PIN 已落盘');
+  const clearedLan = setCustomPin('lan', '   ');
+  assert.equal(pinCustom('lan'), false, '清除局域网自定义标记');
+  assert.ok(clearedLan.length === 8 && /^\d+$/.test(clearedLan), '局域网也重置为随机 8 位 PIN');
 }));
 
 // ---------- 命名隧道配置（issue #66：固定公网域名） ----------

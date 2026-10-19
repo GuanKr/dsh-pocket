@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { writeFile, readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { startQuickTunnel, startNamedTunnel, firstMeaningfulErrorLine } from '../lib/tunnel.mjs';
+import { startQuickTunnel, startNamedTunnel, firstMeaningfulErrorLine, cloudflaredEnv } from '../lib/tunnel.mjs';
 
 async function makeFakeCloudflared() {
   const dir = await mkdtemp(join(tmpdir(), 'dsh-pocket-fake-cf-'));
@@ -91,4 +91,28 @@ test('firstMeaningfulErrorLine: 运行期错误（403）仍取尾部', () => {
   const buf = 'INF Starting tunnel\nERR Failed to connect to origin: 403 Forbidden\nERR retrying';
   const r = firstMeaningfulErrorLine(buf);
   assert.ok(r.includes('403'), '应保留尾部含 403 的报错信息');
+});
+
+test('cloudflaredEnv：剥离所有代理变量，强制 cloudflared 直连边缘（防 error 1033）', () => {
+  const saved = {};
+  const keys = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'NO_PROXY', 'no_proxy'];
+  for (const k of keys) saved[k] = process.env[k];
+  const other = process.env.DSH_POCKET_TEST_KEEP;
+  try {
+    for (const k of keys) process.env[k] = 'http://127.0.0.1:7890';
+    process.env.DSH_POCKET_TEST_KEEP = 'kept';
+    const env = cloudflaredEnv({ TUNNEL_TOKEN: 'tok' });
+    for (const k of keys) assert.equal(env[k], undefined, `代理变量 ${k} 必须被剥离`);
+    assert.equal(env.DSH_POCKET_TEST_KEEP, 'kept', '非代理变量保持原样');
+    assert.equal(env.TUNNEL_TOKEN, 'tok', '显式 extra 生效');
+    // 不污染 process.env（只影响子进程副本）
+    assert.equal(process.env.HTTP_PROXY, 'http://127.0.0.1:7890', '不得修改当前进程环境');
+  } finally {
+    for (const k of keys) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+    if (other === undefined) delete process.env.DSH_POCKET_TEST_KEEP;
+    else process.env.DSH_POCKET_TEST_KEEP = other;
+  }
 });

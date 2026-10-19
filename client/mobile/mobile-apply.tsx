@@ -337,12 +337,8 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
     [data-mobile-nav="delete-confirm-actions"] > button {
       min-height: 44px !important;
     }
-    /* 抽屉 footer 两 pills（base.css.ts session-log/explorer height:34px）→ 40px：
-       44 会把 footer 行撑得过高，40 是密度与触达的折中。 */
-    [data-mobile-nav="session-log"],
-    [data-mobile-nav="explorer"] {
-      min-height: 40px !important;
-    }
+    /* 抽屉品牌行「导出会话」图标（v3.2.0 起 28×28，issue #225）：不再给 min-height，
+       否则会把品牌行撑高；触控目标由 wrapper 的 28px 图标 + 行内 padding 保证。 */
     /* FAB（base.css.ts 38×38）→ 44×44。 */
     [data-mobile-nav="fab"] {
       min-width: 44px !important;

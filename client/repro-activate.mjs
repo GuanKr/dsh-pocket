@@ -8,6 +8,11 @@ const el = () => ({
   addEventListener() {}, removeEventListener() {}, click() {},
   style: { setProperty() {}, removeProperty() {}, getPropertyValue: () => '' }, dataset: {},
   classList: { add() {}, remove() {} }, isConnected: true, contains() { return false },
+  // v3.2.0 的 drawer-session-log 任务会对 frame 做 querySelector 查找品牌行；
+  // 真机是真实元素，这里补最小形状，避免冒烟把桩的缺口当成激活失败。
+  querySelector: () => null, querySelectorAll: () => [], parentElement: null,
+  childElementCount: 0, children: [], closest: () => null, matches: () => false,
+  insertBefore() {},
 })
 const reg = []
 const registered = []
