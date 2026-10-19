@@ -145,99 +145,119 @@ const Ico = {
 // 内联只能靠 JS 事件模拟，既啰嗦又拿不到键盘可达性。颜色全部走宿主 token，
 // 深色主题自动跟随，不在代码里写死深浅两套。
 const POCKET_SETTINGS_CSS = `
-.dshp-page{display:flex;flex-direction:column;gap:14px;max-width:640px;color:var(--dsw-alias-label-primary,inherit);font-size:13px;line-height:1.5}
-.dshp-head{display:flex;align-items:flex-start;gap:12px}
-.dshp-badge{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--dsw-alias-bg-layer-2,#f3f4f6);color:var(--dsw-alias-brand-primary,#4f6ef7)}
+.dshp-page{max-width:760px;margin:0 auto;--dshp-text:var(--dsw-alias-label-primary,#0f1115);--dshp-text-2:var(--dsw-alias-label-secondary,#61666b);--dshp-text-3:var(--dsw-alias-label-tertiary,#81858c);--dshp-line:rgba(15,17,21,.09);--dshp-line-2:rgba(15,17,21,.16);--dshp-fill:rgba(15,17,21,.04);--dshp-fill-2:rgba(15,17,21,.07);--dshp-brand:var(--dsw-alias-brand-primary,#0f1115);--dshp-on-brand:var(--dsw-alias-label-primary-foreground,#fff);--dshp-danger:var(--dsw-alias-state-error-primary,#e5484d);--dshp-warn:var(--dsw-alias-state-warn-primary,#b45309);--dshp-success:var(--dsw-alias-state-success-primary,#10b981);--dshp-shadow:0 1px 2px rgba(15,17,21,.04),0 8px 24px -16px rgba(15,17,21,.18);--dshp-line:color-mix(in srgb,var(--dshp-text) 10%,transparent);--dshp-line-2:color-mix(in srgb,var(--dshp-text) 17%,transparent);--dshp-fill:color-mix(in srgb,var(--dshp-text) 4.5%,transparent);--dshp-fill-2:color-mix(in srgb,var(--dshp-text) 8%,transparent);display:flex;flex-direction:column;gap:16px;max-width:620px;color:var(--dshp-text);font-size:13px;line-height:1.55}
+body[data-ds-dark-theme] .dshp-page{--dshp-line:rgba(255,255,255,.11);--dshp-line-2:rgba(255,255,255,.2);--dshp-fill:rgba(255,255,255,.055);--dshp-fill-2:rgba(255,255,255,.09);--dshp-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.6);--dshp-line:color-mix(in srgb,var(--dshp-text) 13%,transparent);--dshp-line-2:color-mix(in srgb,var(--dshp-text) 22%,transparent);--dshp-fill:color-mix(in srgb,var(--dshp-text) 6%,transparent);--dshp-fill-2:color-mix(in srgb,var(--dshp-text) 10%,transparent)}
+.dshp-head{display:flex;align-items:center;gap:12px}
+.dshp-badge{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--dshp-fill);color:var(--dshp-brand);border:1px solid var(--dshp-line)}
 .dshp-head-main{flex:1;min-width:0}
-.dshp-title{font-size:15px;font-weight:600;letter-spacing:.1px}
-.dshp-sub{margin-top:2px;font-size:12px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
+.dshp-title{font-size:17px;font-weight:650;letter-spacing:-.2px;line-height:1.3}
+.dshp-sub{margin-top:3px;font-size:12px;color:var(--dshp-text-3)}
 .dshp-chips{display:flex;flex-wrap:wrap;gap:6px}
-.dshp-chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,#e5e7eb);background:var(--dsw-alias-bg-layer-1,#fff);font-size:11.5px;color:var(--dsw-alias-label-secondary,#6b7280);white-space:nowrap}
-.dshp-chip-dot{width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-border-l3,#c8ccd4)}
-.dshp-chip.is-on .dshp-chip-dot{background:var(--dsw-alias-state-success-primary,#10b981)}
-.dshp-card{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e7eb);border-radius:14px;overflow:hidden}
-.dshp-card.is-danger{border-color:rgba(220,38,38,.32)}
-.dshp-card-head{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--dsw-alias-border-l2,#eef0f4)}
-.dshp-card-icon{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--dsw-alias-bg-layer-2,#f3f4f6);color:var(--dsw-alias-label-secondary,#6b7280)}
+.dshp-chip{display:inline-flex;align-items:center;gap:6px;height:23px;padding:0 9px;border-radius:999px;border:1px solid transparent;background:var(--dshp-fill);font-size:11.5px;font-weight:500;color:var(--dshp-text-3);white-space:nowrap}
+.dshp-chip-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
+.dshp-chip.is-on{background:color-mix(in srgb,var(--dshp-success) 13%,transparent);border-color:color-mix(in srgb,var(--dshp-success) 24%,transparent);color:color-mix(in srgb,var(--dshp-success) 72%,var(--dshp-text))}
+.dshp-chip.is-on .dshp-chip-dot{opacity:1}
+.dshp-card{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);border-radius:14px;box-shadow:var(--dshp-shadow);overflow:hidden}
+.dshp-card.is-danger{background:color-mix(in srgb,var(--dshp-danger) 4%,var(--dsw-alias-bg-layer-1,#fff));border-color:color-mix(in srgb,var(--dshp-danger) 20%,transparent)}
+.dshp-card-head{display:flex;align-items:flex-start;gap:11px;padding:14px 16px}
+.dshp-card-icon{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--dshp-fill);color:var(--dshp-text-2)}
 .dshp-card-text{flex:1;min-width:0}
-.dshp-card-title{font-size:13.5px;font-weight:600}
-.dshp-card-sub{margin-top:1px;font-size:11.5px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-card-body{padding:12px 15px 14px;display:flex;flex-direction:column;gap:10px}
-.dshp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;border-top:1px solid var(--dsw-alias-border-l2,#eef0f4)}
-.dshp-row.is-first{border-top:0;padding-top:0}
+.dshp-card-title{font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.dshp-card-sub{margin-top:2px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-card-body{padding:0 16px 14px;display:flex;flex-direction:column;gap:12px}
+.dshp-card-body>.dshp-row:first-child{border-top:1px solid var(--dshp-line);padding-top:12px}
+.dshp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--dshp-line)}
 .dshp-row.is-stack{flex-direction:column;align-items:stretch;gap:8px}
-.dshp-row-label{font-size:13px}
-.dshp-row-desc{margin-top:2px;font-size:11.5px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-btn{font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 14px;border-radius:999px;border:1px solid transparent;font-size:12.5px;font-weight:500;white-space:nowrap;transition:background .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease}
-.dshp-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}
-.dshp-btn:disabled{opacity:.5;cursor:default}
-.dshp-btn.is-primary{background:var(--dsw-alias-button-primary-fill,var(--dsw-alias-brand-primary,#4f6ef7));color:var(--dsw-alias-label-primary-foreground,#fff)}
-.dshp-btn.is-primary:hover:not(:disabled){filter:brightness(1.06)}
-.dshp-btn.is-ghost{background:var(--dsw-alias-bg-layer-1,#fff);border-color:var(--dsw-alias-border-l2,#d1d5db);color:var(--dsw-alias-label-primary,inherit)}
-.dshp-btn.is-ghost:hover:not(:disabled){background:var(--dsw-alias-bg-layer-2,#f3f4f6)}
-.dshp-btn.is-quiet{background:var(--dsw-alias-bg-layer-2,#f3f4f6);color:var(--dsw-alias-label-secondary,#6b7280)}
-.dshp-btn.is-quiet:hover:not(:disabled){background:var(--dsw-alias-border-l2,#e5e7eb)}
-.dshp-btn.is-danger{background:transparent;border-color:var(--dsw-alias-border-l2,#d1d5db);color:var(--dsw-alias-state-error-primary,#dc2626)}
-.dshp-btn.is-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-primary,#dc2626);color:#fff;border-color:transparent}
-.dshp-btn.is-mini{height:26px;padding:0 10px;font-size:11.5px;font-weight:400}
-.dshp-link{font:inherit;cursor:pointer;border:0;background:none;padding:0;color:var(--dsw-alias-brand-primary,#4f6ef7);font-size:12px}
-.dshp-switch{flex:none;position:relative;width:36px;height:20px;padding:2px;border:0;border-radius:999px;cursor:pointer;background:var(--dsw-alias-border-l3,var(--dsw-alias-border-l2,#d1d5db));transition:background .12s ease}
-.dshp-switch[aria-checked="true"]{background:var(--dsw-alias-brand-primary,#4f6ef7)}
-.dshp-switch:disabled{opacity:.55;cursor:default}
-.dshp-switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}
-.dshp-switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary-foreground,#fff);box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform .12s ease}
+.dshp-row-label{font-size:13px;font-weight:500}
+.dshp-row-desc{margin-top:3px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-btn{font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:8px;border:1px solid transparent;font-size:12.5px;font-weight:550;white-space:nowrap;transition:background .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease}
+.dshp-btn:focus-visible{outline:2px solid color-mix(in srgb,var(--dshp-brand) 40%,transparent);outline-offset:2px}
+.dshp-btn:disabled{opacity:.45;cursor:default}
+.dshp-btn.is-primary{background:var(--dshp-brand);color:var(--dshp-on-brand);border-color:transparent}
+.dshp-btn.is-primary:hover:not(:disabled){background:color-mix(in srgb,var(--dshp-brand) 86%,var(--dshp-text-3))}
+.dshp-btn.is-ghost{background:var(--dsw-alias-bg-layer-1,#fff);border-color:var(--dshp-line-2);color:var(--dshp-text)}
+.dshp-btn.is-ghost:hover:not(:disabled){background:var(--dshp-fill)}
+.dshp-btn.is-quiet{background:transparent;color:var(--dshp-text-2)}
+.dshp-btn.is-quiet:hover:not(:disabled){background:var(--dshp-fill);color:var(--dshp-text)}
+.dshp-btn.is-danger{background:transparent;border-color:color-mix(in srgb,var(--dshp-danger) 32%,transparent);color:var(--dshp-danger)}
+.dshp-btn.is-danger:hover:not(:disabled){background:color-mix(in srgb,var(--dshp-danger) 9%,transparent)}
+.dshp-btn.is-mini{height:26px;padding:0 9px;font-size:11.5px;font-weight:500;border-radius:7px}
+.dshp-link{font:inherit;cursor:pointer;border:0;background:none;padding:0;color:var(--dshp-text-2);font-size:12px;text-decoration:underline;text-decoration-color:var(--dshp-line-2);text-underline-offset:2px}
+.dshp-link:hover{color:var(--dshp-text)}
+.dshp-switch{flex:none;position:relative;width:36px;height:20px;padding:2px;border:0;border-radius:999px;cursor:pointer;background:var(--dshp-fill-2);transition:background .14s ease}
+.dshp-switch[aria-checked="true"]{background:var(--dshp-brand)}
+.dshp-switch:disabled{opacity:.45;cursor:default}
+.dshp-switch:focus-visible{outline:2px solid color-mix(in srgb,var(--dshp-brand) 40%,transparent);outline-offset:2px}
+.dshp-switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dshp-on-brand);box-shadow:0 1px 2px rgba(0,0,0,.22);transition:transform .14s ease}
 .dshp-switch[aria-checked="true"] .dshp-switch-thumb{transform:translateX(16px)}
-.dshp-qr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--dsw-alias-bg-layer-2,#f3f4f6);border-radius:12px;padding:12px}
-.dshp-qr-frame{flex:none;padding:6px;background:#fff;border-radius:10px;border:1px solid var(--dsw-alias-border-l2,#e5e7eb)}
-.dshp-qr-frame img{display:block;width:128px;height:128px;border-radius:2px}
-.dshp-qr-main{flex:1 1 180px;min-width:170px}
-.dshp-url{font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.6;word-break:break-all;color:var(--dsw-alias-label-primary,inherit)}
-.dshp-qr-hint{margin-top:4px;font-size:11.5px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-qr-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.dshp-alert{display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border-radius:10px;background:var(--dsw-alias-bg-layer-2,#f3f4f6);font-size:12px;line-height:1.6;border-left:3px solid var(--dsw-alias-border-l3,#c8ccd4);color:var(--dsw-alias-label-secondary,#6b7280)}
-.dshp-alert-icon{flex:none;margin-top:1px}
-.dshp-alert.is-info{border-left-color:var(--dsw-alias-brand-primary,#4f6ef7)}
-.dshp-alert.is-warn{border-left-color:var(--dsw-alias-state-warn-primary,#b45309);color:var(--dsw-alias-state-warn-primary,#b45309)}
-.dshp-alert.is-error{border-left-color:var(--dsw-alias-state-error-primary,#dc2626);color:var(--dsw-alias-state-error-primary,#dc2626)}
+.dshp-qr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:12px;padding:12px}
+.dshp-qr-frame{flex:none;padding:6px;background:#fff;border-radius:10px;border:1px solid rgba(15,17,21,.08);box-shadow:0 1px 2px rgba(15,17,21,.06)}
+.dshp-qr-frame img{display:block;width:116px;height:116px;border-radius:2px}
+.dshp-qr-main{flex:1 1 190px;min-width:180px}
+.dshp-url{font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.6;word-break:break-all;color:var(--dshp-text);background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);border-radius:8px;padding:7px 9px}
+.dshp-qr-hint{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-qr-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.dshp-alert{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--dshp-fill);border:1px solid var(--dshp-line);font-size:12.5px;line-height:1.6;color:var(--dshp-text-2)}
+.dshp-alert-icon{flex:none;margin-top:1px;color:var(--dshp-text-3)}
+.dshp-alert.is-info{background:var(--dshp-fill)}
+.dshp-alert.is-warn{background:color-mix(in srgb,var(--dshp-warn) 9%,transparent);border-color:color-mix(in srgb,var(--dshp-warn) 22%,transparent);color:var(--dshp-text-2)}
+.dshp-alert.is-warn .dshp-alert-icon{color:var(--dshp-warn)}
+.dshp-alert.is-error{background:color-mix(in srgb,var(--dshp-danger) 8%,transparent);border-color:color-mix(in srgb,var(--dshp-danger) 20%,transparent);color:var(--dshp-text-2)}
+.dshp-alert.is-error .dshp-alert-icon{color:var(--dshp-danger)}
+.dshp-alert.is-success{background:color-mix(in srgb,var(--dshp-success) 9%,transparent);border-color:color-mix(in srgb,var(--dshp-success) 22%,transparent)}
+.dshp-alert.is-success .dshp-alert-icon{color:var(--dshp-success)}
 .dshp-alert-body{flex:1;min-width:0}
-.dshp-alert-title{font-weight:600}
-.dshp-input,.dshp-select{font:inherit;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2,#d1d5db);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-primary,inherit);font-size:12.5px;outline:none;min-width:0;box-sizing:border-box}
-.dshp-input:focus,.dshp-select:focus{border-color:var(--dsw-alias-brand-primary,#4f6ef7);box-shadow:0 0 0 3px rgba(79,110,247,.16)}
+.dshp-alert-title{font-weight:600;color:var(--dshp-text);margin-bottom:2px}
+.dshp-select{padding-right:28px;min-width:104px;cursor:pointer}
+.dshp-panel-title{font-family:var(--dshp-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12.5px;font-weight:600;line-height:1.45;word-break:break-all}
+.dshp-input,.dshp-select{font:inherit;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--dshp-line-2);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dshp-text);font-size:12.5px;outline:none;min-width:0;box-sizing:border-box}
+.dshp-input:focus,.dshp-select:focus{border-color:color-mix(in srgb,var(--dshp-brand) 45%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--dshp-brand) 12%,transparent)}
 .dshp-input.is-mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
-.dshp-seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:var(--dsw-alias-bg-layer-2,#eef0f4)}
-.dshp-seg-btn{font:inherit;cursor:pointer;border:0;height:26px;padding:0 12px;border-radius:7px;font-size:12px;background:transparent;color:var(--dsw-alias-label-tertiary,#8b93a1);transition:background .12s ease,color .12s ease}
-.dshp-seg-btn.is-active{background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-primary,inherit);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.10)}
+.dshp-seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:var(--dshp-fill)}
+.dshp-seg-btn{font:inherit;cursor:pointer;border:0;height:26px;padding:0 12px;border-radius:7px;font-size:12px;background:transparent;color:var(--dshp-text-3);transition:background .12s ease,color .12s ease}
+.dshp-seg-btn.is-active{background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dshp-text);font-weight:600;box-shadow:0 1px 3px rgba(15,17,21,.12)}
+.dshp-pinbox{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:10px;padding:8px 10px}
+.dshp-pin-value{font-family:ui-monospace,Menlo,monospace;font-size:13.5px;letter-spacing:2px;color:var(--dshp-text);flex:1;min-width:96px;word-break:break-all}
+.dshp-pinbox .dshp-btn{flex:none}
 .dshp-pin{font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.5px}
 .dshp-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.dshp-custom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--dsw-alias-label-secondary,#6b7280)}
-.dshp-hint{margin-top:4px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-warn-text{margin-top:4px;font-size:11px;color:var(--dsw-alias-state-warn-primary,#b45309)}
-.dshp-err-text{margin-top:4px;font-size:11.5px;color:var(--dsw-alias-state-error-primary,#dc2626)}
-.dshp-adv{display:flex;flex-direction:column;gap:8px;width:100%}
+.dshp-custom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--dshp-text-2)}
+.dshp-hint{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-warn-text{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-warn)}
+.dshp-err-text{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-danger)}
+.dshp-panel{display:flex;flex-direction:column;gap:6px;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:10px;padding:10px 12px}
+.dshp-adv{display:flex;flex-direction:column;gap:10px;width:100%}
 .dshp-form{display:flex;flex-direction:column;gap:10px}
-.dshp-field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--dsw-alias-label-secondary,#6b7280)}
+.dshp-field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--dshp-text-2)}
 .dshp-check{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:12.5px;line-height:1.55;cursor:pointer}
-.dshp-check input{flex:none;width:15px;height:15px;margin:2px 0 0;accent-color:var(--dsw-alias-brand-primary,#4f6ef7)}
-.dshp-loading{display:flex;align-items:center;gap:8px;padding:14px 2px;font-size:12.5px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-loading::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--dsw-alias-border-l3,#c8ccd4);border-top-color:var(--dsw-alias-brand-primary,#4f6ef7);animation:dshp-spin .8s linear infinite}
+.dshp-check input{flex:none;width:15px;height:15px;margin:2px 0 0;accent-color:var(--dshp-brand)}
+.dshp-loading{display:flex;align-items:center;gap:8px;padding:16px 2px;font-size:12.5px;color:var(--dshp-text-3)}
+.dshp-loading::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--dshp-line-2);border-top-color:var(--dshp-text-2);animation:dshp-spin .8s linear infinite}
 @keyframes dshp-spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion: reduce){.dshp-loading::before{animation:none}}
-.dshp-footer{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--dsw-alias-border-l2,#eef0f4);font-size:11px;color:var(--dsw-alias-label-tertiary,#8b93a1)}
-.dshp-footer a{color:inherit;text-decoration:none;border-bottom:1px dashed currentColor}
-.dshp-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,17,21,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.dshp-modal{width:100%;max-width:420px;padding:20px 22px;border-radius:14px;background:var(--dsw-alias-bg-layer-1,#fff);box-shadow:0 12px 40px rgba(0,0,0,.22)}
-.dshp-modal-title{font-size:15px;font-weight:600;margin-bottom:10px}
-.dshp-modal-title.is-warn{color:var(--dsw-alias-state-warn-primary,#b45309)}
-.dshp-modal-title.is-danger{color:var(--dsw-alias-state-error-primary,#dc2626)}
-.dshp-modal-title.is-brand{color:var(--dsw-alias-brand-primary,#4f6ef7)}
-.dshp-modal-body{font-size:13px;line-height:1.7;white-space:pre-line}
+@media (prefers-reduced-motion: reduce){.dshp-loading::before{animation:none}.dshp-btn,.dshp-switch,.dshp-switch-thumb{transition:none}}
+.dshp-footer{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--dshp-line);font-size:11.5px;color:var(--dshp-text-3)}
+.dshp-footer a{color:var(--dshp-text-2);text-decoration:none}
+.dshp-footer a:hover{color:var(--dshp-text);text-decoration:underline;text-underline-offset:2px}
+.dshp-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,17,21,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.dshp-modal{width:100%;max-width:420px;padding:20px;border-radius:16px;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);box-shadow:0 24px 64px -16px rgba(15,17,21,.4)}
+.dshp-modal-title{font-size:15.5px;font-weight:600;letter-spacing:-.1px;margin-bottom:10px}
+.dshp-modal-title.is-warn{color:var(--dshp-warn)}
+.dshp-modal-title.is-danger{color:var(--dshp-danger)}
+.dshp-modal-title.is-brand{color:var(--dshp-text)}
+.dshp-modal-body{font-size:13px;line-height:1.7;white-space:pre-line;color:var(--dshp-text-2)}
 .dshp-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
-.dshp-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;max-width:300px;padding:10px 16px;border-radius:10px;background:rgba(17,24,39,.92);color:#fff;font-size:13px;line-height:1.5;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.dshp-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;max-width:320px;padding:11px 18px;border-radius:10px;background:var(--dsw-alias-label-primary,#111);color:var(--dsw-alias-bg-layer-1,#fff);font-size:13px;line-height:1.5;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.3)}
 @media (max-width:560px){
-  .dshp-card-head{padding:12px 13px}
-  .dshp-card-body{padding:11px 13px 13px}
-  .dshp-qr{padding:10px;gap:12px}
-  .dshp-qr-frame img{width:112px;height:112px}
+  .dshp-page{gap:14px}
+  .dshp-badge{width:36px;height:36px;border-radius:10px}
+  .dshp-title{font-size:16px}
+  .dshp-card-head{padding:13px 13px}
+  .dshp-card-body{padding:0 13px 13px}
+  .dshp-qr{padding:11px;gap:12px}
+  .dshp-qr-frame img{width:108px;height:108px}
+  .dshp-qr-main{min-width:100%}
+  .dshp-btn{padding:0 11px}
+  .dshp-row{gap:10px}
 }
 `;
 
@@ -277,14 +297,17 @@ function PocketSettingsTab({ rpcCall, t }) {
     }
   };
 
-  // 设置页样式表：按 id 幂等注入一次；切换页签卸载后保留（避免回来时闪一下无样式）。
+  // 设置页样式表：按 id 幂等注入；已存在时更新内容，避免插件热重载后残留旧 CSS。
   useEffect(() => {
     const id = 'dshp-settings-css';
-    if (document.getElementById(id)) return undefined;
-    const el = document.createElement('style');
-    el.id = id;
-    el.textContent = POCKET_SETTINGS_CSS;
-    document.head.appendChild(el);
+    let el = document.getElementById(id);
+    if (el && el.tagName !== 'STYLE') el = null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    if (el.textContent !== POCKET_SETTINGS_CSS) el.textContent = POCKET_SETTINGS_CSS;
     return undefined;
   }, []);
 
@@ -734,7 +757,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     'data-dshp-section': key ?? '',
   },
   h('div', { className: 'dshp-card-head' },
-    icon ? h('span', { className: 'dshp-card-icon' }, h(icon, { size: 15 })) : null,
+    icon ? h('span', { className: 'dshp-card-icon' }, h(icon, { size: 16 })) : null,
     h('div', { className: 'dshp-card-text' },
       h('div', { className: 'dshp-card-title' }, title),
       sub ? h('div', { className: 'dshp-card-sub' }, sub) : null),
@@ -745,7 +768,7 @@ function PocketSettingsTab({ rpcCall, t }) {
   const Row = ({ label, desc, control, extra, stack = false }) => h('div', {
     className: `dshp-row${stack ? ' is-stack' : ''}`,
   },
-  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minWidth: 0, width: '100%' } },
+  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, rowGap: 8, flexWrap: 'wrap', minWidth: 0, width: '100%' } },
     h('div', { style: { minWidth: 0 } },
       h('div', { className: 'dshp-row-label' }, label),
       desc ? h('div', { className: 'dshp-row-desc' }, desc) : null),
@@ -767,13 +790,13 @@ function PocketSettingsTab({ rpcCall, t }) {
       h('div', { className: 'dshp-url' }, url),
       hint ? h('div', { className: 'dshp-qr-hint' }, hint) : null,
       h('div', { className: 'dshp-qr-actions' },
-        Btn({ variant: 'quiet', mini: true, icon: Ico.copy, onClick: async () => showToast(await copyText(url) ? t('copied') : t('copyFailed')) }, t('copyLink')))));
+        Btn({ variant: 'ghost', mini: true, icon: Ico.copy, onClick: async () => showToast(await copyText(url) ? t('copied') : t('copyFailed')) }, t('copyLink')))));
 
   // 访问密码值行：遮罩（固定 8 个点，不泄露长度）/明文 + 显示/隐藏 + 额外按钮
-  const pinValueRow = (which, value, extraBtns) => h('div', { className: 'dshp-inline' },
-    h('span', { className: 'dshp-pin', 'data-dshp-pin': which }, pinShown[which] ? value : '••••••••'),
-    h('button', {
-      type: 'button', className: 'dshp-link',
+  const pinValueRow = (which, value, extraBtns) => h('div', { className: 'dshp-pinbox' },
+    h('span', { className: 'dshp-pin-value', 'data-dshp-pin': which }, pinShown[which] ? value : '••••••••'),
+    Btn({
+      variant: 'ghost', mini: true,
       onClick: () => setPinShown((m) => ({ ...m, [which]: !m[which] })),
     }, pinShown[which] ? t('pinHide') : t('pinShow')),
     ...(extraBtns ?? []));
@@ -832,13 +855,23 @@ function PocketSettingsTab({ rpcCall, t }) {
     })
     : tunnelPhase === 'error'
       ? Alert({ kind: 'error', icon: Ico.warn, children: fmt(t, 'error', { detail: errText(tunnelStateDetail) || t('unknownError') }) })
-      : (!tunnelUrl && !isDesktop ? h('div', { className: 'dshp-hint' }, t('wanOffHint')) : null);
+      : (!tunnelUrl && !isDesktop
+        ? Alert({
+          kind: 'info', icon: Ico.info, children: t('wanOffHint'),
+          extra: h('div', { style: { marginTop: 8 } },
+            Btn({ variant: 'primary', onClick: startTunnel, disabled: pending.wan === true }, t('enable'))),
+        })
+        : null);
 
   const namedSummaryView = namedMode && !tunnelCfg
-    ? h('div', { className: 'dshp-hint' },
-      fmt(t, 'namedSummary', { host: tunnelModeView.hostname || '—', token: tunnelModeView.tokenSet ? t('namedTokenSet') : t('namedTokenMissing') }),
-      Btn({ variant: 'quiet', mini: true, onClick: () => setTunnelCfg({ hostname: tunnelModeView.hostname ?? '', token: '', err: null }) }, t('namedEdit')),
-      h('div', { className: 'dshp-hint' }, t('namedHow')),
+    ? h('div', { className: 'dshp-panel' },
+      h('div', { style: { display: 'flex', alignItems: 'flex-start', gap: 10 } },
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { className: 'dshp-panel-title' }, tunnelModeView.hostname || '—'),
+          h('div', { className: 'dshp-hint', style: { marginTop: 2 } },
+            tunnelModeView.tokenSet ? t('namedTokenSet') : t('namedTokenMissing'))),
+        Btn({ variant: 'ghost', mini: true, onClick: () => setTunnelCfg({ hostname: tunnelModeView.hostname ?? '', token: '', err: null }) }, t('namedEdit'))),
+      h('div', { className: 'dshp-hint', style: { marginTop: 8, lineHeight: 1.65 } }, t('namedHow')),
       !tunnelModeView.tokenSet || !tunnelModeView.hostname ? h('div', { className: 'dshp-err-text' }, t('namedNeedCfg')) : null)
     : null;
 
@@ -882,7 +915,7 @@ function PocketSettingsTab({ rpcCall, t }) {
         ? customPinRow('public')
         : h('div', null,
           pinValueRow('public', status.accessToken, [customBtn('public')]),
-          status?.publicPinCustom ? h('div', { className: 'dshp-warn-text' }, t('pinCustomHint')) : null,
+          !namedMode && status?.publicPinCustom ? h('div', { className: 'dshp-hint' }, t('pinCustomHint')) : null,
           namedMode ? h('div', { className: 'dshp-warn-text' }, t('namedSecurity')) : null),
     })
     : null;
@@ -890,7 +923,7 @@ function PocketSettingsTab({ rpcCall, t }) {
   const wanBody = tunnelUrl
     ? h('div', null,
       QRBlock({ src: status.tunnelQr, url: tunnelUrl, hint: namedMode ? t('namedRunningHint') : null }),
-      Alert({ kind: 'warn', icon: Ico.warn, children: t('wanEphemeralWarn') }),
+      !namedMode ? Alert({ kind: 'warn', icon: Ico.warn, children: t('wanEphemeralWarn') }) : null,
       Row({ label: t('modeLabel'), control: modeSeg, stack: true, extra: modeExtra }),
       publicPinView)
     : null;
@@ -913,7 +946,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     // 操作错误：放在页面顶部（即使操作按钮在下面也一眼看见），可手动关掉
     error ? Alert({ kind: 'error', icon: Ico.warn, children: errText(error),
       extra: h('div', { className: 'dshp-inline', style: { marginTop: 8 } },
-        Btn({ variant: 'quiet', mini: true, onClick: () => setError(null) }, t('ok'))) }) : null,
+        Btn({ variant: 'ghost', mini: true, onClick: () => setError(null) }, t('ok'))) }) : null,
 
     // 与宿主断开：连续两次拉不到 status 才提示（宿主重启期间正常现象，恢复后自动消失）
     offline ? Alert({ kind: 'warn', icon: Ico.warn, children: t('offlineHint') }) : null,
@@ -957,7 +990,7 @@ function PocketSettingsTab({ rpcCall, t }) {
             : Btn({ variant: 'primary', mini: true, icon: Ico.refresh, onClick: restartPocket, disabled: updateInfo.restarting }, updateInfo.restarting ? t('restarting') : t('restartNow')),
         // 「稍后」只隐藏横幅；下次版本检查（15 分钟/回到前台）会重新提示，不会漏掉更新
         !updateInfo.updating && !updateInfo.restarting
-          ? Btn({ variant: 'quiet', mini: true, onClick: () => setUpdateInfo(null) }, t('later'))
+          ? Btn({ variant: 'ghost', mini: true, onClick: () => setUpdateInfo(null) }, t('later'))
           : null),
     }) : null,
 
@@ -969,7 +1002,11 @@ function PocketSettingsTab({ rpcCall, t }) {
       children: !status
         ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
         : status.lanEnabled === false
-          ? Alert({ kind: 'warn', icon: Ico.warn, children: t('lanDisabledHint') })
+          ? Alert({
+            kind: 'info', icon: Ico.info, children: t('lanDisabledHint'),
+            extra: h('div', { style: { marginTop: 8 } },
+              Btn({ variant: 'primary', onClick: () => requestLanToggle(true), disabled: pending.lanToggle === true }, t('lanToggleTitleOn'))),
+          })
           : (lanUrl
             ? h('div', null,
               QRBlock({ src: status.lanQr, url: lanUrl, hint: null }),
@@ -984,13 +1021,13 @@ function PocketSettingsTab({ rpcCall, t }) {
                   ? customPinRow('lan')
                   : h('div', null,
                     pinValueRow('lan', status.lanToken, [
-                      Btn({ variant: 'quiet', mini: true, icon: Ico.refresh, onClick: refreshLanPin, disabled: pending.refreshPin === true }, t('refresh')),
+                      Btn({ variant: 'ghost', mini: true, icon: Ico.refresh, onClick: refreshLanPin, disabled: pending.refreshPin === true }, t('refresh')),
                       customBtn('lan'),
                     ]),
                     status.lanPinCustom ? h('div', { className: 'dshp-warn-text' }, t('pinCustomHint')) : null)),
               Row({
                 label: t('advAddress'),
-                control: Btn({ variant: 'quiet', mini: true, onClick: () => setAdvOpen((v) => !v) }, (status.lanIpOverride || t('lanAddressAuto')) + (advOpen ? ' ‹' : ' ›')),
+                control: Btn({ variant: 'ghost', mini: true, onClick: () => setAdvOpen((v) => !v) }, (status.lanIpOverride || t('lanAddressAuto')) + (advOpen ? ' ‹' : ' ›')),
                 extra: advOpen ? h('div', { className: 'dshp-adv' },
                   h('label', { className: 'dshp-field' }, t('lanAddress'),
                     h('select', {
@@ -1008,7 +1045,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     // ── 公网 ────────────────────────────────────────────────────────────────
     // 卡片：标题 + 副题 + 总开关（开=已连隧道）；开启经免责声明弹窗确认
     Card({
-      key: 'wan', icon: Ico.wan, title: t('wanAccess'), sub: t('wanHint'),
+      key: 'wan', icon: Ico.wan, title: t('wanAccess'), sub: namedMode ? t('namedWanHint') : t('wanHint'),
       right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || !status, t('wanAccess')),
       children: !status
         ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
