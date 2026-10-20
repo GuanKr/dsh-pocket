@@ -14,6 +14,7 @@
 // 国内直连被墙，普通用户用不了。专注扫码同屏这一件事。
 
 import { createElement as h, useEffect, useRef, useState } from 'react';
+import * as uiPrimitives from '@deepseek-ai/dsh-client-ui-primitives';
 
 import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, MOBILE_FONT_ATTRIBUTE, MOBILE_FONT_EVENT, MOBILE_FONT_SIZE_VAR, MOBILE_FONT_MIN, MOBILE_FONT_MAX, redactStatus, compareVersions, isSameRepo } from './api.js';
 import { mobileApply } from './mobile/mobile-apply.tsx';
@@ -111,9 +112,157 @@ async function copyText(text) {
   }
 }
 
+// ── 宿主图标适配（两代命名）───────────────────────────────────────────────
+// 宿主 primitives 的图标有两代命名：0.1.0-rc.6 是 IconXxxOutline16，
+// 0.1.7-alpha.1 起是 IconXxxOutlineRegular。运行时哪个存在用哪个，都没有则
+// 返回空组件——宁可少画一个图标，也不让整页渲染抛错（同 mobile/upstream/core/icon-compat.ts）。
+const pickIcon = (names) => {
+  const table = (uiPrimitives ?? {});
+  for (const n of names) {
+    if (typeof table[n] === 'function') return table[n];
+  }
+  return () => null;
+};
+
+const Ico = {
+  settings: pickIcon(['IconSettingsOutlineRegular', 'IconSettingsOutline16']),
+  lan: pickIcon(['IconLinkOutlineRegular', 'IconLinkOutline16']),
+  wan: pickIcon(['IconGlobeOutlineRegular', 'IconGlobeOutline16']),
+  pin: pickIcon(['IconShieldOutlineRegular', 'IconShieldOutline16']),
+  sliders: pickIcon(['IconSlidersTwoOutlineRegular', 'IconSlidersTwoOutline16']),
+  trash: pickIcon(['IconTrashOutlineRegular', 'IconTrashOutline16']),
+  copy: pickIcon(['IconCopyOutlineRegular', 'IconCopyOutline16']),
+  refresh: pickIcon(['IconRefreshOutlineRegular', 'IconRefreshOutline16']),
+  download: pickIcon(['IconDownloadOutlineRegular', 'IconDownloadOutline16']),
+  warn: pickIcon(['IconWarningOutlineRegular', 'IconWarningOutline16']),
+  info: pickIcon(['IconInfoOutlineRegular', 'IconInfoOutline16']),
+  check: pickIcon(['IconCheckCircleOutlineRegular', 'IconCheckCircleOutline16']),
+  chevron: pickIcon(['IconChevronDownOutlineRegular', 'IconChevronDownOutline16']),
+};
+
+// 设置页样式（v3）：类名统一 dshp- 前缀，一次性注入 <style>。
+// 之所以不用全内联样式：hover / focus-visible / 媒体查询 / 伪元素都需要样式表，
+// 内联只能靠 JS 事件模拟，既啰嗦又拿不到键盘可达性。颜色全部走宿主 token，
+// 深色主题自动跟随，不在代码里写死深浅两套。
+const POCKET_SETTINGS_CSS = `
+.dshp-page{max-width:760px;margin:0 auto;--dshp-text:var(--dsw-alias-label-primary,#0f1115);--dshp-text-2:var(--dsw-alias-label-secondary,#61666b);--dshp-text-3:var(--dsw-alias-label-tertiary,#81858c);--dshp-line:rgba(15,17,21,.09);--dshp-line-2:rgba(15,17,21,.16);--dshp-fill:rgba(15,17,21,.04);--dshp-fill-2:rgba(15,17,21,.07);--dshp-brand:var(--dsw-alias-brand-primary,#0f1115);--dshp-on-brand:var(--dsw-alias-label-primary-foreground,#fff);--dshp-danger:var(--dsw-alias-state-error-primary,#e5484d);--dshp-warn:var(--dsw-alias-state-warn-primary,#b45309);--dshp-success:var(--dsw-alias-state-success-primary,#10b981);--dshp-shadow:0 1px 2px rgba(15,17,21,.04),0 8px 24px -16px rgba(15,17,21,.18);--dshp-line:color-mix(in srgb,var(--dshp-text) 10%,transparent);--dshp-line-2:color-mix(in srgb,var(--dshp-text) 17%,transparent);--dshp-fill:color-mix(in srgb,var(--dshp-text) 4.5%,transparent);--dshp-fill-2:color-mix(in srgb,var(--dshp-text) 8%,transparent);display:flex;flex-direction:column;gap:16px;max-width:620px;color:var(--dshp-text);font-size:13px;line-height:1.55}
+body[data-ds-dark-theme] .dshp-page{--dshp-line:rgba(255,255,255,.11);--dshp-line-2:rgba(255,255,255,.2);--dshp-fill:rgba(255,255,255,.055);--dshp-fill-2:rgba(255,255,255,.09);--dshp-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.6);--dshp-line:color-mix(in srgb,var(--dshp-text) 13%,transparent);--dshp-line-2:color-mix(in srgb,var(--dshp-text) 22%,transparent);--dshp-fill:color-mix(in srgb,var(--dshp-text) 6%,transparent);--dshp-fill-2:color-mix(in srgb,var(--dshp-text) 10%,transparent)}
+.dshp-head{display:flex;align-items:center;gap:12px}
+.dshp-badge{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--dshp-fill);color:var(--dshp-brand);border:1px solid var(--dshp-line)}
+.dshp-head-main{flex:1;min-width:0}
+.dshp-title{font-size:17px;font-weight:650;letter-spacing:-.2px;line-height:1.3}
+.dshp-sub{margin-top:3px;font-size:12px;color:var(--dshp-text-3)}
+.dshp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.dshp-chip{display:inline-flex;align-items:center;gap:6px;height:23px;padding:0 9px;border-radius:999px;border:1px solid transparent;background:var(--dshp-fill);font-size:11.5px;font-weight:500;color:var(--dshp-text-3);white-space:nowrap}
+.dshp-chip-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
+.dshp-chip.is-on{background:color-mix(in srgb,var(--dshp-success) 13%,transparent);border-color:color-mix(in srgb,var(--dshp-success) 24%,transparent);color:color-mix(in srgb,var(--dshp-success) 72%,var(--dshp-text))}
+.dshp-chip.is-on .dshp-chip-dot{opacity:1}
+.dshp-card{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);border-radius:14px;box-shadow:var(--dshp-shadow);overflow:hidden}
+.dshp-card.is-danger{background:color-mix(in srgb,var(--dshp-danger) 4%,var(--dsw-alias-bg-layer-1,#fff));border-color:color-mix(in srgb,var(--dshp-danger) 20%,transparent)}
+.dshp-card-head{display:flex;align-items:flex-start;gap:11px;padding:14px 16px}
+.dshp-card-icon{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--dshp-fill);color:var(--dshp-text-2)}
+.dshp-card-text{flex:1;min-width:0}
+.dshp-card-title{font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.dshp-card-sub{margin-top:2px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-card-body{padding:0 16px 14px;display:flex;flex-direction:column;gap:12px}
+.dshp-card-body>.dshp-row:first-child{border-top:1px solid var(--dshp-line);padding-top:12px}
+.dshp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--dshp-line)}
+.dshp-row.is-stack{flex-direction:column;align-items:stretch;gap:8px}
+.dshp-row-label{font-size:13px;font-weight:500}
+.dshp-row-desc{margin-top:3px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-btn{font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:8px;border:1px solid transparent;font-size:12.5px;font-weight:550;white-space:nowrap;transition:background .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease}
+.dshp-btn:focus-visible{outline:2px solid color-mix(in srgb,var(--dshp-brand) 40%,transparent);outline-offset:2px}
+.dshp-btn:disabled{opacity:.45;cursor:default}
+.dshp-btn.is-primary{background:var(--dshp-brand);color:var(--dshp-on-brand);border-color:transparent}
+.dshp-btn.is-primary:hover:not(:disabled){background:color-mix(in srgb,var(--dshp-brand) 86%,var(--dshp-text-3))}
+.dshp-btn.is-ghost{background:var(--dsw-alias-bg-layer-1,#fff);border-color:var(--dshp-line-2);color:var(--dshp-text)}
+.dshp-btn.is-ghost:hover:not(:disabled){background:var(--dshp-fill)}
+.dshp-btn.is-quiet{background:transparent;color:var(--dshp-text-2)}
+.dshp-btn.is-quiet:hover:not(:disabled){background:var(--dshp-fill);color:var(--dshp-text)}
+.dshp-btn.is-danger{background:transparent;border-color:color-mix(in srgb,var(--dshp-danger) 32%,transparent);color:var(--dshp-danger)}
+.dshp-btn.is-danger:hover:not(:disabled){background:color-mix(in srgb,var(--dshp-danger) 9%,transparent)}
+.dshp-btn.is-mini{height:26px;padding:0 9px;font-size:11.5px;font-weight:500;border-radius:7px}
+.dshp-link{font:inherit;cursor:pointer;border:0;background:none;padding:0;color:var(--dshp-text-2);font-size:12px;text-decoration:underline;text-decoration-color:var(--dshp-line-2);text-underline-offset:2px}
+.dshp-link:hover{color:var(--dshp-text)}
+.dshp-switch{flex:none;position:relative;width:36px;height:20px;padding:2px;border:0;border-radius:999px;cursor:pointer;background:var(--dshp-fill-2);transition:background .14s ease}
+.dshp-switch[aria-checked="true"]{background:var(--dshp-brand)}
+.dshp-switch:disabled{opacity:.45;cursor:default}
+.dshp-switch:focus-visible{outline:2px solid color-mix(in srgb,var(--dshp-brand) 40%,transparent);outline-offset:2px}
+.dshp-switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dshp-on-brand);box-shadow:0 1px 2px rgba(0,0,0,.22);transition:transform .14s ease}
+.dshp-switch[aria-checked="true"] .dshp-switch-thumb{transform:translateX(16px)}
+.dshp-qr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:12px;padding:12px}
+.dshp-qr-frame{flex:none;padding:6px;background:#fff;border-radius:10px;border:1px solid rgba(15,17,21,.08);box-shadow:0 1px 2px rgba(15,17,21,.06)}
+.dshp-qr-frame img{display:block;width:116px;height:116px;border-radius:2px}
+.dshp-qr-main{flex:1 1 190px;min-width:180px}
+.dshp-url{font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.6;word-break:break-all;color:var(--dshp-text);background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);border-radius:8px;padding:7px 9px}
+.dshp-qr-hint{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-qr-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.dshp-alert{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--dshp-fill);border:1px solid var(--dshp-line);font-size:12.5px;line-height:1.6;color:var(--dshp-text-2)}
+.dshp-alert-icon{flex:none;margin-top:1px;color:var(--dshp-text-3)}
+.dshp-alert.is-info{background:var(--dshp-fill)}
+.dshp-alert.is-warn{background:color-mix(in srgb,var(--dshp-warn) 9%,transparent);border-color:color-mix(in srgb,var(--dshp-warn) 22%,transparent);color:var(--dshp-text-2)}
+.dshp-alert.is-warn .dshp-alert-icon{color:var(--dshp-warn)}
+.dshp-alert.is-error{background:color-mix(in srgb,var(--dshp-danger) 8%,transparent);border-color:color-mix(in srgb,var(--dshp-danger) 20%,transparent);color:var(--dshp-text-2)}
+.dshp-alert.is-error .dshp-alert-icon{color:var(--dshp-danger)}
+.dshp-alert.is-success{background:color-mix(in srgb,var(--dshp-success) 9%,transparent);border-color:color-mix(in srgb,var(--dshp-success) 22%,transparent)}
+.dshp-alert.is-success .dshp-alert-icon{color:var(--dshp-success)}
+.dshp-alert-body{flex:1;min-width:0}
+.dshp-alert-title{font-weight:600;color:var(--dshp-text);margin-bottom:2px}
+.dshp-select{padding-right:28px;min-width:104px;cursor:pointer}
+.dshp-panel-title{font-family:var(--dshp-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12.5px;font-weight:600;line-height:1.45;word-break:break-all}
+.dshp-input,.dshp-select{font:inherit;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--dshp-line-2);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dshp-text);font-size:12.5px;outline:none;min-width:0;box-sizing:border-box}
+.dshp-input:focus,.dshp-select:focus{border-color:color-mix(in srgb,var(--dshp-brand) 45%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--dshp-brand) 12%,transparent)}
+.dshp-input.is-mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
+.dshp-seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:var(--dshp-fill)}
+.dshp-seg-btn{font:inherit;cursor:pointer;border:0;height:26px;padding:0 12px;border-radius:7px;font-size:12px;background:transparent;color:var(--dshp-text-3);transition:background .12s ease,color .12s ease}
+.dshp-seg-btn.is-active{background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dshp-text);font-weight:600;box-shadow:0 1px 3px rgba(15,17,21,.12)}
+.dshp-pinbox{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:10px;padding:8px 10px}
+.dshp-pin-value{font-family:ui-monospace,Menlo,monospace;font-size:13.5px;letter-spacing:2px;color:var(--dshp-text);flex:1;min-width:96px;word-break:break-all}
+.dshp-pinbox .dshp-btn{flex:none}
+.dshp-pin{font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.5px}
+.dshp-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dshp-custom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--dshp-text-2)}
+.dshp-hint{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-text-3)}
+.dshp-warn-text{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-warn)}
+.dshp-err-text{margin-top:6px;font-size:11.5px;line-height:1.5;color:var(--dshp-danger)}
+.dshp-panel{display:flex;flex-direction:column;gap:6px;background:var(--dshp-fill);border:1px solid var(--dshp-line);border-radius:10px;padding:10px 12px}
+.dshp-adv{display:flex;flex-direction:column;gap:10px;width:100%}
+.dshp-form{display:flex;flex-direction:column;gap:10px}
+.dshp-field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--dshp-text-2)}
+.dshp-check{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:12.5px;line-height:1.55;cursor:pointer}
+.dshp-check input{flex:none;width:15px;height:15px;margin:2px 0 0;accent-color:var(--dshp-brand)}
+.dshp-loading{display:flex;align-items:center;gap:8px;padding:16px 2px;font-size:12.5px;color:var(--dshp-text-3)}
+.dshp-loading::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--dshp-line-2);border-top-color:var(--dshp-text-2);animation:dshp-spin .8s linear infinite}
+@keyframes dshp-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.dshp-loading::before{animation:none}.dshp-btn,.dshp-switch,.dshp-switch-thumb{transition:none}}
+.dshp-footer{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--dshp-line);font-size:11.5px;color:var(--dshp-text-3)}
+.dshp-footer a{color:var(--dshp-text-2);text-decoration:none}
+.dshp-footer a:hover{color:var(--dshp-text);text-decoration:underline;text-underline-offset:2px}
+.dshp-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,17,21,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.dshp-modal{width:100%;max-width:420px;padding:20px;border-radius:16px;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dshp-line);box-shadow:0 24px 64px -16px rgba(15,17,21,.4)}
+.dshp-modal-title{font-size:15.5px;font-weight:600;letter-spacing:-.1px;margin-bottom:10px}
+.dshp-modal-title.is-warn{color:var(--dshp-warn)}
+.dshp-modal-title.is-danger{color:var(--dshp-danger)}
+.dshp-modal-title.is-brand{color:var(--dshp-text)}
+.dshp-modal-body{font-size:13px;line-height:1.7;white-space:pre-line;color:var(--dshp-text-2)}
+.dshp-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.dshp-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;max-width:320px;padding:11px 18px;border-radius:10px;background:var(--dsw-alias-label-primary,#111);color:var(--dsw-alias-bg-layer-1,#fff);font-size:13px;line-height:1.5;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.3)}
+@media (max-width:560px){
+  .dshp-page{gap:14px}
+  .dshp-badge{width:36px;height:36px;border-radius:10px}
+  .dshp-title{font-size:16px}
+  .dshp-card-head{padding:13px 13px}
+  .dshp-card-body{padding:0 13px 13px}
+  .dshp-qr{padding:11px;gap:12px}
+  .dshp-qr-frame img{width:108px;height:108px}
+  .dshp-qr-main{min-width:100%}
+  .dshp-btn{padding:0 11px}
+  .dshp-row{gap:10px}
+}
+`;
+
 function PocketSettingsTab({ rpcCall, t }) {
   const [status, setStatus] = useState(null);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [tunnelState, setTunnelState] = useState(null); // 隧道进度 {phase, detail, startedAt}
   const [restartNotice, setRestartNotice] = useState(false); // 重启后提示
@@ -122,11 +271,45 @@ function PocketSettingsTab({ rpcCall, t }) {
   const [now, setNow] = useState(Date.now()); // 每秒 tick，驱动倒计时
   const [pinShown, setPinShown] = useState({}); // 密码明文开关 { lan?: true, public?: true }——默认遮罩
   const [autoReloadFailed, setAutoReloadFailed] = useState(false); // 重启后自动刷新失败
+  const [pending, setPending] = useState({}); // 单项操作进行中标记（防连点/乱序）：refreshPin/lanAuth/lanToggle/wan/prefs/savePin/saveNamed/lanAddr/reset
+  const [offline, setOffline] = useState(false); // 连续拉不到 status：宿主可能正在重启
+  const failuresRef = useRef(0); // 连续失败次数（不进 state，避免每次失败都重渲染）
+  const mutatedAtRef = useRef(0); // 最近一次本地修改时间：用于丢弃比本地状态更旧的 status 快照
 
   // status 首帧还没回来时，setStatus((s) => ({ ...s, ... })) 会把 null 展开成 {}
   // —— 界面字段短暂变 undefined。统一走这里：没数据就丢弃这次局部更新，
   // 下一次 status 轮询会带回真实值。
   const patchStatus = (patch) => setStatus((s) => (s ? { ...s, ...patch } : s));
+
+  // 单项操作的进行中标记：防止连点造成请求乱序（例如开关连点，先发的「开」后到，
+  // 会把「关」的结果盖掉）。mutatedAtRef 同时记录本地修改时刻，供 status 轮询判断快照新旧。
+  const withPending = async (key, fn) => {
+    mutatedAtRef.current = Date.now();
+    setPending((p) => ({ ...p, [key]: true }));
+    try {
+      return await fn();
+    } finally {
+      setPending((p) => {
+        const next = { ...p };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  // 设置页样式表：按 id 幂等注入；已存在时更新内容，避免插件热重载后残留旧 CSS。
+  useEffect(() => {
+    const id = 'dshp-settings-css';
+    let el = document.getElementById(id);
+    if (el && el.tagName !== 'STYLE') el = null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    if (el.textContent !== POCKET_SETTINGS_CSS) el.textContent = POCKET_SETTINGS_CSS;
+    return undefined;
+  }, []);
 
   // 进行中操作的「已等待 X 秒」倒计时——只在有活跃倒计时（更新/重启进行中、隧道
   // 连接中）时才挂每秒 tick，操作结束即卸载；空闲设置页不再无条件每秒重渲染
@@ -138,7 +321,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [updateInfo, tunnelState]);
-  const elapsed = (startedAt) => (startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : 0);
+  const elapsed = (startedAt) => (startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0);
 
   const call = async (endpoint, payload) => {
     const res = await rpcCall(endpoint, payload);
@@ -162,8 +345,13 @@ function PocketSettingsTab({ rpcCall, t }) {
   };
 
   const load = async () => {
+    const startedAt = Date.now();
     try {
       const s = await call(POCKET_ENDPOINTS.status, {});
+      // 拉取期间用户刚改过设置：这份快照可能比本地状态旧，丢掉，否则会把刚切的开关弹回去
+      if (mutatedAtRef.current > startedAt) { setOffline(false); failuresRef.current = 0; return; }
+      failuresRef.current = 0;
+      setOffline(false);
       setStatus(s);
       applyMobileRightbarSetting(s.mobileRightbarEnabled);
       applyMobilePinchZoomSetting(s.mobilePinchZoomEnabled);
@@ -180,15 +368,24 @@ function PocketSettingsTab({ rpcCall, t }) {
           waitForHostThenReload();
         }
       }
-    } catch { /* 忽略瞬时失败 */ }
+    } catch {
+      // 宿主重启/网络抖动时静默重试；连续失败 2 次才提示，避免一次抖动就报错
+      failuresRef.current += 1;
+      if (failuresRef.current >= 2) setOffline(true);
+    }
   };
 
   useEffect(() => {
     load();
-    // 页面不可见时跳过 status 轮询，回到前台后下一拍（≤10s）自动恢复。
+    // 页面不可见时跳过 status 轮询，回到前台立刻补一次（不等下一拍）。
     // 10s 而非 3s：每次 status 都带两张二维码 data URL，常开设置页没必要这么频繁。
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener('visibilitychange', onVisible);
     const t = setInterval(() => { if (!document.hidden) load(); }, 10000);
-    return () => clearInterval(t);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   // 每次页面加载清掉自动刷新标记——这样下次重启（更新后）才能再次触发自动刷新
@@ -238,39 +435,39 @@ function PocketSettingsTab({ rpcCall, t }) {
 
   // 重启宿主（更新生效必需：刷新页面不会重载服务端代码）
   const restartPocket = async () => {
-    setUpdateInfo((u) => ({ ...u, restarting: true, startedAt: Date.now() }));
+    setUpdateInfo((u) => ({ ...(u ?? {}), restarting: true, startedAt: Date.now() }));
     try {
       // 宿主 500ms 后自杀，RPC 响应可能来不及送达 → 3 秒超时兜底，别让按钮永远卡「重启中…」
       await Promise.race([
         call(POCKET_ENDPOINTS.restart, {}),
         new Promise((_, rej) => setTimeout(() => rej(new Error('restart requested (no reply within 3s)')), 3000)),
       ]);
-      setUpdateInfo((u) => ({ ...u, restarting: true, result: 'ok' }));
+      setUpdateInfo((u) => ({ ...(u ?? {}), restarting: true, result: 'ok' }));
     } catch (err) {
       // 网络断连/超时同样视为「已请求重启」——旧进程即将退出，等新进程起来后刷新即可
       const msg = String(err?.message ?? '');
       if (/connection|socket|fetch|network|abort|cancelled|ECONN|disconnect|closed|timeout/i.test(msg)) {
-        setUpdateInfo((u) => ({ ...u, restarting: true, result: 'ok' }));
+        setUpdateInfo((u) => ({ ...(u ?? {}), restarting: true, result: 'ok' }));
         return;
       }
-      setUpdateInfo((u) => ({ ...u, restarting: false, result: 'fail', output: err.message }));
+      setUpdateInfo((u) => ({ ...(u ?? {}), restarting: false, result: 'fail', output: err.message }));
     }
   };
 
   // 一键更新：调宿主 dsh plugin update（成功后宿主自动重启生效，用户只点一次）
   const runUpdate = async () => {
-    setUpdateInfo((u) => ({ ...u, updating: true, result: null, startedAt: Date.now() }));
+    setUpdateInfo((u) => ({ ...(u ?? {}), updating: true, result: null, startedAt: Date.now() }));
     try {
       const r = await call(POCKET_ENDPOINTS.update, {});
       setUpdateInfo((u) => ({
-        ...u,
+        ...(u ?? {}),
         updating: false,
         result: r.ok ? 'ok' : 'fail',
         autoRestart: r.autoRestart === true,
         output: r.output ?? r.error,
       }));
     } catch (err) {
-      setUpdateInfo((u) => ({ ...u, updating: false, result: 'fail', output: err.message }));
+      setUpdateInfo((u) => ({ ...(u ?? {}), updating: false, result: 'fail', output: err.message }));
     }
   };
 
@@ -287,16 +484,19 @@ function PocketSettingsTab({ rpcCall, t }) {
       setError(t('namedNeedCfg'));
       return;
     }
-    setBusy(true);
     setError(null);
     setTunnelState({ phase: 'starting', detail: '正在开启…', startedAt: Date.now() });
-    try {
-      setStatus(await call(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true }));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+    await withPending('wan', async () => {
+      try {
+        const s = await call(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
+        setStatus(s);
+        // 启动接口返回的就是最新状态：直接同步隧道进度，否则要等下一拍轮询才从「连接中」跳出来
+        setTunnelState(s.tunnelState ?? null);
+      } catch (err) {
+        setError(err.message);
+        setTunnelState(null);
+      }
+    });
   };
   const startTunnel = () => {
     // 每次开启都弹免责确认（勾选后才能继续）
@@ -309,71 +509,89 @@ function PocketSettingsTab({ rpcCall, t }) {
     doStartTunnel();
   };
 
-  const stopTunnel = async () => {
-    try { setStatus(await call(POCKET_ENDPOINTS.tunnelStop, {})); } catch { /* 忽略 */ }
-  };
+  const stopTunnel = () => withPending('wan', async () => {
+    try {
+      const s = await call(POCKET_ENDPOINTS.tunnelStop, {});
+      setStatus(s);
+      setTunnelState(s.tunnelState ?? null);
+    } catch (err) {
+      setError(err.message);
+    }
+  });
 
   // 公网模式（issue #66）：随机域名（默认零配置）/ 固定域名（Cloudflare 命名隧道 + Tunnel Token）
   // tunnelCfg：编辑态 { hostname, token, err } | null；token 输入留空 = 保持已存的 Token 不变
   const [tunnelCfg, setTunnelCfg] = useState(null);
-  const switchToQuick = async () => {
-    try { setStatus(await call(POCKET_ENDPOINTS.tunnelSetConfig, { mode: 'quick' })); } catch (err) { setError(err.message); }
-  };
-  const saveNamedTunnel = async () => {
+  const switchToQuick = () => withPending('tunnelCfg', async () => {
     try {
-      setStatus(await call(POCKET_ENDPOINTS.tunnelSetConfig, {
+      const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, { mode: 'quick' });
+      setStatus(s);
+      setTunnelState(s.tunnelState ?? null);
+    } catch (err) {
+      setError(err.message);
+    }
+  });
+  const saveNamedTunnel = () => withPending('saveNamed', async () => {
+    try {
+      const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, {
         mode: 'named',
         hostname: tunnelCfg?.hostname ?? '',
         token: tunnelCfg?.token || undefined, // 留空不覆盖已存 Token
-      }));
+      });
+      setStatus(s);
       setTunnelCfg(null);
     } catch (err) {
-      setTunnelCfg((c) => ({ ...c, err: err.message }));
+      setTunnelCfg((c) => ({ ...(c ?? {}), err: err.message }));
     }
-  };
+  });
 
   // 恢复出厂设置：清本机设置 + 重设随机密码（弹窗确认；RPC 端也强制校验 confirm）
   const [resetOpen, setResetOpen] = useState(false);
   const doFactoryReset = async () => {
     setResetOpen(false);
-    setBusy(true);
     setError(null);
-    try {
-      const next = await call(POCKET_ENDPOINTS.pocketReset, { confirm: true });
-      setStatus(next);
-      applyMobileRightbarSetting(next.mobileRightbarEnabled);
-      applyMobilePinchZoomSetting(next.mobilePinchZoomEnabled);
-      applyMobileFontSize(next.mobileFontSize);
-      setTunnelCfg(null);
-      setCustomPin(null);
-      setAdvOpen(false);
-      setPinShown({});
-      showToast(t('resetDone'));
-    } catch (err) {
-      setError(err.message);
-      showToast(t('resetFailed'));
-    } finally {
-      setBusy(false);
-    }
+    await withPending('reset', async () => {
+      try {
+        const next = await call(POCKET_ENDPOINTS.pocketReset, { confirm: true });
+        setStatus(next);
+        applyMobileRightbarSetting(next.mobileRightbarEnabled);
+        applyMobilePinchZoomSetting(next.mobilePinchZoomEnabled);
+        applyMobileFontSize(next.mobileFontSize);
+        setTunnelCfg(null);
+        setCustomPin(null);
+        setAdvOpen(false);
+        setPinShown({});
+        showToast(t('resetDone'));
+      } catch (err) {
+        setError(err.message);
+        showToast(t('resetFailed'));
+      }
+    });
   };
 
   // 刷新局域网访问密码（旧密码立即作废）
-  const refreshLanPin = async () => {
+  const refreshLanPin = () => withPending('refreshPin', async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.lanTokenRefresh, {});
       setStatus((s) => (s ? { ...s, lanToken: r.lanToken } : s));
-    } catch { /* 忽略 */ }
-  };
+      // 新密码默认不保持明文展示
+      setPinShown((m) => ({ ...m, lan: false }));
+    } catch (err) {
+      setError(err.message);
+    }
+  });
 
   // 局域网访问密码开关（issue #24）：默认开启；关闭后局域网扫码直连（公网不受影响）
-  const setLanAuth = async (on) => {
+  const setLanAuth = (on) => withPending('lanAuth', async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.lanAuthSetEnabled, { on });
       setStatus((s) => (s ? { ...s, lanAuthEnabled: r.lanAuthEnabled } : s));
-    } catch { /* 忽略 */ }
-  };
+    } catch (err) {
+      setError(err.message);
+    }
+  });
 
-  const setMobileRightbar = async (on) => {
+  const setMobileRightbar = (on) => withPending('prefs', async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.mobileRightbarSetEnabled, { on });
       const enabled = r.mobileRightbarEnabled === true;
@@ -382,9 +600,9 @@ function PocketSettingsTab({ rpcCall, t }) {
     } catch (err) {
       setError(err.message);
     }
-  };
+  });
 
-  const setMobilePinchZoom = async (on) => {
+  const setMobilePinchZoom = (on) => withPending('prefs', async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.mobilePinchZoomSetEnabled, { on });
       const enabled = r.mobilePinchZoomEnabled === true;
@@ -393,9 +611,9 @@ function PocketSettingsTab({ rpcCall, t }) {
     } catch (err) {
       setError(err.message);
     }
-  };
+  });
 
-  const setMobileFontSize = async (size) => {
+  const setMobileFontSize = (size) => withPending('prefs', async () => {
     try {
       const r = await call(POCKET_ENDPOINTS.mobileFontSetSize, { size });
       const px = Number(r.mobileFontSize) || 0;
@@ -404,37 +622,44 @@ function PocketSettingsTab({ rpcCall, t }) {
     } catch (err) {
       setError(err.message);
     }
-  };
+  });
 
   // 局域网访问总开关：关闭后局域网扫码/链接直接失效（公网不受影响）。
   // 切换前弹窗确认（弹窗提醒）；服务端用 setLanEnabled 持久化，代理按 Host 实时拦截。
   const [lanToggleOpen, setLanToggleOpen] = useState(null); // null | true | false（目标 on 状态）
   const requestLanToggle = (on) => setLanToggleOpen(on);
-  const confirmLanToggle = async () => {
+  const confirmLanToggle = () => {
     const on = lanToggleOpen;
     setLanToggleOpen(null);
     if (on === null) return;
-    try {
-      const r = await call(POCKET_ENDPOINTS.lanSetEnabled, { on });
-      setStatus((s) => (s ? { ...s, lanEnabled: r.lanEnabled } : s));
-    } catch (err) {
-      setError(err.message);
-    }
+    return withPending('lanToggle', async () => {
+      try {
+        const r = await call(POCKET_ENDPOINTS.lanSetEnabled, { on });
+        setStatus((s) => (s ? { ...s, lanEnabled: r.lanEnabled } : s));
+      } catch (err) {
+        setError(err.message);
+      }
+    });
   };
 
   // 局域网地址手动覆盖（Tailscale/VPN 等远程访问场景）：空值恢复自动选择
-  const setLanAddress = async (ip) => {
+  const setLanAddress = (ip) => withPending('lanAddr', async () => {
     try {
       setStatus(await call(POCKET_ENDPOINTS.lanSetOverride, { ip }));
     } catch (err) {
       setError(err.message);
     }
-  };
+  });
 
   // 自定义访问密码（issue #33）：公网/局域网各自设固定 8–64 位密码（英文字母大小写或数字）；自定义后公网不再自动轮换。
   // customPin: { which: 'public'|'lan', value, err } | null —— 正在输入自定义密码的区块
   const [customPin, setCustomPin] = useState(null);
-  const saveCustomPin = async (which) => {
+  const saveCustomPin = (which) => withPending('savePin', async () => {
+    // 先做本地长度校验，不合法就不发请求（服务端还会再校验一次）
+    if (String(customPin?.value ?? '').length < 8) {
+      setCustomPin((c) => ({ ...(c ?? {}), err: '密码至少 8 位 | PIN must be at least 8 characters' }));
+      return;
+    }
     try {
       const r = await call(POCKET_ENDPOINTS.pinSetCustom, { which, value: customPin?.value ?? '' });
       setStatus((s) => (s ? {
@@ -446,9 +671,9 @@ function PocketSettingsTab({ rpcCall, t }) {
       } : s));
       setCustomPin(null);
     } catch (err) {
-      setCustomPin((c) => ({ ...c, err: err.message }));
+      setCustomPin((c) => ({ ...(c ?? {}), err: err.message }));
     }
-  };
+  });
 
   const lanUrl = status?.lanUrl;
   const tunnelUrl = status?.tunnelUrl;
@@ -478,365 +703,425 @@ function PocketSettingsTab({ rpcCall, t }) {
   };
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
-  // ── v2 视图件 ──────────────────────────────────────────────────────────────
-  // iOS 风格小开关：局域网总开关 / 公网总开关 / 局域网密码开关 / 手机端右边栏；
-  // disabled 态用于操作进行中（如隧道连接），视觉半透明且不可点。
-  // 尺寸/颜色跟宿主 0.2.x 的 Switch 对齐（上游 2.12.0 f24c6de）：36×20 轨道、
-  // 16×16 圆钮、圆钮不再用死白（深色主题下改用 label-primary-foreground）。
-  const Switch = (on, onClick, disabled) => h('button', {
-    role: 'switch', 'aria-checked': !!on, disabled: disabled === true,
-    style: { flexShrink: 0, width: 36, height: 20, borderRadius: 999, border: 'none', padding: 2, position: 'relative', boxSizing: 'border-box', cornerShape: 'round', cursor: disabled === true ? 'default' : 'pointer', font: 'inherit', opacity: disabled === true ? 0.55 : 1, background: on ? 'var(--dsw-alias-brand-primary, var(--dsw-alias-button-primary-fill,#4f6ef7))' : 'var(--dsw-alias-border-l3, var(--dsw-alias-border-l2,#d1d5db))', transition: 'background .12s ease' },
-    onClick: disabled === true ? undefined : onClick,
-  }, h('span', { style: { position: 'absolute', top: 2, left: 2, width: 16, height: 16, borderRadius: '50%', background: on ? 'var(--dsw-alias-label-primary-foreground,#fff)' : 'var(--dsw-alias-switch-thumb,#fff)', boxShadow: '0 1px 2px rgba(0,0,0,.18)', transform: on ? 'translateX(16px)' : 'translateX(0)', transition: 'transform .12s ease, background .12s ease' } }));
+  // 弹窗可访问性：Esc 关闭最上层弹窗；打开时记住焦点，关闭后还回去（键盘用户不丢位置）。
+  const lastFocusRef = useRef(null);
+  const anyModalOpen = disclaimerOpen || lanToggleOpen !== null || resetOpen;
+  useEffect(() => {
+    if (!anyModalOpen) return undefined;
+    lastFocusRef.current = document.activeElement;
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      if (disclaimerOpen) { setDisclaimerOpen(false); return; }
+      if (lanToggleOpen !== null) { setLanToggleOpen(null); return; }
+      if (resetOpen) setResetOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      const el = lastFocusRef.current;
+      lastFocusRef.current = null;
+      if (el && typeof el.focus === 'function' && el.isConnected) el.focus();
+    };
+  }, [anyModalOpen, disclaimerOpen, lanToggleOpen, resetOpen]);
 
-  // 通道小节：标题行（状态点 + 名称 + 右侧控件）+ 内容；小节之间只靠留白，不再画粗边框
-  // children 只有一个槽——再加行必须包成数组传入，多余的 row 会落进 key 槽被静默丢弃
-  const Section = (title, right, children, key) => {
-    if (key != null && typeof key !== 'string') console.warn('[dsh-pocket] Section 参数错位：key 槽收到非字符串（多余实参会被静默丢弃），children 需为数组', key);
-    return h('section', { style: { marginTop: 20 }, 'data-dshp-section': key ?? '' },
-    h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      title ? h('span', { style: { fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6 } }, title) : h('span', { style: { flex: 1 } }, null),
-      right ?? null),
-    children ?? null);
+  // ── 视图件（v3：宿主 token + class 样式）───────────────────────────────────
+  // 开关：跟宿主 0.2.x 对齐（36×20 轨道 / 16×16 圆钮）；disabled 用于操作进行中。
+  const Switch = (on, onClick, disabled, label = null) => h('button', {
+    role: 'switch', type: 'button', 'aria-checked': !!on, disabled: disabled === true,
+    'aria-label': label ?? undefined,
+    className: 'dshp-switch',
+    onClick: disabled === true ? undefined : onClick,
+  }, h('span', { className: 'dshp-switch-thumb' }));
+
+  // 按钮：variant = primary | ghost | quiet | danger；mini = 行内小按钮。
+  // 文案两种传法都支持：props.children，或 Btn({...}, '文案') 的第二参数
+  // （后者是旧调用风格；只按 props 解构会静默丢掉第二参数，渲染出空白按钮）。
+  const Btn = (props, ...extraChildren) => {
+    const { variant = 'ghost', mini = false, icon = null, children: propChildren, ...rest } = props ?? {};
+    const children = extraChildren.length > 0 ? extraChildren : propChildren;
+    return h('button', {
+      type: 'button',
+      ...rest,
+      className: `dshp-btn is-${variant}${mini ? ' is-mini' : ''}`,
+    }, icon ? h(icon, { size: mini ? 12 : 14 }) : null, children);
   };
 
-  // 设置行：发丝线分隔；第一行 = 左标签 + 右控件；extra 追加在下方
-  const row = (label, control, extra) => h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l2,#eceef2)', paddingTop: 10, marginTop: 10 } },
-    h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' } },
-      h('span', { style: { fontSize: 13 } }, label), control),
-    extra ?? null);
+  // 状态胶囊：圆点 + 文本（用于页头汇总当前两条通道的状态）
+  const Chip = ({ on, children }) => h('span', { className: `dshp-chip${on ? ' is-on' : ''}` },
+    h('span', { className: 'dshp-chip-dot' }), children);
 
-  // 二维码横排卡：左 128px 码（白底衬 quiet zone，深色模式也稳）+ 右侧地址/提示/复制
-  const qrBlock = (src, url, hint) => h('div', { style: { display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', background: 'var(--dsw-alias-bg-layer-2,#f3f4f6)', borderRadius: 12, padding: 12, marginTop: 10 } },
-    h('div', { style: { flexShrink: 0, padding: 6, background: '#fff', borderRadius: 10, border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)' } },
-      h('img', { src, alt: 'QR', style: { width: 128, height: 128, display: 'block', borderRadius: 2 } })),
-    h('div', { style: { flex: '1 1 170px', minWidth: 170 } },
-      h('div', { style: { ...styles.mono, fontSize: 12, wordBreak: 'break-all', color: 'var(--dsw-alias-label-primary,inherit)', lineHeight: 1.6 } }, url),
-      h('div', { style: { ...styles.muted, fontSize: 11, marginTop: 6 } }, hint),
-      h('button', {
-        style: { ...styles.mini, marginTop: 8 },
-        onClick: async () => showToast(await copyText(url) ? t('copied') : t('copyFailed')),
-      }, t('copyLink'))));
+  // 分区卡：图标 + 标题 + 副题 + 右侧控件，内容在卡片体里
+  const Card = ({ icon, title, sub, right, children, danger = false, key }) => h('section', {
+    className: `dshp-card${danger ? ' is-danger' : ''}`,
+    'data-dshp-section': key ?? '',
+  },
+  h('div', { className: 'dshp-card-head' },
+    icon ? h('span', { className: 'dshp-card-icon' }, h(icon, { size: 16 })) : null,
+    h('div', { className: 'dshp-card-text' },
+      h('div', { className: 'dshp-card-title' }, title),
+      sub ? h('div', { className: 'dshp-card-sub' }, sub) : null),
+    right ?? null),
+  children ? h('div', { className: 'dshp-card-body' }, children) : null);
 
-  // 紧凑提示条：kind = info(品牌蓝) | warn(琥珀) | error(红)
-  const Alert = (kind, children, extraStyle) => h('div', {
-    style: {
-      display: 'flex', gap: 8, alignItems: 'flex-start',
-      fontSize: 12, lineHeight: 1.6,
-      borderRadius: 10, padding: '8px 10px', marginTop: 10,
-      background: 'var(--dsw-alias-bg-layer-2,#f3f4f6)',
-      borderLeft: `3px solid ${kind === 'error' ? 'var(--dsw-alias-state-error-primary,#dc2626)' : kind === 'info' ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-state-warn-primary,#b45309)'}`,
-      color: kind === 'error' ? 'var(--dsw-alias-state-error-primary,#dc2626)' : kind === 'warn' ? 'var(--dsw-alias-state-warn-primary,#b45309)' : 'var(--dsw-alias-label-secondary,#6b7280)',
-      ...extraStyle,
-    },
-  }, children);
+  // 设置行：左标签（可带说明）+ 右控件；extra 渲染在整行下方（展开面板等）
+  const Row = ({ label, desc, control, extra, stack = false }) => h('div', {
+    className: `dshp-row${stack ? ' is-stack' : ''}`,
+  },
+  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, rowGap: 8, flexWrap: 'wrap', minWidth: 0, width: '100%' } },
+    h('div', { style: { minWidth: 0 } },
+      h('div', { className: 'dshp-row-label' }, label),
+      desc ? h('div', { className: 'dshp-row-desc' }, desc) : null),
+    control ?? null),
+  extra ?? null);
 
-  // 访问密码值行：遮罩（固定 8 个点，不泄露长度）/明文 + 显示/隐藏 + 刷新/自定义（按钮间距放宽）
-  const pinValueRow = (which, value, extraBtns) => h('div', { style: { marginTop: 8, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
-    h('span', { style: { ...styles.mono, fontSize: 13 }, 'data-dshp-pin': which }, pinShown[which] ? value : '••••••••'),
-    h('button', {
-      style: { ...styles.link, padding: '2px 0' },
+  // 提示条：kind = info | warn | error
+  const Alert = ({ kind = 'info', icon = null, children, title = null, extra = null }) => h('div', { className: `dshp-alert is-${kind}` },
+    icon ? h('span', { className: 'dshp-alert-icon' }, h(icon, { size: 14 })) : null,
+    h('div', { className: 'dshp-alert-body' },
+      title ? h('div', { className: 'dshp-alert-title' }, title) : null,
+      children,
+      extra ?? null));
+
+  // 二维码横排卡：左 128px 码（白底衬 quiet zone）+ 右侧地址/提示/复制
+  const QRBlock = ({ src, url, hint }) => h('div', { className: 'dshp-qr' },
+    h('div', { className: 'dshp-qr-frame' }, src ? h('img', { src, alt: 'QR' }) : null),
+    h('div', { className: 'dshp-qr-main' },
+      h('div', { className: 'dshp-url' }, url),
+      hint ? h('div', { className: 'dshp-qr-hint' }, hint) : null,
+      h('div', { className: 'dshp-qr-actions' },
+        Btn({ variant: 'ghost', mini: true, icon: Ico.copy, onClick: async () => showToast(await copyText(url) ? t('copied') : t('copyFailed')) }, t('copyLink')))));
+
+  // 访问密码值行：遮罩（固定 8 个点，不泄露长度）/明文 + 显示/隐藏 + 额外按钮
+  const pinValueRow = (which, value, extraBtns) => h('div', { className: 'dshp-pinbox' },
+    h('span', { className: 'dshp-pin-value', 'data-dshp-pin': which }, pinShown[which] ? value : '••••••••'),
+    Btn({
+      variant: 'ghost', mini: true,
       onClick: () => setPinShown((m) => ({ ...m, [which]: !m[which] })),
     }, pinShown[which] ? t('pinHide') : t('pinShow')),
     ...(extraBtns ?? []));
 
-  // 渲染自定义输入行（共用）：输入框 + 保存/取消
-  const customPinRow = (which) => h('div', { style: { marginTop: 8, fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', lineHeight: 1.5 } },
-    t('customizing'),
-    h('input', {
-      style: { width: 130, margin: '0 6px', padding: '4px 8px', fontSize: 14, letterSpacing: 1, textAlign: 'center', border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', borderRadius: 6, outline: 'none' },
-      type: 'password',
-      minLength: 8,
-      maxLength: 64,
-      value: customPin?.value ?? '',
-      autoFocus: true,
-      onChange: (e) => setCustomPin((c) => ({ ...c, value: e.target.value.replace(/[^a-zA-Z0-9]/g, ''), err: null })),
-      onKeyDown: (e) => { if (e.key === 'Enter') saveCustomPin(which); if (e.key === 'Escape') setCustomPin(null); },
-    }),
-    h('button', { style: styles.mini, onClick: () => saveCustomPin(which) }, t('save')),
-    h('button', { style: styles.mini, onClick: () => setCustomPin(null) }, t('cancel')),
-    customPin?.err ? h('div', { style: { color: 'var(--dsw-alias-state-error-primary,#dc2626)', marginTop: 4 } }, errText(customPin.err)) : null);
-  // 「自定义」按钮（非输入态显示在密码行末尾）
-  const customBtn = (which) => h('button', { style: styles.mini, onClick: () => setCustomPin({ which, value: '', err: null }) }, t('customize'));
+  // 自定义密码输入行：输入框 + 保存/取消
+  const customPinRow = (which) => h('div', { className: 'dshp-adv' },
+    h('div', { className: 'dshp-custom' },
+      h('span', null, t('customizing')),
+      h('input', {
+        className: 'dshp-input is-mono',
+        style: { width: 150, textAlign: 'center' },
+        type: 'password', minLength: 8, maxLength: 64,
+        value: customPin?.value ?? '', autoFocus: true,
+        onChange: (e) => setCustomPin((c) => ({ ...c, value: e.target.value.replace(/[^a-zA-Z0-9]/g, ''), err: null })),
+        onKeyDown: (e) => { if (e.key === 'Enter') saveCustomPin(which); if (e.key === 'Escape') setCustomPin(null); },
+      }),
+      Btn({ variant: 'primary', mini: true, onClick: () => saveCustomPin(which), disabled: pending.savePin === true }, t('save')),
+      Btn({ variant: 'ghost', mini: true, onClick: () => setCustomPin(null), disabled: pending.savePin === true }, t('cancel'))),
+    customPin?.err ? h('div', { className: 'dshp-err-text' }, errText(customPin.err)) : null);
+
+  const customBtn = (which) => Btn({ variant: 'ghost', mini: true, onClick: () => setCustomPin({ which, value: '', err: null }) }, t('customize'));
 
   // 公网地址模式分段控件（随机/固定域名）
-  const modeSeg = h('div', { style: { display: 'inline-flex', background: 'var(--dsw-alias-bg-layer-2,#eef0f4)', borderRadius: 9, padding: 2, gap: 2 } },
+  const modeSeg = h('div', { className: 'dshp-seg' },
     h('button', {
-      style: { font: 'inherit', cursor: 'pointer', border: 'none', height: 26, padding: '0 12px', borderRadius: 7, fontSize: 12, background: !namedActive ? 'var(--dsw-alias-bg-layer-1,#fff)' : 'transparent', color: !namedActive ? 'var(--dsw-alias-label-primary,inherit)' : 'var(--dsw-alias-label-tertiary,#8b93a1)', fontWeight: !namedActive ? 600 : 400, boxShadow: !namedActive ? '0 1px 3px rgba(0,0,0,.10)' : 'none' },
+      type: 'button', className: `dshp-seg-btn${!namedActive ? ' is-active' : ''}`,
       onClick: namedMode ? switchToQuick : (tunnelCfg ? () => setTunnelCfg(null) : undefined),
     }, t('modeQuick')),
     h('button', {
-      style: { font: 'inherit', cursor: 'pointer', border: 'none', height: 26, padding: '0 12px', borderRadius: 7, fontSize: 12, background: namedActive ? 'var(--dsw-alias-bg-layer-1,#fff)' : 'transparent', color: namedActive ? 'var(--dsw-alias-label-primary,inherit)' : 'var(--dsw-alias-label-tertiary,#8b93a1)', fontWeight: namedActive ? 600 : 400, boxShadow: namedActive ? '0 1px 3px rgba(0,0,0,.10)' : 'none' },
+      type: 'button', className: `dshp-seg-btn${namedActive ? ' is-active' : ''}`,
       onClick: () => setTunnelCfg(tunnelCfg ? null : { hostname: tunnelModeView.hostname ?? '', token: '', err: null }),
     }, t('modeNamed')));
 
   // 统一确认弹窗：遮罩 + 面板（标题色随语义）+ 内容 + 右对齐操作
-  const Modal = ({ title, tone = 'warn', children, actions }) => h('div', {
-    style: { position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(15,17,21,.45)', backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  // 可访问性：role=dialog + aria-modal + aria-label；Esc 关闭（见下面的全局 keydown effect）；
+  // 点遮罩空白处关闭。取消按钮带 autoFocus，键盘用户打开即可直接 Esc/Enter。
+  const Modal = ({ title, tone = 'warn', children, actions, onClose }) => h('div', {
+    className: 'dshp-modal-backdrop',
+    onClick: (e) => { if (e.target === e.currentTarget) onClose?.(); },
   },
-  h('div', { style: { background: 'var(--dsw-alias-bg-layer-1,#fff)', borderRadius: 14, maxWidth: 420, width: '100%', padding: '20px 22px', boxShadow: '0 12px 40px rgba(0,0,0,.22)' } },
-    h('div', { style: { fontWeight: 600, fontSize: 15, marginBottom: 10, color: tone === 'danger' ? 'var(--dsw-alias-state-error-primary,#dc2626)' : tone === 'brand' ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-state-warn-primary,#b45309)' } }, title),
+  h('div', { className: 'dshp-modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div', { className: `dshp-modal-title is-${tone}` }, title),
     children,
-    h('div', { style: { display: 'flex', gap: 8, marginTop: 18, justifyContent: 'flex-end' } }, actions)));
+    h('div', { className: 'dshp-modal-actions' }, actions)));
 
   // 高级（手动选地址）展开态
   const [advOpen, setAdvOpen] = useState(false);
 
-  return h('div', { style: styles.card, 'data-dshp-ui': 'v2' },
-    // 页头：一行标题 + 一行副题（署名挪到页脚，不再挤在右上角）
-    h('div', null,
-      h('div', { style: { fontWeight: 600, fontSize: 14 } }, t('title')),
-      h('div', { style: { ...styles.muted, marginTop: 2 } }, t('subtitle')),
-    ),
+  // ── 公网卡片的派生片段（拆开写，避免多层三元把 JSX 括号搞乱）─────────────
+  const wanStatusView = tunnelStarting
+    ? Alert({
+      kind: 'info', icon: Ico.info,
+      children: tunnelPhase === 'downloading'
+        ? fmt(t, 'downloading', { s: elapsed(tunnelStateStarted) })
+        : fmt(t, 'connecting', { s: elapsed(tunnelStateStarted), suffix: elapsed(tunnelStateStarted) > 30 ? t('slowHint') : '' }),
+    })
+    : tunnelPhase === 'error'
+      ? Alert({ kind: 'error', icon: Ico.warn, children: fmt(t, 'error', { detail: errText(tunnelStateDetail) || t('unknownError') }) })
+      : (!tunnelUrl && !isDesktop
+        ? Alert({
+          kind: 'info', icon: Ico.info, children: t('wanOffHint'),
+          extra: h('div', { style: { marginTop: 8 } },
+            Btn({ variant: 'primary', onClick: startTunnel, disabled: pending.wan === true }, t('enable'))),
+        })
+        : null);
 
-    // 重启后提示（进程在后台运行，停止方法）——蓝色提示条（桌面端不会触发本插件的自重启）
-    // 桌面端不显示更新/重启横幅（更新由 DSH Desktop 管理），也不需要额外提示
-    !isDesktop && restartNotice ? Alert('info',
-      h('div', { style: { flex: 1, minWidth: 0 } },
-        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' } },
-          h('span', { style: { fontWeight: 600 } }, t('restarted')),
-          h('div', { style: { display: 'flex', gap: 6 } },
-            autoReloadFailed
-              ? h('button', { style: styles.mini, onClick: () => { setAutoReloadFailed(false); waitForHostThenReload(); } }, t('reloadNow'))
-              : null,
-            h('button', { style: styles.mini, onClick: () => setRestartNotice(false) }, t('ok')))),
+  const namedSummaryView = namedMode && !tunnelCfg
+    ? h('div', { className: 'dshp-panel' },
+      h('div', { style: { display: 'flex', alignItems: 'flex-start', gap: 10 } },
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { className: 'dshp-panel-title' }, tunnelModeView.hostname || '—'),
+          h('div', { className: 'dshp-hint', style: { marginTop: 2 } },
+            tunnelModeView.tokenSet ? t('namedTokenSet') : t('namedTokenMissing'))),
+        Btn({ variant: 'ghost', mini: true, onClick: () => setTunnelCfg({ hostname: tunnelModeView.hostname ?? '', token: '', err: null }) }, t('namedEdit'))),
+      h('div', { className: 'dshp-hint', style: { marginTop: 8, lineHeight: 1.65 } }, t('namedHow')),
+      !tunnelModeView.tokenSet || !tunnelModeView.hostname ? h('div', { className: 'dshp-err-text' }, t('namedNeedCfg')) : null)
+    : null;
+
+  const namedFormView = tunnelCfg
+    ? h('div', { className: 'dshp-form' },
+      h('label', { className: 'dshp-field' }, t('namedHostnameLabel'),
+        h('input', {
+          className: 'dshp-input',
+          placeholder: 'pocket.example.com',
+          value: tunnelCfg.hostname ?? '',
+          autoFocus: true,
+          onChange: (e) => setTunnelCfg((c) => ({ ...c, hostname: e.target.value.trim(), err: null })),
+          onKeyDown: (e) => { if (e.key === 'Enter') saveNamedTunnel(); if (e.key === 'Escape') setTunnelCfg(null); },
+        })),
+      h('label', { className: 'dshp-field' }, t('namedTokenLabel'),
+        h('input', {
+          className: 'dshp-input is-mono',
+          type: 'password',
+          value: tunnelCfg.token ?? '',
+          onChange: (e) => setTunnelCfg((c) => ({ ...c, token: e.target.value.trim(), err: null })),
+          onKeyDown: (e) => { if (e.key === 'Enter') saveNamedTunnel(); if (e.key === 'Escape') setTunnelCfg(null); },
+        })),
+      h('div', { className: 'dshp-inline' },
+        Btn({ variant: 'primary', mini: true, onClick: saveNamedTunnel, disabled: pending.saveNamed === true }, t('save')),
+        Btn({ variant: 'ghost', mini: true, onClick: () => setTunnelCfg(null), disabled: pending.saveNamed === true }, t('cancel'))),
+      h('div', { className: 'dshp-hint' }, t('namedHow')),
+      h('div', { className: 'dshp-warn-text' }, t('namedSecurity')),
+      tunnelCfg.err ? h('div', { className: 'dshp-err-text' }, errText(tunnelCfg.err)) : null)
+    : null;
+
+  const modeExtra = h('div', { className: 'dshp-adv' },
+    namedMode && /trycloudflare\.com/i.test(tunnelUrl ?? '') ? h('div', { className: 'dshp-warn-text' }, t('namedTakeEffect')) : null,
+    namedSummaryView,
+    namedFormView);
+
+  const publicPinView = status?.accessToken
+    ? Row({
+      label: t('pinLabel'),
+      stack: true,
+      extra: customPin?.which === 'public'
+        ? customPinRow('public')
+        : h('div', null,
+          pinValueRow('public', status.accessToken, [customBtn('public')]),
+          !namedMode && status?.publicPinCustom ? h('div', { className: 'dshp-hint' }, t('pinCustomHint')) : null,
+          namedMode ? h('div', { className: 'dshp-warn-text' }, t('namedSecurity')) : null),
+    })
+    : null;
+
+  const wanBody = tunnelUrl
+    ? h('div', null,
+      QRBlock({ src: status.tunnelQr, url: tunnelUrl, hint: namedMode ? t('namedRunningHint') : null }),
+      !namedMode ? Alert({ kind: 'warn', icon: Ico.warn, children: t('wanEphemeralWarn') }) : null,
+      Row({ label: t('modeLabel'), control: modeSeg, stack: true, extra: modeExtra }),
+      publicPinView)
+    : null;
+
+  return h('div', { className: 'dshp-page', 'data-dshp-ui': 'v3' },
+    // 页头：图标 + 标题 + 副题；下面一行状态胶囊汇总两条通道
+    h('header', { className: 'dshp-head' },
+      h('span', { className: 'dshp-badge' }, h(Ico.settings, { size: 19 })),
+      h('div', { className: 'dshp-head-main' },
+        h('div', { className: 'dshp-title' }, t('section')),
+        h('div', { className: 'dshp-sub' }, t('subtitle')))),
+    h('div', { className: 'dshp-chips' },
+      status
+        ? [
+          Chip({ on: status.lanEnabled !== false, children: `${t('lanAccess')} · ${status.lanEnabled !== false ? t('statusOn') : t('statusOff')}` }),
+          Chip({ on: !!tunnelUrl, children: `${t('wanAccess')} · ${tunnelUrl ? t('statusConnected') : t('statusOff')}` }),
+        ]
+        : h('span', { className: 'dshp-hint', style: { marginTop: 0 } }, t('loadingStatus'))),
+
+    // 操作错误：放在页面顶部（即使操作按钮在下面也一眼看见），可手动关掉
+    error ? Alert({ kind: 'error', icon: Ico.warn, children: errText(error),
+      extra: h('div', { className: 'dshp-inline', style: { marginTop: 8 } },
+        Btn({ variant: 'ghost', mini: true, onClick: () => setError(null) }, t('ok'))) }) : null,
+
+    // 与宿主断开：连续两次拉不到 status 才提示（宿主重启期间正常现象，恢复后自动消失）
+    offline ? Alert({ kind: 'warn', icon: Ico.warn, children: t('offlineHint') }) : null,
+
+    // 重启后提示（进程在后台运行，停止方法）——桌面端不显示更新/重启横幅（由 DSH Desktop 管理）
+    !isDesktop && restartNotice ? Alert({ kind: 'info', icon: Ico.refresh,
+      title: t('restarted'),
+      children: h('div', { className: 'dshp-hint', style: { wordBreak: 'break-all', marginTop: 2 } },
+        fmt(t, 'bgHint', { cmd: status?.killHint ?? `lsof -ti :${status?.dshPort ?? 3080} | xargs kill -9` })),
+      extra: h('div', { className: 'dshp-inline', style: { marginTop: 8 } },
         autoReloadFailed
-          ? h('div', { style: { color: 'var(--dsw-alias-label-tertiary,#8b93a1)', marginTop: 2 } }, t('reloadFailed'))
+          ? Btn({ variant: 'ghost', mini: true, icon: Ico.refresh, onClick: () => { setAutoReloadFailed(false); waitForHostThenReload(); } }, t('reloadNow'))
           : null,
-        h('div', { style: { color: 'var(--dsw-alias-label-tertiary,#8b93a1)', wordBreak: 'break-all' } },
-          fmt(t, 'bgHint', { cmd: status?.killHint ?? `lsof -ti :${status?.dshPort ?? 3080} | xargs kill -9` }))),
-      { marginTop: 14 }) : null,
+        autoReloadFailed ? h('span', { className: 'dshp-hint', style: { marginTop: 0 } }, t('reloadFailed')) : null,
+        Btn({ variant: 'quiet', mini: true, onClick: () => setRestartNotice(false) }, t('ok'))),
+    }) : null,
 
-    // 更新提示——琥珀色提示条（有新版本/更新中/已更新待重启，单状态不并存）
-    // 桌面端不渲染（更新由 DSH Desktop 管理）
-    !isDesktop && updateInfo ? Alert('warn',
-      h('div', { style: { flex: 1, minWidth: 0 } },
-        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' } },
-          h('span', { style: { fontWeight: 600 } },
-            updateInfo.updated
-              ? fmt(t, 'updatedRestart', { ver: updateInfo.current })
-              : updateInfo.result === 'ok'
-                ? (updateInfo.autoRestart ? fmt(t, 'updateAutoRestarting', { ver: updateInfo.latest }) : fmt(t, 'updatedOk', { ver: updateInfo.latest }))
-                : fmt(t, 'updateAvailable', { ver: updateInfo.latest })),
-          updateInfo.result !== 'ok'
-            ? h('button', { style: styles.primary, onClick: runUpdate, disabled: updateInfo.updating }, updateInfo.updating ? t('updating') : fmt(t, 'updateTo', { ver: updateInfo.latest }))
-            : updateInfo.autoRestart
-              ? h('button', { style: styles.btn, disabled: true }, t('restartingNow'))
-              : h('button', { style: styles.primary, onClick: restartPocket, disabled: updateInfo.restarting }, updateInfo.restarting ? t('restarting') : t('restartNow'))),
-        h('div', { style: { color: 'var(--dsw-alias-label-tertiary,#8b93a1)' } },
-          updateInfo.updating
-            ? fmt(t, 'updatingDetail', { s: elapsed(updateInfo.startedAt) })
+    // 更新提示——琥珀色提示条（有新版本/更新中/已更新待重启，单状态不并存；桌面端不渲染）
+    !isDesktop && updateInfo ? Alert({ kind: 'warn', icon: Ico.download,
+      title: updateInfo.updated
+        ? fmt(t, 'updatedRestart', { ver: updateInfo.current })
+        : updateInfo.result === 'ok'
+          ? (updateInfo.autoRestart ? fmt(t, 'updateAutoRestarting', { ver: updateInfo.latest }) : fmt(t, 'updatedOk', { ver: updateInfo.latest }))
+          : updateInfo.result === 'fail'
+            ? t('updateFailedTitle')
+            : fmt(t, 'updateAvailable', { ver: updateInfo.latest }),
+      children: h('div', { className: 'dshp-hint', style: { marginTop: 2 } },
+        updateInfo.updating
+          ? fmt(t, 'updatingDetail', { s: elapsed(updateInfo.startedAt) })
           : updateInfo.restarting
             ? fmt(t, 'restartingDetail', { s: elapsed(updateInfo.startedAt) })
-          : updateInfo.result === 'ok'
-            ? (updateInfo.autoRestart ? t('updatedAutoDetail') : t('updatedRestartDetail'))
-          : updateInfo.result === 'fail' ? fmt(t, 'updateFailed', { err: errText(updateInfo.output) || t('unknownError') })
-          : fmt(t, 'versionRange', { cur: updateInfo.current, latest: updateInfo.latest }))),
-      { marginTop: 14 }) : null,
+            : updateInfo.result === 'ok'
+              ? (updateInfo.autoRestart ? t('updatedAutoDetail') : t('updatedRestartDetail'))
+              : updateInfo.result === 'fail' ? fmt(t, 'updateFailed', { err: errText(updateInfo.output) || t('unknownError') })
+                : fmt(t, 'versionRange', { cur: updateInfo.current, latest: updateInfo.latest })),
+      extra: h('div', { className: 'dshp-inline', style: { marginTop: 8 } },
+        updateInfo.result !== 'ok'
+          ? Btn({ variant: 'primary', mini: true, icon: Ico.download, onClick: runUpdate, disabled: updateInfo.updating }, updateInfo.updating ? t('updating') : fmt(t, 'updateTo', { ver: updateInfo.latest }))
+          : updateInfo.autoRestart
+            ? Btn({ variant: 'ghost', mini: true, disabled: true }, t('restartingNow'))
+            : Btn({ variant: 'primary', mini: true, icon: Ico.refresh, onClick: restartPocket, disabled: updateInfo.restarting }, updateInfo.restarting ? t('restarting') : t('restartNow')),
+        // 「稍后」只隐藏横幅；下次版本检查（15 分钟/回到前台）会重新提示，不会漏掉更新
+        !updateInfo.updating && !updateInfo.restarting
+          ? Btn({ variant: 'ghost', mini: true, onClick: () => setUpdateInfo(null) }, t('later'))
+          : null),
+    }) : null,
 
     // ── 局域网 ────────────────────────────────────────────────────────────────
-    // 标题行自带总开关 → 二维码横排卡 → 访问密码行（开关 + 遮罩值）→ 高级·手动选地址
-    Section(h('span', null, Dot(status?.lanEnabled !== false), t('lanAccess')), Switch(status?.lanEnabled !== false, () => requestLanToggle(status?.lanEnabled === false)),
-      status?.lanEnabled === false
-        ? Alert('warn', t('lanDisabledHint'))
-        : (lanUrl
-          ? h('div', null,
-            qrBlock(status.lanQr, lanUrl, t('lanHint')),
-            // 访问密码行：开关 + 值（关闭时提示直连）
-            row(t('lanPin'), Switch(status?.lanAuthEnabled !== false, () => setLanAuth(status?.lanAuthEnabled === false)),
+    // 卡片：标题 + 副题 + 总开关 → 二维码 → 访问密码 → 高级（手动选地址）
+    Card({
+      key: 'lan', icon: Ico.lan, title: t('lanAccess'), sub: t('lanHint'),
+      right: Switch(status?.lanEnabled !== false, () => requestLanToggle(status?.lanEnabled === false), !status || pending.lanToggle === true, t('lanAccess')),
+      children: !status
+        ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
+        : status.lanEnabled === false
+          ? Alert({
+            kind: 'info', icon: Ico.info, children: t('lanDisabledHint'),
+            extra: h('div', { style: { marginTop: 8 } },
+              Btn({ variant: 'primary', onClick: () => requestLanToggle(true), disabled: pending.lanToggle === true }, t('lanToggleTitleOn'))),
+          })
+          : (lanUrl
+            ? h('div', null,
+              QRBlock({ src: status.lanQr, url: lanUrl, hint: null }),
+              Row({
+                label: t('lanPin'),
+                desc: status?.lanAuthEnabled === false ? t('lanPinOff') : null,
+                control: Switch(status?.lanAuthEnabled !== false, () => setLanAuth(status?.lanAuthEnabled === false), pending.lanAuth === true, t('lanPin')),
+              }),
               status?.lanAuthEnabled === false
-                ? h('div', { style: { ...styles.muted, marginTop: 6 } }, t('lanPinOff'))
+                ? null
                 : (customPin?.which === 'lan'
                   ? customPinRow('lan')
                   : h('div', null,
                     pinValueRow('lan', status.lanToken, [
-                      h('button', { style: styles.mini, onClick: refreshLanPin }, t('refresh')),
+                      Btn({ variant: 'ghost', mini: true, icon: Ico.refresh, onClick: refreshLanPin, disabled: pending.refreshPin === true }, t('refresh')),
                       customBtn('lan'),
                     ]),
-                    status?.lanPinCustom ? h('div', { style: { ...styles.warn, fontSize: 11, marginTop: 4 } }, t('pinCustomHint')) : null))),
-            // 高级：手动选地址（默认收起）
-            row(t('advAddress'),
-              h('button', {
-                style: { ...styles.link, font: 'inherit' },
-                onClick: () => setAdvOpen((v) => !v),
-              }, (status?.lanIpOverride || t('lanAddressAuto')) + (advOpen ? ' ‹' : ' ›')),
-              advOpen ? h('div', { style: { marginTop: 8 } },
-                h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)' } },
-                  t('lanAddress'),
-                  h('select', {
-                    value: status?.lanIpOverride || '',
-                    onChange: (e) => setLanAddress(e.target.value),
-                    style: { font: 'inherit', height: 30, padding: '0 8px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', background: 'var(--dsw-alias-bg-layer-1,#fff)', color: 'var(--dsw-alias-label-primary,inherit)' },
-                  },
-                  h('option', { value: '' }, t('lanAddressAuto')),
-                  (status?.lanCandidates || []).map((ip) => h('option', { key: ip, value: ip }, ip)),
-                  ),
-                )) : null),
-          )
-          : h('div', { style: { ...styles.muted, marginTop: 8 } }, t('lanStarting'))),
-        'lan'),
+                    status.lanPinCustom ? h('div', { className: 'dshp-warn-text' }, t('pinCustomHint')) : null)),
+              Row({
+                label: t('advAddress'),
+                control: Btn({ variant: 'ghost', mini: true, onClick: () => setAdvOpen((v) => !v) }, (status.lanIpOverride || t('lanAddressAuto')) + (advOpen ? ' ‹' : ' ›')),
+                extra: advOpen ? h('div', { className: 'dshp-adv' },
+                  h('label', { className: 'dshp-field' }, t('lanAddress'),
+                    h('select', {
+                      className: 'dshp-select',
+                      value: status.lanIpOverride || '',
+                      disabled: pending.lanAddr === true,
+                      onChange: (e) => setLanAddress(e.target.value),
+                    },
+                    h('option', { value: '' }, t('lanAddressAuto')),
+                    (status.lanCandidates || []).map((ip) => h('option', { key: ip, value: ip }, ip))))) : null,
+              }))
+            : h('div', { className: 'dshp-hint' }, t('lanStarting'))),
+    }),
 
     // ── 公网 ────────────────────────────────────────────────────────────────
-    // 标题行自带总开关（与局域网同语义）：开=已连隧道，关=未开启；
-    // 开启经免责声明弹窗确认，进度/错误由下方提示条呈现
-    Section(h('span', null, Dot(!!tunnelUrl), t('wanAccess')),
-      Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting),
-      h('div', null,
-        tunnelStarting
-          ? Alert('info', h('span', null,
-              tunnelPhase === 'downloading'
-                ? fmt(t, 'downloading', { s: elapsed(tunnelStateStarted) })
-                : fmt(t, 'connecting', { s: elapsed(tunnelStateStarted), suffix: elapsed(tunnelStateStarted) > 30 ? t('slowHint') : '' })))
-          : tunnelPhase === 'error'
-            ? Alert('error', fmt(t, 'error', { detail: errText(tunnelStateDetail) || t('unknownError') }))
-            : (!tunnelUrl && !isDesktop ? h('div', { style: { ...styles.muted, marginTop: 8 } }, t('wanOffHint')) : null),
-        tunnelUrl
-          ? h('div', null,
-            qrBlock(status.tunnelQr, tunnelUrl, namedMode ? t('namedRunningHint') : t('wanHint')),
-            // 防钓鱼 / 别收藏（issue #82）：公网链接仅本次有效、勿收藏提示
-            Alert('warn', t('wanEphemeralWarn')),
-            // 地址模式行（随机/固定；固定域名选中或编辑时分段高亮）
-            row(t('modeLabel'), modeSeg,
-              h('div', { style: { marginTop: 6 } },
-                // 刚保存固定域名但当前连接仍是随机域名：需关闭后重新开启才生效
-                namedMode && /trycloudflare\.com/i.test(tunnelUrl ?? '') ? h('div', { style: styles.warn }, t('namedTakeEffect')) : null,
-                // 固定域名：已保存摘要 + 修改入口（非编辑态）
-                namedMode && !tunnelCfg ? h('div', { style: { ...styles.muted } },
-                  fmt(t, 'namedSummary', { host: tunnelModeView.hostname || '—', token: tunnelModeView.tokenSet ? t('namedTokenSet') : t('namedTokenMissing') }),
-                  h('button', { style: { ...styles.mini, marginLeft: 8 }, onClick: () => setTunnelCfg({ hostname: tunnelModeView.hostname ?? '', token: '', err: null }) }, t('namedEdit')),
-                  h('div', { style: { ...styles.muted, marginTop: 4 } }, t('namedHow')),
-                  !tunnelModeView.tokenSet || !tunnelModeView.hostname ? h('div', { style: { marginTop: 2, color: 'var(--dsw-alias-state-error-primary,#dc2626)' } }, t('namedNeedCfg')) : null,
-                ) : null,
-                // 固定域名：编辑表单（域名 + Tunnel Token，Token 留空保持不变）
-                tunnelCfg ? h('div', { style: { marginTop: 6, fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', lineHeight: 1.6 } },
-                  h('div', null,
-                    t('namedHostnameLabel'),
-                    h('input', {
-                      style: { margin: '4px 0 0 6px', padding: '4px 8px', fontSize: 13, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', borderRadius: 6, outline: 'none', width: 200 },
-                      placeholder: 'pocket.example.com',
-                      value: tunnelCfg.hostname ?? '',
-                      autoFocus: true,
-                      onChange: (e) => setTunnelCfg((c) => ({ ...c, hostname: e.target.value.trim(), err: null })),
-                      onKeyDown: (e) => { if (e.key === 'Enter') saveNamedTunnel(); if (e.key === 'Escape') setTunnelCfg(null); },
-                    }),
-                  ),
-                  h('div', { style: { marginTop: 6 } },
-                    t('namedTokenLabel'),
-                    h('input', {
-                      style: { margin: '4px 0 0 6px', padding: '4px 8px', fontSize: 13, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', borderRadius: 6, outline: 'none', width: 240, ...styles.mono },
-                      type: 'password',
-                      value: tunnelCfg.token ?? '',
-                      onChange: (e) => setTunnelCfg((c) => ({ ...c, token: e.target.value.trim(), err: null })),
-                      onKeyDown: (e) => { if (e.key === 'Enter') saveNamedTunnel(); if (e.key === 'Escape') setTunnelCfg(null); },
-                    }),
-                  ),
-                  h('div', { style: { marginTop: 8, display: 'flex', gap: 8 } },
-                    h('button', { style: styles.mini, onClick: saveNamedTunnel }, t('save')),
-                    h('button', { style: styles.mini, onClick: () => setTunnelCfg(null) }, t('cancel')),
-                  ),
-                  h('div', { style: { ...styles.muted, marginTop: 6 } }, t('namedHow')),
-                  h('div', { style: { marginTop: 2, fontSize: 11, color: 'var(--dsw-alias-state-warn-primary,#b45309)', lineHeight: 1.5 } }, t('namedSecurity')),
-                  tunnelCfg.err ? h('div', { style: { color: 'var(--dsw-alias-state-error-primary,#dc2626)', marginTop: 4 } }, errText(tunnelCfg.err)) : null,
-                ) : null,
-              )),
-            // 访问密码行：遮罩值 + 自定义（自定义输入态整体替换）
-            status.accessToken
-              ? row(t('pinLabel'), null,
-                  customPin?.which === 'public'
-                    ? customPinRow('public')
-                    : h('div', null,
-                      pinValueRow('public', status.accessToken, [customBtn('public')]),
-                      h('div', { style: { marginTop: 4 } },
-                        status?.publicPinCustom ? h('div', { style: { ...styles.warn, fontSize: 11 } }, t('pinCustomHint')) : null,
-                        namedMode ? h('div', { style: { ...styles.warn, fontSize: 11 } }, t('namedSecurity')) : null)))
-              : null,
-          )
-          : null,
-      ),
-      'wan'),
+    // 卡片：标题 + 副题 + 总开关（开=已连隧道）；开启经免责声明弹窗确认
+    Card({
+      key: 'wan', icon: Ico.wan, title: t('wanAccess'), sub: namedMode ? t('namedWanHint') : t('wanHint'),
+      right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || !status, t('wanAccess')),
+      children: !status
+        ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
+        : h('div', null, wanStatusView, wanBody),
+    }),
 
-    // ── 偏好：手机端右边栏 / 捏合缩放（同属「手机访问」页，给出可见分组标题）──
-    // Section 签名是 (title, right, children, key)——只吃一个 children 槽，两行必须包成数组；
-    // 之前第二行 row 落进 key 参数被静默丢弃（data-dshp-section 变 [object Object]）
-    Section(h('span', null, t('prefsTitle')), null,
-      [row(
-        t('mobileRightbar'),
-        Switch(status?.mobileRightbarEnabled !== false, () => setMobileRightbar(status?.mobileRightbarEnabled === false)),
-        h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobileRightbarHint')),
-      ),
-      row(
-        t('mobilePinchZoom'),
-        Switch(status?.mobilePinchZoomEnabled === true, () => setMobilePinchZoom(status?.mobilePinchZoomEnabled !== true)),
-        h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobilePinchZoomHint')),
-      ),
-      row(
-        t('mobileFontSize'),
-        h('select', {
-          style: { font: 'inherit', fontSize: 13, height: 28, padding: '0 8px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', background: 'var(--dsw-alias-bg-layer-1,#fff)', color: 'inherit' },
-          value: String(Number(status?.mobileFontSize) || 0),
-          onChange: (e) => setMobileFontSize(Number(e.target.value)),
-        }, MOBILE_FONT_OPTIONS.map((px) => h('option', { key: px, value: String(px) }, px === 0 ? t('mobileFontFollow') : `${px} px`))),
-        h('div', { style: { ...styles.muted, marginTop: 6 } }, t('mobileFontSizeHint')),
-      )],
-      'prefs'),
+    // ── 手机端偏好：右边栏 / 捏合缩放 / 独立字号 ─────────────────────────────
+    Card({
+      key: 'prefs', icon: Ico.sliders, title: t('prefsTitle'), sub: t('prefsHint'),
+      children: !status
+        ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
+        : h('div', null,
+          Row({
+            label: t('mobileRightbar'),
+            desc: t('mobileRightbarHint'),
+            control: Switch(status.mobileRightbarEnabled !== false, () => setMobileRightbar(status.mobileRightbarEnabled === false), pending.prefs === true, t('mobileRightbar')),
+          }),
+          Row({
+            label: t('mobilePinchZoom'),
+            desc: t('mobilePinchZoomHint'),
+            control: Switch(status.mobilePinchZoomEnabled === true, () => setMobilePinchZoom(status.mobilePinchZoomEnabled !== true), pending.prefs === true, t('mobilePinchZoom')),
+          }),
+          Row({
+            label: t('mobileFontSize'),
+            desc: t('mobileFontSizeHint'),
+            control: h('select', {
+              className: 'dshp-select',
+              value: String(Number(status.mobileFontSize) || 0),
+              disabled: pending.prefs === true,
+              onChange: (e) => setMobileFontSize(Number(e.target.value)),
+            }, MOBILE_FONT_OPTIONS.map((px) => h('option', { key: px, value: String(px) }, px === 0 ? t('mobileFontFollow') : `${px} px`))),
+          })),
+    }),
 
-    error ? h('div', { style: { color: 'var(--dsw-alias-state-error-primary,#dc2626)', fontSize: 12, marginTop: 12 } }, `❌ ${errText(error)}`) : null,
+    // ── 维护：恢复出厂设置（最底部，避免误触）────────────────────────────────
+    Card({
+      key: 'reset', icon: Ico.trash, title: t('resetFactory'), sub: t('resetIntro'), danger: true,
+      right: Btn({ variant: 'danger', mini: true, onClick: () => setResetOpen(true), disabled: pending.reset === true }, t('resetGo')),
+    }),
 
-    // ── 恢复出厂设置：设置出问题时的临时兜底（最底部，避免误触） ─────────────
-    Section(null, null,
-      row(
-        t('resetFactory'),
-        h('button', { style: { ...styles.mini, color: 'var(--dsw-alias-state-error-primary,#dc2626)' }, onClick: () => setResetOpen(true) }, t('resetGo')),
-        h('div', { style: { ...styles.muted, fontSize: 11, marginTop: 4 } }, t('resetIntro')),
-      ),
-      'reset'),
-
-    // 页脚署名行：开发者 · Star · 反馈（一行收拢，弱化处理）
-    h('div', { style: { marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--dsw-alias-border-l2,#eceef2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11, color: 'var(--dsw-alias-label-tertiary,#8b93a1)' } },
+    // 页脚署名行：开发者 · Star · 反馈
+    h('footer', { className: 'dshp-footer' },
       h('span', null, t('developer')),
       h('span', null, '·'),
-      h('a', { href: 'https://github.com/daha1216/dsh-pocket', target: '_blank', rel: 'noreferrer', title: t('starAsk'), style: { color: 'inherit', textDecoration: 'none', borderBottom: '1px dashed currentColor' } }, t('starCta')),
+      h('a', { href: 'https://github.com/daha1216/dsh-pocket', target: '_blank', rel: 'noreferrer', title: t('starAsk') }, t('starCta')),
       h('span', null, '·'),
-      h('a', { href: 'https://github.com/daha1216/dsh-pocket/issues', target: '_blank', rel: 'noreferrer', style: { color: 'inherit', textDecoration: 'none', borderBottom: '1px dashed currentColor' } }, t('feedback')),
-    ),
+      h('a', { href: 'https://github.com/daha1216/dsh-pocket/issues', target: '_blank', rel: 'noreferrer' }, t('feedback'))),
 
     // 恢复出厂设置确认弹框
-    resetOpen ? Modal({ title: t('resetTitle'), tone: 'danger',
-      children: h('div', { style: { fontSize: 13, lineHeight: 1.7, color: 'var(--dsw-alias-label-primary,inherit)', whiteSpace: 'pre-line' } }, t('resetBody')),
-      actions: [
-        h('button', { style: { ...styles.btn, height: 32, padding: '0 16px' }, onClick: () => setResetOpen(false) }, t('cancel')),
-        h('button', { style: { ...styles.primary, height: 32, padding: '0 16px', background: 'var(--dsw-alias-state-error-primary,#dc2626)' }, onClick: doFactoryReset }, t('resetConfirm')),
-      ] }) : null,
-
-    // Toast：重置等操作的即时反馈（固定屏幕正中央，2.6s 自动消失）
-    toast ? h('div', {
-      style: { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 10001, maxWidth: 300, background: 'rgba(17,24,39,.92)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, lineHeight: 1.5, textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,.22)' },
-    }, toast) : null,
+    resetOpen ? Modal({ title: t('resetTitle'), tone: 'danger', onClose: () => setResetOpen(false),
+      children: h('div', { className: 'dshp-modal-body' }, t('resetBody')),
+      actions: h('div', { className: 'dshp-inline' },
+        Btn({ variant: 'ghost', mini: true, autoFocus: true, onClick: () => setResetOpen(false) }, t('cancel')),
+        Btn({ variant: 'danger', mini: true, onClick: doFactoryReset, disabled: pending.reset === true }, t('resetConfirm'))) }) : null,
 
     // 局域网访问开关确认弹框（关闭/打开时弹窗提醒）
-    lanToggleOpen !== null ? Modal({ title: t(lanToggleOpen ? 'lanToggleTitleOn' : 'lanToggleTitleOff'), tone: lanToggleOpen ? 'brand' : 'warn',
-      children: h('div', { style: { fontSize: 13, lineHeight: 1.7, color: 'var(--dsw-alias-label-primary,inherit)' } }, t(lanToggleOpen ? 'lanToggleBodyOn' : 'lanToggleBodyOff')),
-      actions: [
-        h('button', { style: { ...styles.btn, height: 32, padding: '0 16px' }, onClick: () => setLanToggleOpen(null) }, t('cancel')),
-        h('button', { style: { ...styles.primary, height: 32, padding: '0 16px' }, onClick: confirmLanToggle }, t('confirm')),
-      ] }) : null,
+    lanToggleOpen !== null ? Modal({ title: t(lanToggleOpen ? 'lanToggleTitleOn' : 'lanToggleTitleOff'), tone: lanToggleOpen ? 'brand' : 'warn', onClose: () => setLanToggleOpen(null),
+      children: h('div', { className: 'dshp-modal-body' }, t(lanToggleOpen ? 'lanToggleBodyOn' : 'lanToggleBodyOff')),
+      actions: h('div', { className: 'dshp-inline' },
+        Btn({ variant: 'ghost', mini: true, autoFocus: true, onClick: () => setLanToggleOpen(null) }, t('cancel')),
+        Btn({ variant: 'primary', mini: true, onClick: confirmLanToggle }, t('confirm'))) }) : null,
 
     // 安全免责声明弹框（issue #31）：每次开启公网访问前确认
-    disclaimerOpen ? Modal({ title: t('disclaimerTitle'), tone: 'warn',
+    disclaimerOpen ? Modal({ title: t('disclaimerTitle'), tone: 'warn', onClose: () => setDisclaimerOpen(false),
       children: h('div', null,
-        h('div', { style: { fontSize: 13, lineHeight: 1.7, color: 'var(--dsw-alias-label-primary,inherit)' } }, t('disclaimerBody')),
-        h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13, cursor: 'pointer' } },
-          h('input', { type: 'checkbox', checked: disclaimerChecked, onChange: (e) => setDisclaimerChecked(e.target.checked), style: { width: 16, height: 16 } }),
+        h('div', { className: 'dshp-modal-body' }, t('disclaimerBody')),
+        h('label', { className: 'dshp-check' },
+          h('input', { type: 'checkbox', checked: disclaimerChecked, onChange: (e) => setDisclaimerChecked(e.target.checked) }),
           t('disclaimerAgree')),
-        !disclaimerChecked ? h('div', { style: { marginTop: 8, fontSize: 12, color: 'var(--dsw-alias-state-error-primary,#dc2626)' } }, t('disclaimerHint')) : null),
-      actions: [
-        h('button', { style: { ...styles.btn, height: 32, padding: '0 16px' }, onClick: () => setDisclaimerOpen(false) }, t('cancel')),
-        h('button', {
-          style: { ...styles.primary, height: 32, padding: '0 16px', opacity: disclaimerChecked ? 1 : 0.5 },
-          disabled: !disclaimerChecked,
-          onClick: confirmDisclaimer,
-        }, t('disclaimerAgree')),
-      ] }) : null,
+        !disclaimerChecked ? h('div', { className: 'dshp-err-text', style: { marginTop: 8 } }, t('disclaimerHint')) : null),
+      actions: h('div', { className: 'dshp-inline' },
+        Btn({ variant: 'ghost', mini: true, autoFocus: true, onClick: () => setDisclaimerOpen(false) }, t('cancel')),
+        Btn({ variant: 'primary', mini: true, disabled: !disclaimerChecked, onClick: confirmDisclaimer }, t('disclaimerAgree'))) }) : null,
+
+    // Toast：重置等操作的即时反馈（固定屏幕正中央，2.6s 自动消失；读屏通过 aria-live 播报）
+    toast ? h('div', { className: 'dshp-toast', role: 'status', 'aria-live': 'polite' }, toast) : null,
   );
 }
 
