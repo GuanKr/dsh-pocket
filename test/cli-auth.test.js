@@ -20,7 +20,7 @@ import {
   buildAuth,
   entryUrl,
   resolvePublicConfig,
-  MIN_PIN_LENGTH,
+  MIN_PIN_LENGTH, assertSafeArgs,
 } from '../bin/dsh-pocket.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -53,14 +53,20 @@ test('issue #90：--pin / DSH_POCKET_PIN 可自定义，优先级 flag > env > �
 });
 
 test(`issue #90：自定义密码短于 ${MIN_PIN_LENGTH} 位必须被拒，不能静默接受弱口令`, () => {
-  for (const weak of ['1', '12', '1234', '12345']) {
+  for (const weak of ['1', '12', '1234', '12345', '123456', '1234567']) {
     const r = resolvePin(parseArgs(['--pin', weak]), {});
     assert.equal(r.pin, null, `${weak} 应被拒绝`);
     assert.ok(r.error, `${weak} 应给出错误说明`);
     assert.match(r.error, new RegExp(String(MIN_PIN_LENGTH)));
   }
-  // 刚好达到下限则接受
-  assert.equal(resolvePin(parseArgs(['--pin', '123456']), {}).pin, '123456');
+  // 刚好达到下限则接受（与插件默认/登录页 minlength=8 对齐）
+  assert.equal(resolvePin(parseArgs(['--pin', '12345678']), {}).pin, '12345678');
+});
+
+test('CLI --public 不能与 --no-auth 同时使用（公网必须认证）', () => {
+  assert.throws(() => assertSafeArgs(parseArgs(['--public', '--no-auth'])), /--no-auth/);
+  assert.doesNotThrow(() => assertSafeArgs(parseArgs(['--public'])));
+  assert.doesNotThrow(() => assertSafeArgs(parseArgs(['--no-auth'])));
 });
 
 test('issue #90：--no-auth 是显式 opt-out —— 只有它能让 auth 为空', () => {

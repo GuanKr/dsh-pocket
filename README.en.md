@@ -30,7 +30,7 @@
 - Out and about, you want the agent on your computer to look something up or write a snippet — no remote desktop, no SSH.
 - The computer is at home or in the office, you're elsewhere, and you want to **drive your DeepSeek Harness from your phone** — send tasks, watch the output, tap approvals.
 
-That's what DSH Pocket does: **install it, scan a QR code on the same Wi-Fi, and your phone shows and controls the DeepSeek Harness UI in real time.** Public access requires your own Cloudflare fixed hostname and Tunnel Token. Without that configuration, public access stays off and LAN access works as usual.
+That's what DSH Pocket does: **install it, scan a QR code on the same Wi-Fi, and your phone shows and controls the DeepSeek Harness UI in real time.** Public access uses a zero-config Quick Tunnel random URL by default (**no Cloudflare account needed**); you can optionally configure your own fixed hostname and Tunnel Token. LAN access works as usual.
 
 What it looks like — the phone shows the exact same UI as your computer, live:
 
@@ -74,14 +74,18 @@ npm install -g @deepseek-ai/dsh     # global install; verify: dsh --version
 ```
 
 ```sh
-# 1. Install the plugin (everything in one package)
-dsh plugin --profile web add github:daha1216/dsh-pocket -w
+# 1. Pack from this repository root (the Quick Tunnel restoration lives on the local branch only)
+npm install
+npm pack
 
-# 2. Restart dsh web
+# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.2-local.1.tgz)
+dsh plugin --profile web add "file:<repo path>/dsh-pocket-<version>.tgz" -w
+
+# 3. Restart dsh web
 npx @deepseek-ai/dsh web
 ```
 
-> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. Install with the GitHub address shown above.
+> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. The GitHub address `github:daha1216/dsh-pocket` currently points at origin 3.0.2 (fixed-domain only) and **does not include this fork's Quick Tunnel restoration**; use the local pack/install steps above for random URLs. Only switch back to a GitHub install after pushing the local branch and tagging a release.
 >
 > **Compatibility**: `engines.dsh` declares `^0.2.0-rc.1`, i.e. **DSH 0.2.0-rc.1 up to (but not including) 0.3.0**. On an unsupported runtime the plugin manager refuses with `incompatible-version`; add a one-off exemption with `dsh plugin allow-version` if you really need to try it elsewhere. Once DSH reaches 0.3.x this plugin needs a new release to widen the range.
 
@@ -120,7 +124,7 @@ In fixed-domain mode the public PIN defaults to a random **8-character PIN** and
 
 **Auto-restore:** only a previously enabled, fully configured fixed-hostname tunnel auto-restores after a DSH restart. Quick URLs are not restored (the address has changed, and auto-starting would re-expose your computer without consent). A factory reset stops public access and clears the hostname, Token and restore marker.
 
-> Upgrading: re-run the `add` command above (the GitHub address carries no tag, so it installs the latest commit on the default branch). To pin a version, write `github:daha1216/dsh-pocket#v3.0.2` instead, and re-`add` with the new tag when you want to move.
+> Upgrading: bump `package.json`, run `npm install --package-lock-only`, run `npm pack`, then re-run `add` with the new tarball. Do not update via a GitHub tag (origin lacks the local Quick Tunnel patch). Always bump the version: reusing the same version can leave the profile lockfile pointing at the old tarball.
 
 ### CLI public access
 
@@ -139,7 +143,7 @@ The Cloudflare hostname route's **Service must target the CLI's actual listening
 - **Public detection is fail-closed** (issue #66): everything except loopback and private LAN addresses is treated as **public and PIN-gated** — including any self-hosted tunnel / reverse proxy pointing at the local port with its own hostname. There is no "change the domain to bypass the PIN" hole.
 - LAN mode exposes nothing publicly; only devices on the same network can reach it.
 - Built for personal use; the plugin's public PIN lives in `$DSH_HOME/dsh-pocket/token` (rotated on enable in Quick mode, not in fixed-domain mode), the LAN PIN in `$DSH_HOME/dsh-pocket/token-lan` (refreshed manually in Settings), and switches, custom flags and public configuration in `$DSH_HOME/dsh-pocket/settings.json`.
-- **CLI mode (`dsh-pocket`) also requires a PIN by default**: a random 8-digit PIN is printed in the terminal and embedded in the QR code; manual address entry requires the PIN, while loopback access is exempt. Use `--pin <value>` or `DSH_POCKET_PIN=<value>` to set it yourself (at least 6 characters). `--no-auth` disables protection and is **not recommended**: anyone who can reach the port could operate a code-executing DSH.
+- **CLI mode (`dsh-pocket`) also requires a PIN by default**: a random 8-digit PIN is printed in the terminal and embedded in the QR code; manual address entry requires the PIN, while loopback access is exempt. Use `--pin <value>` or `DSH_POCKET_PIN=<value>` to set it yourself (at least 8 characters). `--no-auth` disables protection and is **not recommended** (and cannot be combined with `--public`): anyone who can reach the port could operate a code-executing DSH.
 
 ## 💻 DSH Desktop
 
@@ -204,11 +208,11 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 
 | File                 | Purpose                                                                                                                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/index.js`       | Plugin entry: auto-start proxy + register RPC + PIN management (public: 8 characters, not rotated on stop/start or restart; LAN: separate 8 characters, manually refreshable / switchable) + LAN access switch + DSH Desktop detection |
+| `lib/index.js`       | Plugin entry: auto-start proxy + register RPC + PIN management (public 8 characters: rotated on every Quick enable, not rotated for Named; LAN: separate 8 characters, manually refreshable / switchable) + LAN access switch + DSH Desktop detection |
 | `lib/settings.mjs`   | Settings persistence: LAN access switch (on by default) + LAN-PIN switch (on by default) stored in `$DSH_HOME/dsh-pocket/settings.json`                                                                                      |
-| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), user-configured named tunnel (restore requires complete configuration and a valid marker), status snapshot (with QR data URLs) |
+| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), Quick/Named dual-mode tunnels (only a fully configured Named tunnel auto-restores), status snapshot (with QR data URLs) |
 | `lib/proxy.mjs`      | Header-rewriting reverse proxy: Host/Origin → loopback, HTTP + WebSocket passthrough + polyfill injection + gzip/brotli compression + per-host token auth (public always; LAN per switch) + blocks LAN Hosts when LAN is off |
-| `lib/tunnel.mjs`     | cloudflared: multi-mirror download (Tsinghua first) / adaptive parallel / start a named tunnel with the user's Tunnel Token (HTTP/2) |
+| `lib/tunnel.mjs`     | cloudflared: multi-mirror download (Tsinghua first) / adaptive parallel / Quick (random URL, --protocol auto) and Named (Token + fixed hostname, --protocol auto) |
 | `lib/web-rpc.js`     | Loopback RPC: `status` / `tunnel.start` / `tunnel.stop` / `lan.setEnabled` / `version` / `update` / `restart`                                                                                                                |
 | `client/`            | "Phone access" settings tab + mobile adaptation (dsh-web-mobile port)                                                                                                                                                        |
 | `bin/dsh-pocket.mjs` | CLI: LAN/public modes, prints URL + QR                                                                                                                                                                                       |

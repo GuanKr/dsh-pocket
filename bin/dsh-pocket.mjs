@@ -3,7 +3,7 @@
 //
 // 用法：
 //   dsh-pocket                 # 局域网模式：手机同一 WiFi 扫码访问
-//   dsh-pocket --public        # 公网模式：默认随机域名（免 Cloudflare 账号）；已配置固定域名则用固定域名
+//   dsh-pocket --public        # 公网模式：默认随机域名（免 Cloudflare 账号）；显式切到固定域名模式才用固定域名
 //   dsh-pocket --port 3081     # 自定义代理端口（默认 3081；dsh web 保持 3080）
 //
 // 前提：dsh web 已在 127.0.0.1:3080 运行。
@@ -22,7 +22,14 @@ import { selectLanIPv4 } from '../lib/service.mjs';
 const require = createRequire(import.meta.url);
 
 /** 自定义密码的最短长度（issue #40：别让人设 `1234`）。 */
-export const MIN_PIN_LENGTH = 6;
+export const MIN_PIN_LENGTH = 8;
+
+/** 公网模式不能关闭认证：Quick Tunnel 的 URL 一旦泄露就是互联网裸奔。 */
+export function assertSafeArgs({ public: isPublic = false, noAuth = false } = {}) {
+  if (isPublic && noAuth) {
+    throw new Error('--public 不能与 --no-auth 同时使用：公网隧道必须设置访问密码 | --public cannot be combined with --no-auth');
+  }
+}
 
 export function parseArgs(argv) {
   const args = {
@@ -123,7 +130,7 @@ function printHelp() {
   dsh-pocket --port 3081 自定义代理端口
   dsh-pocket --host      自定义监听地址（默认 0.0.0.0）
   dsh-pocket --pin <值>  自定义访问密码（至少 ${MIN_PIN_LENGTH} 位；也可用环境变量 DSH_POCKET_PIN）
-  dsh-pocket --no-auth   关闭访问密码（不推荐，见下）
+  dsh-pocket --no-auth   关闭访问密码（不推荐；不能与 --public 同用）
   dsh-pocket --help      帮助
 
 前提：dsh web 已在 127.0.0.1:3080 运行（npx @deepseek-ai/dsh web）。
@@ -134,7 +141,7 @@ Tunnel Token / 域名，并把 Cloudflare Service 指向 CLI 的实际代理端�
 
 安全提醒：dsh web 能在这台机器上执行代码。默认会随机生成一个 8 位访问密码，
 二维码里已内嵌该密码（扫码直达），手动输入地址时需要填写。本机访问免密。
---no-auth 会让任何能连到监听端口的人直接控制 dsh web，仅在完全可信的网络里用。
+--no-auth 会让任何能连到监听端口的人直接控制 dsh web，仅在完全可信的网络里用；--public 与 --no-auth 互斥。
 `);
 }
 
@@ -153,6 +160,7 @@ function printQr(url, label) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  assertSafeArgs(args);
 
   const resolved = resolvePin(args, process.env);
   if (resolved.error) {
@@ -208,7 +216,9 @@ async function main() {
         tunnel = await startNamedTunnel({ token: publicConfig.token, signal: controller.signal });
         publicUrl = publicConfig.url;
       } else {
-        tunnel = await startQuickTunnel({ port, signal: controller.signal });
+        // cloudflared 必须连代理实际监听地址；0.0.0.0/:: 这类通配地址用 loopback。
+        const host = ['0.0.0.0', '::', '[::]', ''].includes(String(args.host).trim()) ? '127.0.0.1' : args.host;
+        tunnel = await startQuickTunnel({ port, host, signal: controller.signal });
         publicUrl = tunnel.url;
       }
       // 隧道进程跑着跑着挂了：CLI 没有状态轮询，只能靠这个回调提示，否则二维码一直挂着死链接

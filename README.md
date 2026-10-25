@@ -30,7 +30,7 @@
 - 出门在外，突然想让电脑上的 agent 查点资料、写段代码，但没有远程桌面、没有 SSH
 - 电脑在宿舍/办公室，你人在外面，想随时"操控你的 DeepSeek Harness"——发任务、看输出、点审批
 
-DSH Pocket 就是干这个的：**装上它，同一 WiFi 下手机扫个码，就能实时看到并操控电脑上的 DeepSeek Harness 界面**。公网接入仅支持用户自行配置 Cloudflare 固定域名与 Tunnel Token；未配置时公网保持关闭，局域网照常可用。
+DSH Pocket 就是干这个的：**装上它，同一 WiFi 下手机扫个码，就能实时看到并操控电脑上的 DeepSeek Harness 界面**。公网默认用随机域名 Quick Tunnel（**不需要 Cloudflare 账号**），也可自行配置固定域名与 Tunnel Token；局域网照常可用。
 
 实际效果——手机上的界面就是电脑上的界面，实时同步：
 
@@ -74,14 +74,18 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 ```
 
 ```sh
-# 1. 装插件（一个包全都有）
-dsh plugin --profile web add github:daha1216/dsh-pocket -w
+# 1. 在本仓库根目录打包（本 fork 的 Quick Tunnel 恢复只存在于 local 分支）
+npm install
+npm pack
 
-# 2. 重启 dsh web
+# 2. 装进 DSH profile（把 <仓库绝对路径> 换成实际路径；tarball 名形如 dsh-pocket-3.0.2-local.1.tgz）
+dsh plugin --profile web add "file:<仓库绝对路径>/dsh-pocket-<版本>.tgz" -w
+
+# 3. 重启 dsh web
 npx @deepseek-ai/dsh web
 ```
 
-> **装的是哪个包**：本仓库是 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 的 fork。npm 上同名的 `dsh-pocket` 是上游作者的包（当前 2.12.0），**不是**这里的 3.x。请用上面带 GitHub 地址的命令安装。
+> **装的是哪个包**：本仓库是 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 的 fork。npm 上同名的 `dsh-pocket` 是上游作者的包（当前 2.12.0），**不是**这里的 3.x。GitHub 上的 `github:daha1216/dsh-pocket` 目前是 origin 的 3.0.2（仅固定域名），**不含本 fork 恢复的 Quick Tunnel**；要用随机域名请按上面的本地打包安装。把 local 推到远端并打 tag 后，才可以改回 GitHub 安装。
 >
 > **兼容性**：`engines.dsh` 声明 `^0.2.0-rc.1`，即 **DSH 0.2.0-rc.1 及以上、0.3.0 之前**。装到不匹配的版本时，插件管理器会以 `incompatible-version` 明确拒绝；确实要在别的版本上试，可用 `dsh plugin allow-version` 加一次性豁免。DSH 升到 0.3.x 后需要本插件发新版放开范围。
 
@@ -120,7 +124,7 @@ npx @deepseek-ai/dsh web
 
 **自动恢复**：只有此前已开启且配置完整的固定域名隧道会在 DSH 重启后自动恢复；随机域名不会（地址已变，自动拉起等于替你重新暴露公网）。恢复出厂设置会关闭公网并清除域名、Token 和恢复标记。
 
-> 更新到新版本：重新执行上面的 `add` 命令即可（GitHub 地址不带 tag，装到的是默认分支最新提交）。想锁版本就写成 `github:daha1216/dsh-pocket#v3.0.2`，之后更新时把 tag 换成新版本号再 `add` 一次。
+> 更新到新版本：改 `package.json` 版本号 → `npm install --package-lock-only` → `npm pack` → 用新 tarball 重新执行 `add`。不要用 GitHub tag 更新（origin 不含本地 Quick Tunnel 补丁）；tarball 同名同版本时 profile 锁文件可能不更新，所以每次必须 bump 版本号。
 
 ### CLI 公网访问
 
@@ -139,7 +143,7 @@ npx @deepseek-ai/dsh web
 - **公网判定是 fail closed**（issue #66）：除本机（loopback）和局域网私网地址外，**一切陌生域名（包括你自建隧道/反向代理指向本机端口的固定域名）一律按公网处理、强制公网密码**——不存在「换域名绕过密码」的口子
 - 局域网模式不暴露公网，只有同一网络内的设备能访问
 - 适合个人自用；插件公网密码存本机 `$DSH_HOME/dsh-pocket/token`（随机域名模式开启时轮换，固定域名模式不轮换），局域网密码存 `$DSH_HOME/dsh-pocket/token-lan`（设置页手动刷新），开关、自定义标记及公网配置存 `$DSH_HOME/dsh-pocket/settings.json`
-- **CLI 模式（命令行直跑 `dsh-pocket`）也有密码**（issue #90 修复前这条路是无认证的）：默认随机生成 8 位密码，打印在终端、并已内嵌进二维码（**扫码体验不变**），手动敲地址时需要填写，本机访问免密。`--pin <值>` 或 `DSH_POCKET_PIN=<值>` 自定义（至少 6 位）；`--no-auth` 可关闭，**不推荐**——那等于把能执行代码的 DSH 裸暴露给任何能连上该端口的人
+- **CLI 模式（命令行直跑 `dsh-pocket`）也有密码**（issue #90 修复前这条路是无认证的）：默认随机生成 8 位密码，打印在终端、并已内嵌进二维码（**扫码体验不变**），手动敲地址时需要填写，本机访问免密。`--pin <值>` 或 `DSH_POCKET_PIN=<值>` 自定义（至少 8 位）；`--no-auth` 可关闭，**不推荐**，且**不能与 `--public` 同用**——那等于把能执行代码的 DSH 裸暴露给任何能连上该端口的人
 
 ## 💻 DSH Desktop（桌面版）
 
@@ -210,11 +214,11 @@ npx @deepseek-ai/dsh web
 
 | 文件                 | 说明                                                                                                                                                                               |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/index.js`       | 插件入口：自动起代理 + 注册 RPC + 访问密码管理（公网 8 位，不随启停或重启自动换新；局域网独立 8 位可手动刷新/开关）+ 局域网访问总开关 + 桌面端环境适配 |
+| `lib/index.js`       | 插件入口：自动起代理 + 注册 RPC + 访问密码管理（公网 8 位：Quick 每次开启轮换，Named 不轮换；局域网独立 8 位可手动刷新/开关）+ 局域网访问总开关 + 桌面端环境适配 |
 | `lib/settings.mjs`   | 设置持久化：局域网访问总开关（默认开启）+ 局域网密码开关（默认开启）存 `$DSH_HOME/dsh-pocket/settings.json`                                                                        |
-| `lib/service.mjs`    | 服务：代理生命周期（端口自适应）、用户自配命名隧道（完整配置与有效标记才恢复）、状态快照（含二维码） |
+| `lib/service.mjs`    | 服务：代理生命周期（端口自适应）、Quick/Named 双模式隧道（仅完整配置的 Named 自动恢复）、状态快照（含二维码） |
 | `lib/proxy.mjs`      | 改头反向代理：Host/Origin → loopback，HTTP + WebSocket 透传 + polyfill 注入 + gzip/brotli 压缩 + 按 Host 区分的访问令牌认证（公网必验；局域网按开关）+ 局域网关闭时拦截局域网 Host |
-| `lib/tunnel.mjs`     | cloudflared：多镜像源下载（清华优先）/自适应多线程/用用户的 Tunnel Token 启动命名隧道（HTTP/2） |
+| `lib/tunnel.mjs`     | cloudflared：多镜像源下载（清华优先）/自适应多线程/Quick（随机域名，--protocol auto）与 Named（Token+固定域名，--protocol auto） |
 | `lib/web-rpc.js`     | loopback RPC：`status` / `tunnel.start` / `tunnel.stop` / `lan.setEnabled` / `version` / `update` / `restart`                                                                      |
 | `client/`            | 设置页「手机访问」+ 移动端适配（dsh-web-mobile 移植）                                                                                                                              |
 | `bin/dsh-pocket.mjs` | CLI：局域网/公网模式，打印 URL + 二维码                                                                                                                                            |

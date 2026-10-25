@@ -74,6 +74,8 @@ function mount({ configured = false, mode = 'quick', dictionary = zh, rpc } = {}
     calls.push({ endpoint, payload });
     if (rpc) return rpc(endpoint, payload);
     if (endpoint === POCKET_ENDPOINTS.tunnelSetConfig) {
+      // 与真实后端一致：运行中保存配置会先停止旧隧道，避免旧凭据/旧入口继续暴露。
+      if (status.tunnelUrl) status = { ...status, tunnelUrl: null, tunnelQr: null, tunnelState: { phase: 'idle' } };
       if (payload.mode === 'quick') {
         status = { ...status, tunnelConfig: { ...status.tunnelConfig, mode: 'quick' } };
       } else {
@@ -151,6 +153,8 @@ for (const dictionary of [zh, en]) {
     tree = page.render();
     assert.equal(page.calls.length, 0, '未配置时只展开表单');
     assert.equal(nodes(wan(tree), (node) => node.type === 'input').length, 2);
+    assert.equal(switchOf(tree).props.disabled, true, '表单打开时公网开关禁用，避免误启 Quick');
+    assert.equal(nodes(wan(tree), (node) => node.type === 'button' && text(node) === dictionary.enable).length, 0, '不再显示 Quick 开启 CTA');
 
     // 保存固定域名配置 → 只保存不启动
     const inputs = nodes(wan(tree), (node) => node.type === 'input');
@@ -230,8 +234,46 @@ test('公网设置：编辑时 Token 留空不覆盖旧值，保存中禁止公�
   await pending;
   tree = page.render();
   assert.ok(text(wan(tree)).includes('configuration rejected'));
-  assert.equal(switchOf(tree).props.disabled, false);
+  assert.equal(switchOf(tree).props.disabled, true, '表单仍打开时公网开关保持禁用');
+  button(tree, zh.cancel).props.onClick();
+  tree = page.render();
+  assert.equal(switchOf(tree).props.disabled, false, '取消表单后恢复开关');
   assert.equal(page.calls.length, 1);
+});
+
+test('公网设置：运行中切换模式会停止旧隧道，避免设置与实际入口不一致', async () => {
+  const page = mount({ configured: true, mode: 'named' });
+  button(page.render(), zh.enable).props.onClick();
+  nodes(page.render(), (node) => node.type === 'input' && node.props.type === 'checkbox')[0].props.onChange({ target: { checked: true } });
+  button(page.render(), zh.disclaimerAgree).props.onClick();
+  await settle();
+  let tree = page.render();
+  assert.equal(switchOf(tree).props['aria-checked'], true);
+  button(tree, zh.modeQuick).props.onClick();
+  await settle();
+  tree = page.render();
+  assert.equal(page.calls.at(-1).endpoint, POCKET_ENDPOINTS.tunnelSetConfig);
+  assert.equal(page.calls.at(-1).payload.mode, 'quick');
+  assert.equal(switchOf(tree).props['aria-checked'], false, '旧固定域名隧道已停止');
+  assert.equal(nodes(wan(tree), (node) => node.type === 'img').length, 0, '旧地址二维码不再展示');
+});
+
+test('公网设置：运行中只改 Token 保存也会停止旧隧道', async () => {
+  const page = mount({ configured: true, mode: 'named' });
+  button(page.render(), zh.enable).props.onClick();
+  nodes(page.render(), (node) => node.type === 'input' && node.props.type === 'checkbox')[0].props.onChange({ target: { checked: true } });
+  button(page.render(), zh.disclaimerAgree).props.onClick();
+  await settle();
+  let tree = page.render();
+  assert.equal(switchOf(tree).props['aria-checked'], true);
+  button(tree, zh.namedEdit).props.onClick();
+  tree = page.render();
+  nodes(wan(tree), (node) => node.type === 'input' && node.props.type === 'password')[0].props.onChange({ target: { value: 'fake-rotated-token-for-ui-tests' } });
+  await button(page.render(), zh.save).props.onClick();
+  tree = page.render();
+  assert.equal(page.calls.at(-1).endpoint, POCKET_ENDPOINTS.tunnelSetConfig);
+  assert.equal(page.calls.at(-1).payload.token, 'fake-rotated-token-for-ui-tests');
+  assert.equal(switchOf(tree).props['aria-checked'], false, '旧 Token 隧道已停止，需重新开启应用新 Token');
 });
 
 test('公网设置：恢复出厂回到随机域名，不留下公网入口或二维码', async () => {

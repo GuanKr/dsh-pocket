@@ -475,6 +475,10 @@ function PocketSettingsTab({ rpcCall, t }) {
   const [disclaimerChecked, setDisclaimerChecked] = useState(false);
 
   const doStartTunnel = async () => {
+    if (tunnelCfg) {
+      showToast(t('modeFormPending'));
+      return;
+    }
     // 固定域名模式：Token/域名没配齐就不发起（服务端同样会拒绝）。
     // 随机域名模式零配置，直接开启。
     const cfg = status?.tunnelConfig;
@@ -497,6 +501,12 @@ function PocketSettingsTab({ rpcCall, t }) {
     });
   };
   const startTunnel = () => {
+    // 固定域名表单打开时不能去启动 Quick：用户正在配置固定域名，
+    // 此时启动随机域名会与预期不符，且表单内容会丢失。
+    if (tunnelCfg) {
+      showToast(t('modeFormPending'));
+      return;
+    }
     const cfg = status?.tunnelConfig;
     if (cfg?.mode === 'named' && (!cfg.hostname || !cfg.tokenSet)) {
       setTunnelCfg({ hostname: cfg.hostname ?? '', token: '', err: null });
@@ -531,17 +541,19 @@ function PocketSettingsTab({ rpcCall, t }) {
       setTunnelCfg({ hostname: status?.tunnelConfig?.hostname ?? '', token: '', err: null });
       return;
     }
+    const wasRunning = Boolean(status?.tunnelUrl);
     try {
       const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, { mode });
       setStatus(s);
       setTunnelCfg(null);
-      showToast(t('modeSwitchHint'));
+      showToast(wasRunning ? t('configStopped') : t('modeSwitchHint'));
     } catch (err) {
       setError(err.message);
     }
   });
 
   const saveNamedTunnel = () => withPending('saveNamed', async () => {
+    const wasRunning = Boolean(status?.tunnelUrl);
     try {
       const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, {
         mode: 'named',
@@ -550,6 +562,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       });
       setStatus(s);
       setTunnelCfg(null);
+      if (wasRunning) showToast(t('configStopped'));
     } catch (err) {
       setTunnelCfg((c) => ({ ...(c ?? {}), err: err.message }));
     }
@@ -857,7 +870,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     })
     : tunnelPhase === 'error'
       ? Alert({ kind: 'error', icon: Ico.warn, children: fmt(t, 'error', { detail: errText(tunnelStateDetail) || t('unknownError') }) })
-      : (!tunnelUrl && (publicConfigured || !namedMode)
+      : (!tunnelUrl && !tunnelCfg && (publicConfigured || !namedMode)
         ? Alert({
           kind: 'info', icon: Ico.info, children: namedMode ? t('wanOffHint') : t('quickOffHint'),
           extra: h('div', { style: { marginTop: 8 } },
@@ -1069,7 +1082,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     // 卡片：标题 + 副题 + 总开关（开=已连隧道）；开启经免责声明弹窗确认
     Card({
       key: 'wan', icon: Ico.wan, title: t('wanAccess'), sub: namedMode ? t('namedWanHint') : t('quickWanHint'),
-      right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || pending.saveNamed === true || pending.mode === true || !status, t('wanAccess')),
+      right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || pending.saveNamed === true || pending.mode === true || !status || Boolean(tunnelCfg), t('wanAccess')),
       children: !status
         ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
         : h('div', null, wanStatusView, wanBody),

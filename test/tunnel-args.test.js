@@ -76,6 +76,27 @@ test('Quick Tunnel：--url 指向本机代理、协议 auto，并从输出解析
   }
 });
 
+test('Quick Tunnel：--host 指定非通配地址时连实际地址，通配地址回落 loopback', { skip: POSIX_ONLY }, async () => {
+  for (const [host, expected] of [
+    ['192.168.1.10', 'http://192.168.1.10:3081'],
+    ['0.0.0.0', 'http://127.0.0.1:3081'],
+    ['::', 'http://127.0.0.1:3081'],
+  ]) {
+    const { bin, record, dir } = await makeFakeCloudflared('INF https://fake-quick.trycloudflare.com\n');
+    try {
+      await withFakeBin(bin, async () => {
+        const res = await startQuickTunnel({ port: 3081, host, signal: new AbortController().signal });
+        res.kill();
+        const recorded = JSON.parse(await readFile(record, 'utf8'));
+        const i = recorded.argv.indexOf('--url');
+        assert.equal(recorded.argv[i + 1], expected, host);
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }
+});
+
 test('firstMeaningfulErrorLine: 参数错误取开头首行', () => {
   const buf = 'Incorrect Usage: flag provided but not defined: -no-autoupdate\n\nNAME:\n  cloudflared tunnel run - Proxy a local web server\n--bastion Runs as jump host ...';
   assert.equal(firstMeaningfulErrorLine(buf), 'Incorrect Usage: flag provided but not defined: -no-autoupdate');

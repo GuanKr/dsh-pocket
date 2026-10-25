@@ -394,6 +394,18 @@ test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；rese
     assert.equal(started.value.tunnelUrl, 'https://pocket.example.com');
     assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`]);
 
+    // 运行中保存配置（含 Token 轮换）必须停掉旧隧道，否则新凭据不会生效、旧隧道继续暴露
+    const reconfigured = await conn.handler(POCKET_ENDPOINTS.tunnelSetConfig, {
+      mode: 'named', hostname: 'pocket.example.com',
+    });
+    assert.equal(reconfigured.ok, true);
+    assert.equal(reconfigured.value.tunnelRunning, false, '运行中保存配置会先停隧道');
+    assert.equal(reconfigured.value.tunnelUrl, null, '旧隧道地址立即失效');
+    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`], '停隧道不会再启动新隧道');
+    const restarted = await conn.handler(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
+    assert.equal(restarted.ok, true, '重新开启应用新配置');
+    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${FAKE_TUNNEL_TOKEN}`]);
+
     const unconfirmed = await conn.handler(POCKET_ENDPOINTS.pocketReset, {});
     assert.equal(unconfirmed.ok, false, 'reset 必须显式确认');
     assert.equal((await service.status()).tunnelRunning, true, '未确认不停止隧道');
@@ -405,7 +417,7 @@ test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；rese
     const afterReset = await conn.handler(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
     assert.equal(afterReset.ok, true, 'reset 后仍可用免账号 Quick 模式');
     assert.equal(afterReset.value.tunnelUrl, 'https://quick-test.trycloudflare.com');
-    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, 'quick:3081'], 'reset 后重新启动 Quick');
+    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${FAKE_TUNNEL_TOKEN}`, 'quick:3081'], 'reset 后重新启动 Quick');
   } finally {
     await service.dispose();
   }
@@ -1210,15 +1222,11 @@ test('公网隧道自动恢复：dispose（进程退出/重启）保留标记，
   await service2.restoreTunnelIfNeeded();
   assert.equal(startCount, 2, 'dispose 后重启仍自动恢复');
 
-  // 对照：手动 stopTunnel()（设置页关闭）仍然删除标记
-  service2.stopTunnel();
-  let afterClose = null;
-  for (let i = 0; i < 50; i++) {
-    afterClose = await fsp.readFile(statePath, 'utf8').catch(() => null);
-    if (afterClose === null) break;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  assert.equal(afterClose, null, '手动关闭仍删除标记');
+  // 对照：手动 stopTunnel()（设置页关闭）返回时标记必须已删除——
+  // 否则用户点完关闭立刻重启/断电，named 会在下次启动被错误自动恢复。
+  await service2.stopTunnel();
+  const afterClose = await fsp.readFile(statePath, 'utf8').catch(() => null);
+  assert.equal(afterClose, null, '手动关闭返回时标记已删除');
 
   await fsp.rm(home, { recursive: true, force: true });
 });
