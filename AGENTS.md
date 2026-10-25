@@ -121,7 +121,7 @@ cp "$DSH_HOME/profiles/web/pnpm-lock.yaml" "$DSH_HOME/profiles/web/pnpm-lock.yam
 ## 四、测试
 
 ```sh
-npm test          # 221 个用例（218 pass / 3 skip）
+npm test          # 270 个用例（267 pass / 3 skip）
 ```
 
 - `test/tunnel-args.test.js` 有 2 条在 Windows 上 **skip**（依赖 POSIX shebang 的隧道参数
@@ -227,22 +227,44 @@ git commit -m "chore(sync): 同步 origin/main 至 <短 sha>（<上游版本>）
 `package-lock.json` 的冲突是机械的，**永远**用「`git checkout --ours` +
 `npm install --package-lock-only`」重生成，不要手解。
 
-### 本仓足迹（都不会被 sync 覆盖，故冲突面极小）
+### 本仓足迹（都会保留；冲突面比早期大）
 
 | 文件 | 性质 |
 | --- | --- |
 | `.gitignore` / `package.json` / `package-lock.json` | 配置与版本 |
 | `.releaserc.cjs` | **已删除**（f9e2008）—— sync 时不要让它回来 |
 | `AGENTS.md` / `LOCAL-DEV.md` / `client/mobile/PORTING.md` | 本仓文档 |
-| `test/composer-keyboard.test.js` / `test/mobile-nav.test.js` | 本仓测试 |
+| `test/composer-keyboard.test.js` / `test/mobile-nav.test.js` / `test/public-settings.test.js` | 本仓测试 |
+| `lib/tunnel.mjs` / `lib/settings.mjs` / `lib/service.mjs` / `lib/index.js` / `lib/web-rpc.js` / `bin/dsh-pocket.mjs` | **本地功能补丁**：Quick Tunnel（见下节） |
+| `client/index.jsx` / `client/pocket-locales.js` / `client/client.js` | 设置页 Quick Tunnel 模式切换 + 重建产物 |
 
-**足迹里没有生产代码** —— 全部是文档、测试与配置。这既是冲突面极小的原因，也是维护成本低的
-原因。
+**足迹里已有生产代码**（2026-10-25 起，Quick Tunnel 恢复）。冲突面比过去大：sync 时要特别
+检查 `lib/service.mjs`、`lib/settings.mjs`、`client/index.jsx`，解完冲突必须跑全量测试。
+
+### 本地功能补丁：Quick Tunnel（3.0.2-local.1）
+
+origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保留用户自配的固定域名。
+本 fork 恢复它，因为 Quick Tunnel **不需要 Cloudflare 账号/域名**，是「没有 CF 账号」场景
+唯一的公网入口。
+
+- 模式：`settings.tunnelMode()` 默认 `'quick'`；显式保存 `'named'` 才用固定域名。
+- 启动：`lib/service.mjs` 的 `startTunnel` 按 mode 分派 `startQuickTunnel` / `startNamedTunnel`。
+- 安全语义：Quick 每次开启轮换公网 PIN（自定义 PIN 除外）；Quick 的 `tunnel-auto.json`
+  标记为 `mode:'quick'`，**重启后不自动恢复**（域名已变，自动拉起等于替用户重新暴露公网）；
+  只有完整配置的 Named 会恢复。
+- CLI：`dsh-pocket --public` 默认走 Quick（免账号）；设置里切到 named 且配置完整才走固定域名。
+- UI：设置页公网卡有「随机域名（免账号） / 固定域名」切换；Quick 不显示配置表单。
+- 守护测试：`test/service.test.js`（quick 启动/标记/恢复）、`test/settings.test.js`、
+  `test/cli-auth.test.js`、`test/public-settings.test.js`、`test/tunnel-args.test.js`。
+
+同步时如果 origin 再次改隧道语义，先读这一节与 `client/mobile/PORTING.md` 的对应条目，
+不要把 Quick 分支当成冲突噪音删掉。
 
 ### 什么时候该换回 rebase
 
 - `local` 开始推送或被他人引用 → 仍用 squash-merge，但要重新想清楚远端语义
-- **足迹里开始出现生产代码** → 那时 rebase 的「小步线性提交」价值才真正回来
+- **足迹里开始出现生产代码** → 本仓已出现（Quick Tunnel 补丁，2026-10-25）；结论仍是
+  squash-merge，但每次 sync 后必须人工核对本地补丁并跑全量测试
 - 需要在多个长期分支间来回 → 结论不变，sync 提交的价值反而更大
 
 ---

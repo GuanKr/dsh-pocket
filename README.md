@@ -14,9 +14,9 @@
   <a href="https://awesome-dsh-plugin.com/zh/"><img alt="Awesome DSH Plugin" src="https://awesome-dsh-plugin.com/badge.svg"></a>
 </p>
 
-> 把 **DeepSeek Harness 装进你的口袋**：一个包、一个设置页，手机扫二维码就实时看到电脑上的同一个界面——人在外面也能用。
+> 把 **DeepSeek Harness 装进你的口袋**：一个包、一个设置页，同一 WiFi 下手机扫二维码就实时看到电脑上的同一个界面；点「开启公网访问」还能拿到随机公网地址（**不需要 Cloudflare 账号**），人在外面也能用。
 
-> **本仓库是个人 fork（纯净合并版）**：基于上游 [shaobeichen/dsh-pocket](https://github.com/shaobeichen/dsh-pocket)（GPL-2.0）与移动端适配上游 [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile)（MIT）的最新代码合并而成；不带额外功能定制，只做上游同步与适配修复，维护者 **大哈**（[@daha1216](https://github.com/daha1216)）。上游的功能说明、更新与 release 请看[上游仓库](https://github.com/shaobeichen/dsh-pocket)。
+> **本仓库是个人 fork（纯净合并版）**：基于上游 [shaobeichen/dsh-pocket](https://github.com/shaobeichen/dsh-pocket)（GPL-2.0）与移动端适配上游 [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile)（MIT）的最新代码合并而成；只做上游同步与适配修复，并额外恢复了 origin v3.0.0 移除的 Quick Tunnel（免账号随机公网地址），维护者 **大哈**（[@daha1216](https://github.com/daha1216)）。上游的功能说明、更新与 release 请看[上游仓库](https://github.com/shaobeichen/dsh-pocket)。
 
 <p align="center">
   ⭐ 顺手留颗 Star，大哈能高兴一整天 &nbsp;·&nbsp; <a href="https://github.com/daha1216/dsh-pocket">好，这就去 Star</a>
@@ -30,7 +30,7 @@
 - 出门在外，突然想让电脑上的 agent 查点资料、写段代码，但没有远程桌面、没有 SSH
 - 电脑在宿舍/办公室，你人在外面，想随时"操控你的 DeepSeek Harness"——发任务、看输出、点审批
 
-DSH Pocket 就是干这个的：**装上它，手机扫个码，就能实时看到并操控电脑上的 DeepSeek Harness 界面**——人在外面也能用。
+DSH Pocket 就是干这个的：**装上它，同一 WiFi 下手机扫个码，就能实时看到并操控电脑上的 DeepSeek Harness 界面**。公网接入仅支持用户自行配置 Cloudflare 固定域名与 Tunnel Token；未配置时公网保持关闭，局域网照常可用。
 
 实际效果——手机上的界面就是电脑上的界面，实时同步：
 
@@ -43,20 +43,20 @@ DSH Pocket 就是干这个的：**装上它，手机扫个码，就能实时看�
 | 特性                    | 说明                                                                                                                                                                               |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 📶 局域网扫码           | 装好即用：设置 → 手机访问，打开就有局域网二维码，手机连同一 WiFi 扫码即开（自动识别本机局域网 IP，**WSL 环境自动取 Windows 物理网卡 IP**）                                         |
-| 🚪 局域网开关           | 设置页可**一键关闭/开启局域网访问**（切换时弹窗提醒）：关闭后局域网二维码/链接立即失效，仅公网可用                                                                                 |
-| 🌐 公网扫码（人在外面） | 点「开启公网访问」→ cloudflared 隧道 → 出公网二维码，4G/任何网络都能访问                                                                                                           |
-| 🏷️ 公网固定域名         | 可选「**命名隧道**」模式：填 Cloudflare Tunnel Token + 自己的域名，公网地址**固定不变**（重启不再变；见下方说明）                                                                  |
-| 🔐 访问密码             | 公网链接默认使用 **8 位随机密码**（每次开启公网自动换新；**可自定义固定密码**——自定义后不再换新）；局域网有独立的默认 **8 位随机密码**（默认开启，设置页可**一键关闭**——关闭后局域网扫码直连） |
-| 🔑 自定义密码           | 公网/局域网密码都可在设置页**设成自己固定的 8–64 位密码（英文字母大小写或数字）**（自定义后公网不再自动换新）                                                                         |
+| 🚪 局域网开关           | 设置页可**一键关闭/开启局域网访问**（切换时弹窗提醒）：关闭后局域网二维码/链接立即失效，已配置并开启的公网访问不受影响 |
+| 🌐 公网扫码（人在外面） | 默认 **Quick Tunnel**：点「开启公网访问」即可获得随机 `trycloudflare.com` 地址，**不需要 Cloudflare 账号/域名**；手机可从任何网络扫码访问 |
+| 🏷️ 公网固定域名（可选） | 有自己的 Cloudflare 账号/域名时，可切到**命名隧道**填 Tunnel Token + 固定域名；地址重启不变。保存配置不会自动开启公网 |
+| 🔐 访问密码             | 插件公网默认使用 **8 位随机密码**：随机域名模式每次开启自动换新，固定域名模式不自动换新；局域网有独立的默认 **8 位随机密码**（默认开启，可在设置页关闭，关闭后局域网扫码直连） |
+| 🔑 自定义密码           | 公网/局域网密码都可在设置页**设成自己固定的 8–64 位密码（英文字母大小写或数字）**；请主动管理、泄露后及时修改 |
 | 🧘 会话保持             | 手机输一次密码后**长期免输**（登录状态绑定电脑上的 dsh web 进程：只要它不重启，手机不用再输；**dsh web 重启/更新后需重新输入一次**）                                               |
 | ⚡ 实时同步             | 流式输出走 WebSocket 全透传——**电脑上在输出，手机上同步在滚**，可双向操作；内置心跳保活（防路由器 NAT/省电机制静默断链，断线自动重连）                                             |
 | 📱 移动端适配           | 窄屏自动变抽屉布局（移植 dsh-web-mobile，MIT）：侧栏抽屉、会话全宽、状态栏安全区、触控优化                                                                                         |
 | 🧭 可选右边栏           | 手机端显示原生右边栏入口；普通手机可在设置中关闭以保持紧凑，折叠屏展开后可更方便地同时使用终端底栏和右边栏                                                                         |
-| 📏 手机端独立字号       | 手机上的会话正文可**单独调大（12–22px）**，不影响桌面「字号大小」；默认「跟随桌面」，桌面改字号手机也不变                                                                          |
+| 📏 手机端字号           | 默认「跟随桌面」，桌面改字号时手机同步变化；选择**具体字号（12–22px）**后才独立，不影响桌面「字号大小」 |
 | 📁 文件浏览             | 移动端「文件浏览」入口需要宿主提供 explorer 面板（dsh-web-ui 组件）；官方 DSH 未内置时入口自动隐藏，不会出现"点了没反应"                                                           |
 | 🗜️ 传输压缩             | 大 JSON 响应自动 gzip/brotli（长会话 17MB → ~1MB，brotli 质量 6：快且省流量），手机加载更快、更省流量                                                                              |
-| 🔁 隧道自动恢复         | DSH 重启后自动重新拉起之前开着的公网隧道，无需手动重开                                                                                                                             |
-| 🧩 零依赖安装           | 一个 npm 包、一个设置页，没有核心/适配器要分开装；无需账号、无需服务器                                                                                                             |
+| 🔁 隧道自动恢复         | 仅恢复此前开启且配置完整的**固定域名**隧道；随机域名重启后地址必变，不会自动拉起（避免替你重新暴露公网） |
+| 🧩 单包安装             | 一个 npm 包、一个设置页，没有核心/适配器要分开装；局域网和随机公网都无需账号，固定域名才需要自己的 Cloudflare 账号/域名 |
 
 ## 🚀 怎么用
 
@@ -75,11 +75,15 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 
 ```sh
 # 1. 装插件（一个包全都有）
-dsh plugin --profile web add dsh-pocket -w
+dsh plugin --profile web add github:daha1216/dsh-pocket -w
 
 # 2. 重启 dsh web
 npx @deepseek-ai/dsh web
 ```
+
+> **装的是哪个包**：本仓库是 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 的 fork。npm 上同名的 `dsh-pocket` 是上游作者的包（当前 2.12.0），**不是**这里的 3.x。请用上面带 GitHub 地址的命令安装。
+>
+> **兼容性**：`engines.dsh` 声明 `^0.2.0-rc.1`，即 **DSH 0.2.0-rc.1 及以上、0.3.0 之前**。装到不匹配的版本时，插件管理器会以 `incompatible-version` 明确拒绝；确实要在别的版本上试，可用 `dsh plugin allow-version` 加一次性豁免。DSH 升到 0.3.x 后需要本插件发新版放开范围。
 
 ### 局域网（同一 WiFi）
 
@@ -95,32 +99,46 @@ npx @deepseek-ai/dsh web
 
 ### 公网（人在外面）
 
-同一页点「**开启公网访问**」→ **每次都会先弹出安全免责声明**，勾选「我已知情」后才能开启（公司/涉密网络请先确认合规）→ 等隧道建立（首次会下载 cloudflared，macOS/Linux 走清华镜像秒下）→ 手机扫「🌐 公网」二维码 → 打开链接**输入访问密码**（密码显示在设置页公网区块，默认是**每次开启公网变新的 8 位随机密码**，也可点「自定义」设成 8–64 位固定密码——英文字母大小写或数字，自定义后不再换新）→ 人在外面（4G/公司网）也能访问。
+设置 → 手机访问 → 公网卡片默认是 **随机域名（免账号）** 模式：
 
-> 更新到新版本：`dsh plugin --profile web update dsh-pocket --latest -w`（跨大版本时 `--latest` 是必须的，`^0.x` 范围不会自动升到 1.x）。
+1. 点「**开启公网访问**」→ 首次会弹安全免责声明，勾选「我已知情」后继续。
+2. 等 cloudflared 下载/连接完成（首次约 20–50MB；之后秒开）→ 页面出现 **公网二维码**。
+3. 手机扫码并输入访问密码（页面上的 8 位随机密码，每次开启会换新）即可从 4G/任何网络访问。
 
-### 公网固定域名（命名隧道，可选）
+随机域名由 Cloudflare Quick Tunnel 分配（形如 `https://xxxx.trycloudflare.com`），**不需要 Cloudflare 账号、域名或 Tunnel Token**；关闭或重启 DSH 后地址会失效/更换，**不要收藏链接**。
 
-默认「快速隧道」的公网地址每次重启都会变（前缀随机）。想要**固定公网地址**，可用 Cloudflare **命名隧道**（需要 Cloudflare 账号 + 自己的域名）：
+#### 可选：固定域名（需要自己的 Cloudflare 账号）
 
-1. 在 [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels** 创建一条 Tunnel，复制 **Tunnel Token**
-2. 在该 Tunnel 的 **Public Hostname** 里把你的域名（如 `pocket.example.com`）的 Service 指向 `http://127.0.0.1:3081`
-3. 回到设置页公网区块：模式切到「**命名隧道**」，粘贴 Tunnel Token、填写固定域名，保存
-4. 点「开启公网访问」→ 公网地址固定为你的域名，**重启不再变化**
+想要重启后地址不变，可在公网卡片切到「**固定域名**」：
 
-注意：命名隧道模式下公网密码**不自动轮换**（地址固定，重启后密码不变），建议配合「自定义密码」主动管理；Tunnel Token 只存本机（`$DSH_HOME/dsh-pocket/settings.json`，仅本机可读），设置页不回显。
+1. 在 [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels** 创建命名隧道，复制 **Tunnel Token**。
+2. 在该隧道的 **Public Hostname** 添加域名路由（如 `pocket.example.com`），把 **Service 指向本机实际代理端口**：通常为 `http://127.0.0.1:3081`。改过端口请用实际端口；不要指向 DSH 原始 Web 端口（通常 3080），否则会绕过 Pocket 的访问控制。
+3. 回到设置页填写固定域名 + Tunnel Token 保存。**保存只保存配置，不会启动公网**；修改正在使用的配置后，需关闭并重新开启公网才能生效。
+4. 点「**开启公网访问**」并确认免责声明 → 手机扫公网二维码。地址固定为你配置的域名，**不会随重启变化**。
+
+固定域名模式的公网密码默认是 **8 位随机密码**，不随启停/重启自动换新，可自定义为 **8–64 位英文字母或数字**；请使用强密码，泄露后主动修改。Tunnel Token 只存本机（`$DSH_HOME/dsh-pocket/settings.json`，仅本机可读），设置页不回显。
+
+**自动恢复**：只有此前已开启且配置完整的固定域名隧道会在 DSH 重启后自动恢复；随机域名不会（地址已变，自动拉起等于替你重新暴露公网）。恢复出厂设置会关闭公网并清除域名、Token 和恢复标记。
+
+> 更新到新版本：重新执行上面的 `add` 命令即可（GitHub 地址不带 tag，装到的是默认分支最新提交）。想锁版本就写成 `github:daha1216/dsh-pocket#v3.0.2`，之后更新时把 tag 换成新版本号再 `add` 一次。
+
+### CLI 公网访问
+
+`dsh-pocket` 不带 `--public` 时只提供局域网访问。`dsh-pocket --public` **默认走随机域名 Quick Tunnel，不需要 Cloudflare 配置**；只有设置里显式保存了固定域名模式且配置完整时才走命名隧道（**CLI 与配置时的 DSH 必须使用同一个 `DSH_HOME`**）。
+
+使用固定域名时，Cloudflare 域名路由的 **Service 必须指向 CLI 的实际监听端口**（默认 3081；例如 `dsh-pocket --public --port 3082` 对应 `http://127.0.0.1:3082`）。不要让插件代理与 CLI 争用同一端口，也不要把路由指向 DSH 原始 Web 端口。CLI 的访问密码独立于插件设置：默认每次运行生成，可用 `--pin <值>` 或 `DSH_POCKET_PIN=<值>` 自行设定。
 
 ## ⚠️ 安全（必读）
 
 - **DSH 能执行你电脑上的代码**。**局域网**二维码/URL 配上独立 **8 位密码**才是钥匙（密码**默认开启**，可关——关闭后局域网扫码直连，仅同一网络设备可访问），**请勿把局域网二维码、URL 或密码发给别人**
-- **开启公网访问前必须阅读并勾选免责声明**（每次开启都会弹框；服务端强制校验，无法绕过）：公网 = 把能执行代码的 DSH 暴露到互联网，请使用强密码、用完即关、涉密网络勿用
-- **公网**默认有 **8 位随机密码**保护：链接随机分配、默认每次开启换新密码、旧链接立即作废——泄露了也进不来，改密码/重开即可作废；**自定义密码可设为 8–64 位英文字母或数字，且不再自动换新**
+- **在设置页每次手动开启公网前必须阅读并勾选免责声明**（服务端强制校验开启请求）：公网 = 把能执行代码的 DSH 暴露到互联网，请使用强密码、用完即关、涉密网络勿用；固定域名隧道可在重启后自动恢复，不想恢复时请先手动关闭
+- **插件公网**默认有 **8 位随机密码**保护，可自定义为 **8–64 位英文字母或数字**。随机域名模式每次开启自动换新（自定义密码除外）；固定域名模式不自动换新。若地址和密码泄露，请立即关闭公网并主动修改密码
 - 手机登录状态与电脑上的 dsh web 进程绑定：**电脑 dsh web 一直开着就不用重复输入；重启/更新后需重新输入一次**
 - **登录限速**（防暴力破解）：同一 IP 连续输错 **5 次**锁定 **60 秒**；全局失败超阈值时短暂全锁（防换 IP 分布式扫描）；输对密码后计数清零
-- 公网 URL 由 cloudflared 随机分配，**每次重启会变化**（旧链接自动失效，相当于天然轮换）；**命名隧道固定域名**模式下地址不变、密码不自动轮换，请配合自定义密码管理
+- 随机域名由 Cloudflare 临时分配并会被回收再分配：**不要收藏/分享链接**，用完立即关闭；固定域名由你自己的 Cloudflare 域名和命名隧道路由决定，**重启不会换地址**，更易被长期扫描，请妥善保管 Tunnel Token 和访问密码
 - **公网判定是 fail closed**（issue #66）：除本机（loopback）和局域网私网地址外，**一切陌生域名（包括你自建隧道/反向代理指向本机端口的固定域名）一律按公网处理、强制公网密码**——不存在「换域名绕过密码」的口子
 - 局域网模式不暴露公网，只有同一网络内的设备能访问
-- 适合个人自用；公网密码存本机 `$DSH_HOME/dsh-pocket/token`（默认每次开启公网自动换新，**自定义后不换**），局域网密码存 `$DSH_HOME/dsh-pocket/token-lan`（设置页手动刷新），开关/自定义标记存 `$DSH_HOME/dsh-pocket/settings.json`
+- 适合个人自用；插件公网密码存本机 `$DSH_HOME/dsh-pocket/token`（随机域名模式开启时轮换，固定域名模式不轮换），局域网密码存 `$DSH_HOME/dsh-pocket/token-lan`（设置页手动刷新），开关、自定义标记及公网配置存 `$DSH_HOME/dsh-pocket/settings.json`
 - **CLI 模式（命令行直跑 `dsh-pocket`）也有密码**（issue #90 修复前这条路是无认证的）：默认随机生成 8 位密码，打印在终端、并已内嵌进二维码（**扫码体验不变**），手动敲地址时需要填写，本机访问免密。`--pin <值>` 或 `DSH_POCKET_PIN=<值>` 自定义（至少 6 位）；`--no-auth` 可关闭，**不推荐**——那等于把能执行代码的 DSH 裸暴露给任何能连上该端口的人
 
 ## 💻 DSH Desktop（桌面版）
@@ -139,7 +157,7 @@ npx @deepseek-ai/dsh web
 | 想换端口（issue #70）                       | 插件模式：在 `$DSH_HOME/dsh-pocket/settings.json` 写 `"proxyPort": 3082` 后重启 `dsh web`。CLI 模式：`dsh-pocket --port 3082`。端口被占会报 `EADDRINUSE`，杀掉旧进程或换一个端口                                                                                                                                                                        |
 | 想给访客一个临时密码                        | 暂不支持：issue #69 的「临时访问 PIN」功能已在 2.6.x 移除（撤销时会崩）。现在分享访问：把主密码或 `?token=<主密码>` 链接发给对方，用完在设置页点「刷新」换掉即可                                                                                                                                                                                        |
 | Linux 服务器装不上 cloudflared（issue #45） | 远程 Linux 国内/企业网下所有 CDN 源（GitHub/ghproxy/gh.ddlc/gh-proxy）都连不上时：在服务器上手动装 `cloudflared`（如 `apt install cloudflared`、`dnf install cloudflared`、或下载 tgz 解压到任意目录），然后在 `$DSH_HOME/dsh-pocket/settings.json` 加 `"cloudflaredPath": "/path/to/cloudflared"`，重启 `dsh web` 后插件直接调用它，**不再走自动下载** |
-| 版本停在 0.x 升不上去                       | `^0.x` 范围不允许升到 1.x：更新用 `--latest`（`dsh plugin --profile web update dsh-pocket --latest -w`）                                                                                                                                                                                                                                                |
+| 装完提示 `incompatible-version`             | 本插件要求 DSH **0.2.0-rc.1 ~ 0.2.x**：`dsh --version` 确认版本，升级 DSH，或用 `dsh plugin allow-version` 加一次性豁免 |
 | 公网 `error 1033`                           | 见下方「公网隧道常见问题」——多半是本机代理/VPN（Clash 等 TUN 模式）掐断了隧道                                                                                                                                                                                                                                                                           |
 | 点「重启 dsh web」后页面提示进程在后台运行  | 自重启的新进程是 detached 后台进程（不挂终端），是页内更新的标准做法；停止它：macOS/Linux `lsof -ti :3080 \| xargs kill -9`；Windows `netstat -ano \| findstr :3080` → `taskkill /PID <PID> /F`（日志在 `$DSH_HOME` 下 `dsh-pocket-restart-*.log`）                                                                                                     |
 
@@ -192,11 +210,11 @@ npx @deepseek-ai/dsh web
 
 | 文件                 | 说明                                                                                                                                                                               |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/index.js`       | 插件入口：自动起代理 + 注册 RPC + 访问密码管理（公网 8 位每次开启变新；局域网独立 8 位可手动刷新/开关）+ 局域网访问总开关 + 桌面端环境适配                                         |
+| `lib/index.js`       | 插件入口：自动起代理 + 注册 RPC + 访问密码管理（公网 8 位，不随启停或重启自动换新；局域网独立 8 位可手动刷新/开关）+ 局域网访问总开关 + 桌面端环境适配 |
 | `lib/settings.mjs`   | 设置持久化：局域网访问总开关（默认开启）+ 局域网密码开关（默认开启）存 `$DSH_HOME/dsh-pocket/settings.json`                                                                        |
-| `lib/service.mjs`    | 服务：代理生命周期（端口自适应）、公网隧道（自动恢复）、状态快照（含二维码）                                                                                                       |
+| `lib/service.mjs`    | 服务：代理生命周期（端口自适应）、用户自配命名隧道（完整配置与有效标记才恢复）、状态快照（含二维码） |
 | `lib/proxy.mjs`      | 改头反向代理：Host/Origin → loopback，HTTP + WebSocket 透传 + polyfill 注入 + gzip/brotli 压缩 + 按 Host 区分的访问令牌认证（公网必验；局域网按开关）+ 局域网关闭时拦截局域网 Host |
-| `lib/tunnel.mjs`     | cloudflared：多镜像源下载（清华优先）/自适应多线程/启动/解析公网 URL（HTTP/2）                                                                                                     |
+| `lib/tunnel.mjs`     | cloudflared：多镜像源下载（清华优先）/自适应多线程/用用户的 Tunnel Token 启动命名隧道（HTTP/2） |
 | `lib/web-rpc.js`     | loopback RPC：`status` / `tunnel.start` / `tunnel.stop` / `lan.setEnabled` / `version` / `update` / `restart`                                                                      |
 | `client/`            | 设置页「手机访问」+ 移动端适配（dsh-web-mobile 移植）                                                                                                                              |
 | `bin/dsh-pocket.mjs` | CLI：局域网/公网模式，打印 URL + 二维码                                                                                                                                            |

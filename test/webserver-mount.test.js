@@ -108,6 +108,7 @@ test('直接挂 webServer：不走 rpc.handle（rpc.handle 抛错也照常 mount
     assert.equal(body.rpcId, 'r1');
     assert.equal(body.result.ok, true);
     assert.equal(body.result.value.dshPort, 3080);
+    assert.deepEqual(body.result.value.tunnelConfig, { mode: 'quick', hostname: '', tokenSet: false }, '无配置时默认随机域名模式');
   } finally { await env.stop(); }
 });
 

@@ -361,6 +361,22 @@ document.querySelectorAll('[data-mobile-nav]').length        // > 0
   重锚出 `(0,5,x)` 的 `display:flex`，需同步提权本规则。每次 sync 后用
   `git grep -n 'headerCorner' upstream/styles/` 对账。
 
+### 本 fork 的后端功能补丁（非移动端移植）：Quick Tunnel
+
+origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保留用户自配的固定域名。
+本 fork 在 `3.0.2-local.1` 恢复它（**不需要 Cloudflare 账号**）：
+
+- `settings.tunnelMode()` 默认 `quick`；显式存 `named` 才用固定域名。
+- `service.startTunnel()` 按模式分派 `startQuickTunnel` / `startNamedTunnel`；quick 用代理端口，
+  named 用已保存的 Token/域名。
+- Quick 每次开启轮换公网 PIN（自定义 PIN 除外）；`tunnel-auto.json` 记录 `mode:'quick'`，
+  DSH 重启后**不自动恢复**；只有完整配置的 named 会恢复。
+- CLI `--public` 默认 quick；设置里存了 named 且配置完整才走固定域名。
+- 设置页公网卡提供「随机域名（免账号）/ 固定域名」切换，quick 不显示配置表单。
+
+同步 `origin/main` 时，冲突解完必须跑 `npm test`；若 origin 再次改隧道语义，
+先读 `AGENTS.md` 的「本地功能补丁：Quick Tunnel」一节，不要把 quick 分支当噪音删掉。
+
 ## 移植历史
 
 - pocket 原移植基线 ≈ 上游 **v1.0.0**（MobileNavToggle/MobileDrawerFooter 逐字相同）。

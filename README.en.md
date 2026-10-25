@@ -14,9 +14,9 @@
   <a href="https://awesome-dsh-plugin.com"><img alt="Awesome DSH Plugin" src="https://awesome-dsh-plugin.com/badge.svg"></a>
 </p>
 
-> Put **DeepSeek Harness in your pocket**: one package, one settings tab — scan a QR code and your phone shows exactly what's on your computer screen, live, from anywhere.
+> Put **DeepSeek Harness in your pocket**: one package, one settings tab — scan a QR code on the same Wi-Fi to see your computer's UI live. Click "Enable anywhere" for an ephemeral public URL (**no Cloudflare account needed**) when you're away from home.
 
-> **This is a personal fork (clean-merge edition)**: a clean merge of the latest [shaobeichen/dsh-pocket](https://github.com/shaobeichen/dsh-pocket) (GPL-2.0) and the mobile-layer upstream [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile) (MIT) — no extra self-use features, only upstream syncs and compatibility fixes; maintained by **daha1216 (大哈)**. For upstream features, updates and releases see the [upstream repo](https://github.com/shaobeichen/dsh-pocket).
+> **This is a personal fork (clean-merge edition)**: a clean merge of the latest [shaobeichen/dsh-pocket](https://github.com/shaobeichen/dsh-pocket) (GPL-2.0) and the mobile-layer upstream [mexiaosqwq/dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile) (MIT) — only upstream syncs and compatibility fixes, plus the Quick Tunnel restored after origin v3.0.0 removed it; maintained by **daha1216 (大哈)**. For upstream features, updates and releases see the [upstream repo](https://github.com/shaobeichen/dsh-pocket).
 
 <p align="center">
   ⭐ A Star would make daha1216's day &nbsp;·&nbsp; <a href="https://github.com/daha1216/dsh-pocket">Star it on GitHub</a>
@@ -30,7 +30,7 @@
 - Out and about, you want the agent on your computer to look something up or write a snippet — no remote desktop, no SSH.
 - The computer is at home or in the office, you're elsewhere, and you want to **drive your DeepSeek Harness from your phone** — send tasks, watch the output, tap approvals.
 
-That's what DSH Pocket does: **install it, scan a QR code, and your phone shows and controls the DeepSeek Harness UI in real time — from anywhere.**
+That's what DSH Pocket does: **install it, scan a QR code on the same Wi-Fi, and your phone shows and controls the DeepSeek Harness UI in real time.** Public access requires your own Cloudflare fixed hostname and Tunnel Token. Without that configuration, public access stays off and LAN access works as usual.
 
 What it looks like — the phone shows the exact same UI as your computer, live:
 
@@ -44,19 +44,19 @@ What it looks like — the phone shows the exact same UI as your computer, live:
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 📶 LAN QR access             | Works out of the box: Settings → Phone access — scan the LAN QR on the same Wi-Fi (auto-detects the LAN IP; **under WSL it picks the Windows host's physical NIC IP**)                                                                                                            |
 | 🚪 LAN switch                | **Turn LAN access off/on with one click** in Settings (a confirmation dialog shows each time): off kills the LAN QR code and link instantly; public access is unaffected                                                                                                          |
-| 🌐 Public QR (from anywhere) | Click "Enable anywhere" → cloudflared tunnel → scan the public QR over 4G / any network                                                                                                                                                                                           |
-| 🏷️ Fixed public hostname     | Optional "**Named tunnel**" mode: paste a Cloudflare Tunnel Token + your own domain — the public address stays **fixed across restarts** (see below)                                                                                                                              |
-| 🔐 Access PIN                | Public links use an **8-digit random PIN** by default (rotated on every tunnel start; **customizable to a fixed PIN** — custom PINs are not rotated); LAN has its own separate **8-digit random PIN** (on by default; switchable off in Settings — then LAN scans connect directly) |
-| 🔑 Custom PINs               | Both the public and LAN PINs can be **set to a fixed 8–64-character PIN using letters and digits in Settings** (custom PINs are never auto-rotated)                                                                                                                               |
+| 🌐 Public QR (from anywhere) | Default **Quick Tunnel**: click "Enable anywhere" for an ephemeral `trycloudflare.com` URL — **no Cloudflare account/domain required**; scan from any network |
+| 🏷️ Fixed hostname (optional)  | If you have a Cloudflare account/domain, switch to a **named tunnel** with a Tunnel Token + fixed hostname; the address survives restarts. Saving does not start public access |
+| 🔐 Access PIN                | The plugin uses a random **8-character public PIN** by default: Quick mode rotates it on every enable (unless customized), named mode does not rotate it. LAN has its own random **8-character PIN** (on by default; switchable off for direct LAN access) |
+| 🔑 Custom PINs               | Set the public and LAN PINs to **8–64 letters and digits in Settings**; manage them yourself and change them if they leak |
 | 🧘 Session persistence       | Enter the PIN once and you're set for a long time (login is tied to the computer's dsh web process: as long as it stays up, the phone won't ask again; **after a dsh web restart/update, enter it once more**)                                                                    |
 | ⚡ Real-time sync            | Streaming output passes through WebSocket untouched — what the computer renders, the phone renders live; fully interactive both ways; built-in WS heartbeat keep-alive (defeats silent NAT/battery link drops with auto-reconnect)                                                |
 | 📱 Mobile-adaptive layout    | Narrow screens get a drawer layout automatically (ported from dsh-web-mobile, MIT): sidebar drawer, full-width conversation, safe-area insets, touch optimizations                                                                                                                |
 | 🧭 Optional right sidebar    | Shows the native right-sidebar entry on mobile; disable it for a compact phone header or keep it available alongside the terminal dock on an unfolded display                                                                                                                     |
-| 📏 Independent mobile font   | Conversation text on the phone can be sized **independently (12–22px)** without touching the desktop "Font size"; defaults to "Follow desktop", so desktop changes don't affect the phone                                                                                           |
+| 📏 Mobile font size          | Defaults to "Follow desktop", so desktop font changes also affect the phone. Choose a **specific size (12–22px)** for independent mobile text sizing without changing the desktop setting |
 | 📁 File browser              | The mobile "Files" entries need a host-side explorer panel (a dsh-web-ui component); on stock DSH without it the entries are auto-hidden instead of doing nothing                                                                                                                 |
 | 🗜️ Transfer compression      | Large JSON responses are gzip/brotli'd on the fly (17MB session history → ~1MB; brotli quality 6: fast and bandwidth-friendly) — faster loads, less mobile data                                                                                                                   |
-| 🔁 Tunnel auto-restore       | After a DSH restart the previously-running public tunnel comes back automatically                                                                                                                                                                                                 |
-| 🧩 Zero-dependency install   | One npm package, one settings tab — no core/adapter split, no account, no server                                                                                                                                                                                                  |
+| 🔁 Tunnel auto-restore       | Only previously enabled, fully configured **named** tunnels are restored. Quick URLs change on every restart, so they are never auto-restored (that would re-expose your computer without consent) |
+| 🧩 Single-package install    | One npm package, one settings tab — no core/adapter split. LAN and Quick public access need no account; only a fixed hostname needs your own Cloudflare account/domain |
 
 ## 🚀 Usage
 
@@ -75,11 +75,15 @@ npm install -g @deepseek-ai/dsh     # global install; verify: dsh --version
 
 ```sh
 # 1. Install the plugin (everything in one package)
-dsh plugin --profile web add dsh-pocket -w
+dsh plugin --profile web add github:daha1216/dsh-pocket -w
 
 # 2. Restart dsh web
 npx @deepseek-ai/dsh web
 ```
+
+> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. Install with the GitHub address shown above.
+>
+> **Compatibility**: `engines.dsh` declares `^0.2.0-rc.1`, i.e. **DSH 0.2.0-rc.1 up to (but not including) 0.3.0**. On an unsupported runtime the plugin manager refuses with `incompatible-version`; add a one-off exemption with `dsh plugin allow-version` if you really need to try it elsewhere. Once DSH reaches 0.3.x this plugin needs a new release to widen the range.
 
 ### LAN (same Wi-Fi)
 
@@ -93,34 +97,49 @@ Settings → **Phone access** → scan the "📶 LAN" QR code → enter the **LA
 >
 > Advanced option: auto-detection may not pick a reachable address for Tailscale/VPN setups. You can select a detected IP from the "LAN address" dropdown; normally no change is needed.
 
-### Public (from anywhere)
+### Public access (from anywhere)
 
-On the same page click "**Enable anywhere**" → **a security disclaimer pops up every time — check "I understand and agree" to proceed** (on a corporate/classified network, confirm compliance first) → wait for the tunnel (first run downloads cloudflared; macOS/Linux use the Tsinghua mirror, seconds) → scan the "🌐 Public" QR code → the phone opens the link and **enters the access PIN** (shown in the settings page's public section; the default is an **8-digit random PIN rotated on every tunnel start**, or use **Customize** for a fixed 8–64-character alphanumeric PIN that is never rotated) → works from outside (4G / office network).
+The public card in Settings → Phone access defaults to **Random URL (no account)** mode:
 
-> Upgrading: `dsh plugin --profile web update dsh-pocket --latest -w` (`--latest` is required across major versions — a `^0.x` range won't auto-jump to 1.x).
+1. Click "**Enable anywhere**" → accept the security disclaimer (first time and every manual enable).
+2. Wait for cloudflared to download/connect (first run ~20–50MB; instant afterwards) → a **public QR code** appears.
+3. Scan it and enter the access PIN (the random 8-character PIN shown on the page, rotated on every enable) to connect over 4G/any network.
 
-### Fixed public hostname (named tunnel, optional)
+The random address is provided by Cloudflare Quick Tunnel (like `https://xxxx.trycloudflare.com`) and **requires no Cloudflare account, domain or Tunnel Token**. It stops working when you turn public access off or restart DSH, and **links should not be bookmarked**.
 
-The default "quick tunnel" gets a new random URL on every restart. For a **fixed public address**, use a Cloudflare **named tunnel** (requires a Cloudflare account + your own domain):
+#### Optional: fixed hostname (needs your own Cloudflare account)
 
-1. In [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels**, create a Tunnel and copy the **Tunnel Token**
-2. In that Tunnel's **Public Hostname**, point your domain (e.g. `pocket.example.com`) to `http://127.0.0.1:3081`
-3. Back in the settings page's public section: switch the mode to "**Named tunnel**", paste the Tunnel Token, enter the fixed hostname, and save
-4. Click "Enable anywhere" → the public address is now your own hostname and **survives restarts**
+To keep the address stable across restarts, switch the card to **Fixed domain**:
 
-Note: in named-tunnel mode the public PIN is **not auto-rotated** (the address is fixed, so the PIN stays the same across restarts) — manage it proactively with a custom PIN. The Tunnel Token is stored locally only (`$DSH_HOME/dsh-pocket/settings.json`, readable by your user only) and is never echoed back in the UI.
+1. In [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels**, create a named tunnel and copy its **Tunnel Token**.
+2. Add a **Public Hostname** route (e.g. `pocket.example.com`). Set its **Service to the actual local proxy port**, usually `http://127.0.0.1:3081`. Do not point it at the original DSH Web port (usually 3080), which would bypass Pocket's access controls.
+3. Enter the fixed hostname + Tunnel Token in Settings and save. **Saving only stores the configuration; it does not start public access.** If you change an active configuration, turn public access off and on again to apply it.
+4. Click "**Enable anywhere**" and accept the disclaimer → scan the public QR code. The address stays fixed and **does not change on restart**.
+
+In fixed-domain mode the public PIN defaults to a random **8-character PIN** and does **not** rotate on stop/start or restart; you can customize it to **8–64 letters and digits**. Use a strong PIN and change it yourself if it leaks. The Tunnel Token is stored locally only (`$DSH_HOME/dsh-pocket/settings.json`, readable by your user only) and is never echoed back in the UI.
+
+**Auto-restore:** only a previously enabled, fully configured fixed-hostname tunnel auto-restores after a DSH restart. Quick URLs are not restored (the address has changed, and auto-starting would re-expose your computer without consent). A factory reset stops public access and clears the hostname, Token and restore marker.
+
+> Upgrading: re-run the `add` command above (the GitHub address carries no tag, so it installs the latest commit on the default branch). To pin a version, write `github:daha1216/dsh-pocket#v3.0.2` instead, and re-`add` with the new tag when you want to move.
+
+### CLI public access
+
+Running `dsh-pocket` without `--public` provides LAN access only. `dsh-pocket --public` **defaults to a Quick Tunnel random URL and needs no Cloudflare configuration**; it uses a named tunnel only when fixed-domain mode is explicitly saved with a complete configuration (**the CLI must use the same `DSH_HOME`** as the DSH instance used to save it).
+
+The Cloudflare hostname route's **Service must target the CLI's actual listening port** (3081 by default; for example, `dsh-pocket --public --port 3082` requires `http://127.0.0.1:3082`). Do not let the plugin proxy and CLI compete for the same port, or route to the original DSH Web port. The CLI PIN is separate from the plugin's settings: it is generated per run by default; set your own with `--pin <value>` or `DSH_POCKET_PIN=<value>`.
 
 ## ⚠️ Security (read first)
 
 - **DSH can execute code on your computer.** **LAN** QR/URL plus its own **8-character PIN** is the key (PIN **on by default**, switchable off — then LAN scans connect directly, same-network devices only) — **never share the LAN QR, URL or PIN**.
-- **Read and accept the security disclaimer before enabling public access** (the dialog shows on every enable; the server enforces it, so it can't be bypassed): public = exposing a code-executing DSH to the internet — use a strong PIN, turn it off when done, never on classified networks.
-- **Public** access uses an **8-digit random PIN** by default: the link is random, the PIN rotates on every tunnel start, and old links die instantly — even a leaked link can't get in. **A custom PIN may contain 8–64 letters and digits and is never auto-rotated**.
+- **Read and accept the security disclaimer every time you manually enable public access in Settings** (the server enforces acceptance for start requests): public access exposes a code-executing DSH to the internet — use a strong PIN, turn it off when done, never use it on classified networks. Named tunnels may auto-restore after a restart; turn access off manually if you do not want it restored.
+- **Plugin public access** uses a random **8-character PIN** by default, customizable to **8–64 letters and digits**. Quick mode rotates the generated PIN on every enable (custom PINs do not rotate); fixed-domain mode does not rotate it. If the address and PIN leak, turn public access off immediately and change the PIN yourself.
 - Phone login state is tied to the computer's dsh web process: **no re-entry while dsh web stays up; one re-entry after a restart/update**.
 - **Login rate limiting** (anti brute-force): **5** consecutive wrong PINs from the same IP lock it for **60s**; a global failure threshold briefly locks everyone (blocks distributed IP-rotation scans); a successful login resets the counter.
-- The public URL is randomly assigned by cloudflared and **changes on every restart** (old links die automatically — a natural key rotation); in **named-tunnel fixed-hostname** mode the address stays and the PIN is not auto-rotated — manage it with a custom PIN.
+- Quick URLs are temporary and recycled by Cloudflare: **do not bookmark/share them**, and turn access off when done. Your own Cloudflare hostname and named-tunnel route determine the fixed address; **restarts do not change it**, and a fixed hostname is a persistent scanning target — protect the Tunnel Token and access PIN.
 - **Public detection is fail-closed** (issue #66): everything except loopback and private LAN addresses is treated as **public and PIN-gated** — including any self-hosted tunnel / reverse proxy pointing at the local port with its own hostname. There is no "change the domain to bypass the PIN" hole.
 - LAN mode exposes nothing publicly; only devices on the same network can reach it.
-- Built for personal use; the public PIN lives in `$DSH_HOME/dsh-pocket/token` (re-rolled per tunnel start unless customized), the LAN PIN in `$DSH_HOME/dsh-pocket/token-lan` (refreshed manually in Settings), and switches/custom flags in `$DSH_HOME/dsh-pocket/settings.json`.
+- Built for personal use; the plugin's public PIN lives in `$DSH_HOME/dsh-pocket/token` (rotated on enable in Quick mode, not in fixed-domain mode), the LAN PIN in `$DSH_HOME/dsh-pocket/token-lan` (refreshed manually in Settings), and switches, custom flags and public configuration in `$DSH_HOME/dsh-pocket/settings.json`.
+- **CLI mode (`dsh-pocket`) also requires a PIN by default**: a random 8-digit PIN is printed in the terminal and embedded in the QR code; manual address entry requires the PIN, while loopback access is exempt. Use `--pin <value>` or `DSH_POCKET_PIN=<value>` to set it yourself (at least 6 characters). `--no-auth` disables protection and is **not recommended**: anyone who can reach the port could operate a code-executing DSH.
 
 ## 💻 DSH Desktop
 
@@ -138,7 +157,7 @@ Note: in named-tunnel mode the public PIN is **not auto-rotated** (the address i
 | Want a different port (issue #70)                                               | Plugin mode: write `"proxyPort": 3082` into `$DSH_HOME/dsh-pocket/settings.json` and restart `dsh web`. CLI mode: `dsh-pocket --port 3082`. If the port is taken you'll get `EADDRINUSE` — kill the old process or pick another one                                                                                                                                                                                              |
 | Issue a temporary PIN to a guest                                                | Not available: the temporary access PIN feature (issue #69) was removed in 2.6.x (it crashed on revoke). To share access, send the main PIN or a `?token=<main PIN>` link, then hit "Refresh" in Settings once the guest is done                                                                                                                                                                                                 |
 | cloudflared install fails on a remote Linux server (issue #45)                  | If all CDN sources (GitHub / ghproxy / gh.ddlc / gh-proxy) are unreachable on a remote Linux host, install `cloudflared` yourself (e.g. `apt install cloudflared`, `dnf install cloudflared`, or download the tgz and unpack it), then add `"cloudflaredPath": "/path/to/cloudflared"` into `$DSH_HOME/dsh-pocket/settings.json` and restart `dsh web`. The plugin will then use that binary directly and skip the auto-download |
-| Version stuck below 1.x                                                         | `^0.x` ranges never jump to 1.x: update with `--latest` (`dsh plugin --profile web update dsh-pocket --latest -w`)                                                                                                                                                                                                                                                                                                               |
+| Install fails with `incompatible-version`                                       | This plugin requires DSH **0.2.0-rc.1 – 0.2.x**: check `dsh --version`, upgrade DSH, or add a one-off exemption with `dsh plugin allow-version`                                                                                                                                                                                                                                                                                   |
 | Public `error 1033`                                                             | See "Public tunnel troubleshooting" below — usually a local proxy/VPN (Clash etc. TUN mode) killing the tunnel                                                                                                                                                                                                                                                                                                                   |
 | After "Restart dsh web", the page says the process is running in the background | The new process from in-page self-restart is a detached background process (not attached to your terminal) — that's the standard way to apply updates in-page; stop it: macOS/Linux `lsof -ti :3080 \| xargs kill -9`; Windows `netstat -ano \| findstr :3080` → `taskkill /PID <PID> /F` (logs under `$DSH_HOME` as `dsh-pocket-restart-*.log`)                                                                                 |
 
@@ -185,11 +204,11 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 
 | File                 | Purpose                                                                                                                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/index.js`       | Plugin entry: auto-start proxy + register RPC + access-PIN management (public: 8 digits rotated per tunnel start; LAN: separate 8 digits, manually refreshable / switchable) + LAN access switch + DSH Desktop detection     |
+| `lib/index.js`       | Plugin entry: auto-start proxy + register RPC + PIN management (public: 8 characters, not rotated on stop/start or restart; LAN: separate 8 characters, manually refreshable / switchable) + LAN access switch + DSH Desktop detection |
 | `lib/settings.mjs`   | Settings persistence: LAN access switch (on by default) + LAN-PIN switch (on by default) stored in `$DSH_HOME/dsh-pocket/settings.json`                                                                                      |
-| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), public tunnel (auto-restore), status snapshot (with QR data URLs)                                                                                                             |
+| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), user-configured named tunnel (restore requires complete configuration and a valid marker), status snapshot (with QR data URLs) |
 | `lib/proxy.mjs`      | Header-rewriting reverse proxy: Host/Origin → loopback, HTTP + WebSocket passthrough + polyfill injection + gzip/brotli compression + per-host token auth (public always; LAN per switch) + blocks LAN Hosts when LAN is off |
-| `lib/tunnel.mjs`     | cloudflared: multi-mirror download (Tsinghua first) / adaptive parallel / start / parse public URL (HTTP/2)                                                                                                                  |
+| `lib/tunnel.mjs`     | cloudflared: multi-mirror download (Tsinghua first) / adaptive parallel / start a named tunnel with the user's Tunnel Token (HTTP/2) |
 | `lib/web-rpc.js`     | Loopback RPC: `status` / `tunnel.start` / `tunnel.stop` / `lan.setEnabled` / `version` / `update` / `restart`                                                                                                                |
 | `client/`            | "Phone access" settings tab + mobile adaptation (dsh-web-mobile port)                                                                                                                                                        |
 | `bin/dsh-pocket.mjs` | CLI: LAN/public modes, prints URL + QR                                                                                                                                                                                       |
