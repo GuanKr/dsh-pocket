@@ -343,6 +343,89 @@ test('service：Named 进程异常退出清理公网状态，可再次开启', a
   }
 });
 
+test('RPC：启动中保存配置会中断 in-flight，旧 Token/旧域名不得继续生效', () => withHome(async (home) => {
+  const settings = await import('../lib/settings.mjs');
+  settings.setTunnelConfig({ mode: 'named', hostname: 'old.example.com', token: FAKE_TUNNEL_TOKEN });
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let killCount = 0;
+  const internals = {
+    ...stubInternals(),
+    startNamedTunnel: async ({ signal, onPhase }) => {
+      onPhase?.('registering');
+      await gate;
+      if (signal.aborted) throw new Error('cancelled');
+      return { url: null, kill: () => { killCount += 1; } };
+    },
+  };
+  const getCfg = () => ({ mode: settings.tunnelMode(), hostname: settings.tunnelHostname(), token: settings.tunnelToken() });
+  const service = createPocketService({ dshPort: 3080, port: 3081, home, internals, getTunnelConfig: getCfg });
+  const conn = fakeCtxConnection();
+  installPocketRpc({ connection: conn }, {
+    service,
+    getTunnelConfig: () => ({ ...getCfg(), tokenSet: Boolean(settings.tunnelToken()) }),
+    setTunnelConfig: settings.setTunnelConfig,
+    log: { error() {}, warn() {} },
+  });
+  try {
+    await service.startProxy();
+    const inFlight = service.startTunnel().catch((err) => err);
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal((await service.status()).tunnelState.phase, 'registering', '旧启动正在连接');
+
+    const NEW_TOKEN = 'new-cloudflared-token-for-tests';
+    const saved = await conn.handler(POCKET_ENDPOINTS.tunnelSetConfig, {
+      mode: 'named', hostname: 'new.example.com', token: NEW_TOKEN,
+    });
+    assert.equal(saved.ok, true);
+    assert.equal(saved.value.tunnelRunning, false);
+    assert.equal(saved.value.tunnelState.phase, 'idle', '保存配置必须中止 in-flight 启动');
+
+    release();
+    const aborted = await inFlight;
+    assert.ok(aborted instanceof Error, '旧启动应以 abort 结束');
+    assert.equal(killCount, 0, '旧启动未 ready，不应留下 cloudflared 进程');
+    const after = await service.status();
+    assert.equal(after.tunnelRunning, false);
+    assert.equal(after.tunnelUrl, null);
+    assert.equal(settings.tunnelToken(), NEW_TOKEN);
+    assert.equal(settings.tunnelHostname(), 'new.example.com');
+  } finally {
+    release?.();
+    await service.dispose();
+  }
+}));
+
+test('RPC：marker 删除失败时停止仍成功，但返回 stopWarning', () => withHome(async (home) => {
+  const settings = await import('../lib/settings.mjs');
+  settings.setTunnelConfig({ mode: 'named', hostname: 'pocket.example.com', token: FAKE_TUNNEL_TOKEN });
+  const statePath = join(home, 'dsh-pocket', 'tunnel-auto.json');
+  mkdirSync(statePath, { recursive: true }); // 目录让 rm 失败，模拟文件锁/实时扫描
+  const internals = stubInternals();
+  const service = createPocketService({
+    dshPort: 3080, port: 3081, home, internals,
+    getTunnelConfig: () => ({ mode: 'named', token: settings.tunnelToken(), hostname: settings.tunnelHostname() }),
+  });
+  const conn = fakeCtxConnection();
+  installPocketRpc({ connection: conn }, {
+    service,
+    getTunnelConfig: () => ({ mode: 'named', hostname: settings.tunnelHostname(), tokenSet: true }),
+    setTunnelConfig: settings.setTunnelConfig,
+    log: { error() {}, warn() {} },
+  });
+  try {
+    await service.startProxy();
+    await service.startTunnel();
+    assert.equal((await service.status()).tunnelRunning, true);
+    const stopped = await conn.handler(POCKET_ENDPOINTS.tunnelStop, {});
+    assert.equal(stopped.ok, true, '隧道本身已停止，不能整个请求失败');
+    assert.equal(stopped.value.tunnelRunning, false);
+    assert.match(stopped.value.stopWarning, /删除自动恢复标记失败/, '必须把 marker 删除失败告诉用户');
+  } finally {
+    await service.dispose();
+  }
+}));
+
 test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；reset 回到 quick', () => withHome(async () => {
   const settings = await import('../lib/settings.mjs');
   const { resetPocketState } = await import('../lib/index.js');
@@ -395,16 +478,18 @@ test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；rese
     assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`]);
 
     // 运行中保存配置（含 Token 轮换）必须停掉旧隧道，否则新凭据不会生效、旧隧道继续暴露
+    const ROTATED_TOKEN = 'rotated-cloudflared-token-for-tests';
     const reconfigured = await conn.handler(POCKET_ENDPOINTS.tunnelSetConfig, {
-      mode: 'named', hostname: 'pocket.example.com',
+      mode: 'named', hostname: 'pocket.example.com', token: ROTATED_TOKEN,
     });
     assert.equal(reconfigured.ok, true);
     assert.equal(reconfigured.value.tunnelRunning, false, '运行中保存配置会先停隧道');
     assert.equal(reconfigured.value.tunnelUrl, null, '旧隧道地址立即失效');
+    assert.equal(settings.tunnelToken(), ROTATED_TOKEN, '新 Token 已写入设置');
     assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`], '停隧道不会再启动新隧道');
     const restarted = await conn.handler(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
     assert.equal(restarted.ok, true, '重新开启应用新配置');
-    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${FAKE_TUNNEL_TOKEN}`]);
+    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${ROTATED_TOKEN}`], '重新开启必须使用新 Token');
 
     const unconfirmed = await conn.handler(POCKET_ENDPOINTS.pocketReset, {});
     assert.equal(unconfirmed.ok, false, 'reset 必须显式确认');
@@ -417,7 +502,7 @@ test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；rese
     const afterReset = await conn.handler(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
     assert.equal(afterReset.ok, true, 'reset 后仍可用免账号 Quick 模式');
     assert.equal(afterReset.value.tunnelUrl, 'https://quick-test.trycloudflare.com');
-    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${FAKE_TUNNEL_TOKEN}`, 'quick:3081'], 'reset 后重新启动 Quick');
+    assert.deepEqual(internals.started, ['quick:3081', `named:${FAKE_TUNNEL_TOKEN}`, `named:${ROTATED_TOKEN}`, 'quick:3081'], 'reset 后重新启动 Quick');
   } finally {
     await service.dispose();
   }
@@ -966,6 +1051,9 @@ test('stop 竞态：stop 打断 in-flight 后立即 start，不会并发 spawn c
   await service.startTunnel().catch(() => null); // C：应复用 B 或等 B 完成，不再 spawn
 
   assert.equal(spawnCount, 2, 'A、B 各 spawn 一次，C 不产生第三个 cloudflared');
+  const raceState = await service.status();
+  assert.equal(raceState.tunnelState.phase, 'ready', '被 abort 的 A 不得把 B 的状态刷成 error');
+  assert.ok(raceState.tunnelState.startedAt > 0, 'A 的 catch 不得清掉 B 的启动计时');
 
   service.stopTunnel();
   await service.dispose();

@@ -78,7 +78,7 @@ npm install -g @deepseek-ai/dsh     # global install; verify: dsh --version
 npm install
 npm pack
 
-# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.2-local.1.tgz)
+# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.2-local.<n>.tgz)
 dsh plugin --profile web add "file:<repo path>/dsh-pocket-<version>.tgz" -w
 
 # 3. Restart dsh web
@@ -117,7 +117,7 @@ To keep the address stable across restarts, switch the card to **Fixed domain**:
 
 1. In [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels**, create a named tunnel and copy its **Tunnel Token**.
 2. Add a **Public Hostname** route (e.g. `pocket.example.com`). Set its **Service to the actual local proxy port**, usually `http://127.0.0.1:3081`. Do not point it at the original DSH Web port (usually 3080), which would bypass Pocket's access controls.
-3. Enter the fixed hostname + Tunnel Token in Settings and save. **Saving only stores the configuration; it does not start public access.** If you change an active configuration, turn public access off and on again to apply it.
+3. Enter the fixed hostname + Tunnel Token in Settings and save. **Saving only stores the configuration; it does not start public access.** If public access is running (or still connecting), saving stops the old tunnel automatically; enable it again to apply the new configuration.
 4. Click "**Enable anywhere**" and accept the disclaimer → scan the public QR code. The address stays fixed and **does not change on restart**.
 
 In fixed-domain mode the public PIN defaults to a random **8-character PIN** and does **not** rotate on stop/start or restart; you can customize it to **8–64 letters and digits**. Use a strong PIN and change it yourself if it leaks. The Tunnel Token is stored locally only (`$DSH_HOME/dsh-pocket/settings.json`, readable by your user only) and is never echoed back in the UI.
@@ -222,7 +222,7 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 ```sh
 npm install
 node client/build.mjs   # rebuild after editing client/
-npm test                # proxy / auth / compression / tunnel / service / RPC / settings (109 tests)
+npm test                # proxy / auth / compression / tunnel / service / RPC / settings (277 tests)
 ```
 
 **Want to try your changes locally without publishing?** Point the installed plugin at your local checkout with a symlink and restart dsh web. Full steps (including switching back to the npm release) are in [LOCAL-DEV.md](./LOCAL-DEV.md).

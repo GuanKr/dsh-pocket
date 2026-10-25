@@ -526,6 +526,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       const s = await call(POCKET_ENDPOINTS.tunnelStop, {});
       setStatus(s);
       setTunnelState(s.tunnelState ?? null);
+      if (s.stopWarning) setError(s.stopWarning);
     } catch (err) {
       setError(err.message);
     }
@@ -541,19 +542,22 @@ function PocketSettingsTab({ rpcCall, t }) {
       setTunnelCfg({ hostname: status?.tunnelConfig?.hostname ?? '', token: '', err: null });
       return;
     }
-    const wasRunning = Boolean(status?.tunnelUrl);
+    const wasActive = Boolean(status?.tunnelUrl)
+      || ['downloading', 'starting', 'registering'].includes(status?.tunnelState?.phase);
     try {
       const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, { mode });
       setStatus(s);
       setTunnelCfg(null);
-      showToast(wasRunning ? t('configStopped') : t('modeSwitchHint'));
+      if (s.stopWarning) setError(s.stopWarning);
+      showToast(wasActive ? t('configStopped') : t('modeSwitchHint'));
     } catch (err) {
       setError(err.message);
     }
   });
 
   const saveNamedTunnel = () => withPending('saveNamed', async () => {
-    const wasRunning = Boolean(status?.tunnelUrl);
+    const wasActive = Boolean(status?.tunnelUrl)
+      || ['downloading', 'starting', 'registering'].includes(status?.tunnelState?.phase);
     try {
       const s = await call(POCKET_ENDPOINTS.tunnelSetConfig, {
         mode: 'named',
@@ -562,7 +566,8 @@ function PocketSettingsTab({ rpcCall, t }) {
       });
       setStatus(s);
       setTunnelCfg(null);
-      if (wasRunning) showToast(t('configStopped'));
+      if (s.stopWarning) setError(s.stopWarning);
+      if (wasActive) showToast(t('configStopped'));
     } catch (err) {
       setTunnelCfg((c) => ({ ...(c ?? {}), err: err.message }));
     }
@@ -921,7 +926,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     variant: (namedMode ? 'named' : 'quick') === mode ? 'primary' : 'ghost',
     mini: true,
     onClick: () => switchTunnelMode(mode),
-    disabled: pending.mode === true || pending.saveNamed === true || pending.wan === true,
+    disabled: pending.mode === true || pending.saveNamed === true || pending.wan === true || Boolean(tunnelCfg),
   }, label);
   const modeView = Row({
     label: t('tunnelModeLabel'),
@@ -1082,7 +1087,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     // 卡片：标题 + 副题 + 总开关（开=已连隧道）；开启经免责声明弹窗确认
     Card({
       key: 'wan', icon: Ico.wan, title: t('wanAccess'), sub: namedMode ? t('namedWanHint') : t('quickWanHint'),
-      right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || pending.saveNamed === true || pending.mode === true || !status || Boolean(tunnelCfg), t('wanAccess')),
+      right: Switch(!!tunnelUrl, () => (tunnelUrl ? stopTunnel() : startTunnel()), tunnelStarting || pending.wan === true || pending.saveNamed === true || pending.mode === true || !status || (!tunnelUrl && Boolean(tunnelCfg)), t('wanAccess')),
       children: !status
         ? h('div', { className: 'dshp-loading' }, t('loadingStatus'))
         : h('div', null, wanStatusView, wanBody),

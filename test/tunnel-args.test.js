@@ -81,6 +81,7 @@ test('Quick Tunnel：--host 指定非通配地址时连实际地址，通配地�
     ['192.168.1.10', 'http://192.168.1.10:3081'],
     ['0.0.0.0', 'http://127.0.0.1:3081'],
     ['::', 'http://127.0.0.1:3081'],
+    ['::1', 'http://[::1]:3081'],
   ]) {
     const { bin, record, dir } = await makeFakeCloudflared('INF https://fake-quick.trycloudflare.com\n');
     try {

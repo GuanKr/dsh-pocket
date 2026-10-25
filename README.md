@@ -78,7 +78,7 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 npm install
 npm pack
 
-# 2. 装进 DSH profile（把 <仓库绝对路径> 换成实际路径；tarball 名形如 dsh-pocket-3.0.2-local.1.tgz）
+# 2. 装进 DSH profile（把 <仓库绝对路径> 换成实际路径；tarball 名形如 dsh-pocket-3.0.2-local.<序号>.tgz）
 dsh plugin --profile web add "file:<仓库绝对路径>/dsh-pocket-<版本>.tgz" -w
 
 # 3. 重启 dsh web
@@ -117,7 +117,7 @@ npx @deepseek-ai/dsh web
 
 1. 在 [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) → **Networks → Tunnels** 创建命名隧道，复制 **Tunnel Token**。
 2. 在该隧道的 **Public Hostname** 添加域名路由（如 `pocket.example.com`），把 **Service 指向本机实际代理端口**：通常为 `http://127.0.0.1:3081`。改过端口请用实际端口；不要指向 DSH 原始 Web 端口（通常 3080），否则会绕过 Pocket 的访问控制。
-3. 回到设置页填写固定域名 + Tunnel Token 保存。**保存只保存配置，不会启动公网**；修改正在使用的配置后，需关闭并重新开启公网才能生效。
+3. 回到设置页填写固定域名 + Tunnel Token 保存。**保存只保存配置，不会启动公网**；如果公网正在运行（或正在连接），保存会自动停止旧隧道，需重新开启才能应用新配置。
 4. 点「**开启公网访问**」并确认免责声明 → 手机扫公网二维码。地址固定为你配置的域名，**不会随重启变化**。
 
 固定域名模式的公网密码默认是 **8 位随机密码**，不随启停/重启自动换新，可自定义为 **8–64 位英文字母或数字**；请使用强密码，泄露后主动修改。Tunnel Token 只存本机（`$DSH_HOME/dsh-pocket/settings.json`，仅本机可读），设置页不回显。

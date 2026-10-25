@@ -155,6 +155,9 @@ for (const dictionary of [zh, en]) {
     assert.equal(nodes(wan(tree), (node) => node.type === 'input').length, 2);
     assert.equal(switchOf(tree).props.disabled, true, '表单打开时公网开关禁用，避免误启 Quick');
     assert.equal(nodes(wan(tree), (node) => node.type === 'button' && text(node) === dictionary.enable).length, 0, '不再显示 Quick 开启 CTA');
+    const modeButtons = nodes(wan(tree), (node) => node.type === 'button' && [dictionary.modeQuick, dictionary.modeNamed].includes(text(node)));
+    assert.equal(modeButtons.length, 2);
+    assert.ok(modeButtons.every((node) => node.props.disabled === true), '表单打开时模式按钮也禁用，避免抹掉已输入内容');
 
     // 保存固定域名配置 → 只保存不启动
     const inputs = nodes(wan(tree), (node) => node.type === 'input');
@@ -256,6 +259,7 @@ test('公网设置：运行中切换模式会停止旧隧道，避免设置与�
   assert.equal(page.calls.at(-1).payload.mode, 'quick');
   assert.equal(switchOf(tree).props['aria-checked'], false, '旧固定域名隧道已停止');
   assert.equal(nodes(wan(tree), (node) => node.type === 'img').length, 0, '旧地址二维码不再展示');
+  assert.ok(text(tree).includes(zh.configStopped), '运行中切换模式要提示旧隧道已停止');
 });
 
 test('公网设置：运行中只改 Token 保存也会停止旧隧道', async () => {
@@ -268,12 +272,14 @@ test('公网设置：运行中只改 Token 保存也会停止旧隧道', async (
   assert.equal(switchOf(tree).props['aria-checked'], true);
   button(tree, zh.namedEdit).props.onClick();
   tree = page.render();
+  assert.equal(switchOf(tree).props.disabled, false, '运行中打开表单仍可用开关立即关闭公网');
   nodes(wan(tree), (node) => node.type === 'input' && node.props.type === 'password')[0].props.onChange({ target: { value: 'fake-rotated-token-for-ui-tests' } });
   await button(page.render(), zh.save).props.onClick();
   tree = page.render();
   assert.equal(page.calls.at(-1).endpoint, POCKET_ENDPOINTS.tunnelSetConfig);
   assert.equal(page.calls.at(-1).payload.token, 'fake-rotated-token-for-ui-tests');
   assert.equal(switchOf(tree).props['aria-checked'], false, '旧 Token 隧道已停止，需重新开启应用新 Token');
+  assert.ok(text(tree).includes(zh.configStopped), '保存配置后要提示旧隧道已停止');
 });
 
 test('公网设置：恢复出厂回到随机域名，不留下公网入口或二维码', async () => {

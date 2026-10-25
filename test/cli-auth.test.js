@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
 import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -143,6 +144,24 @@ test('CLI --public 在 named 模式配置不完整时，于监听端口或下载
       return true;
     },
   );
+});
+
+test('CLI --public --no-auth 在监听/下载前退出，且不创建 DSH_HOME', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'dsh-pocket-cli-noauth-'));
+  t.after(() => rm(home, { recursive: true, force: true }));
+  const targetHome = join(home, 'must-not-exist');
+  await assert.rejects(
+    execFileAsync(process.execPath, [cliPath, '--public', '--no-auth'], {
+      env: { ...process.env, DSH_HOME: targetHome },
+      timeout: 10000,
+    }),
+    (err) => {
+      assert.equal(err.code, 1);
+      assert.match(String(err.stderr), /--no-auth/);
+      return true;
+    },
+  );
+  assert.equal(existsSync(targetHome), false, '必须在校验阶段退出，不能先写 settings/启动代理');
 });
 
 test('issue #90：为可测性加的 isDirectRun 守卫不能把 CLI 变成哑巴', async () => {
