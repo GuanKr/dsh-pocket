@@ -134,14 +134,14 @@ test('隧道模式：默认 quick，可切 named/quick，非法值拒绝', () =>
   assert.equal(tunnelMode(), 'quick', '默认随机域名（免 Cloudflare 账号）');
   assert.equal(tunnelToken(), '', '默认未配置 Token');
   assert.equal(tunnelHostname(), '', '默认未配置域名');
-  assert.equal(tunnelAutoRestoreEnabled(), false, 'quick 不自动恢复');
+  assert.equal(tunnelAutoRestoreEnabled(), true, '自动恢复默认开启（Quick 也恢复）');
   assert.equal(existsSync(settingsPath()), false, '读取默认值不创建配置');
   assert.equal(setTunnelMode('named'), 'named', '可显式保存命名模式');
   assert.equal(tunnelMode(), 'named', '命名模式持久化');
-  assert.equal(tunnelAutoRestoreEnabled(), true, '显式保存 named 才能沿用旧恢复意图');
+  assert.equal(tunnelAutoRestoreEnabled(), true, 'Named 同样允许自动恢复');
   assert.equal(setTunnelMode('quick'), 'quick', '可切回随机域名');
   assert.equal(tunnelMode(), 'quick', 'quick 为默认值，不写盘');
-  assert.equal(tunnelAutoRestoreEnabled(), false, '切回 quick 后不再自动恢复');
+  assert.equal(tunnelAutoRestoreEnabled(), true, '切回 quick 后仍允许自动恢复');
   const before = readFileSync(settingsPath(), 'utf8');
   for (const mode of ['other', '', undefined, null]) {
     assert.throws(() => setTunnelMode(mode), /quick 或 named/, '非法模式拒绝');
@@ -150,19 +150,26 @@ test('隧道模式：默认 quick，可切 named/quick，非法值拒绝', () =>
 }));
 
 for (const mode of [undefined, 'quick', 'other', 'named']) {
-  test(`隧道模式：旧存盘模式 ${String(mode)} 仅 named 允许沿用自动恢复`, () => withHome(async (home) => {
+  test(`隧道模式：旧存盘模式 ${String(mode)} 自动恢复默认开启`, () => withHome(async (home) => {
     const { tunnelMode, tunnelAutoRestoreEnabled, tunnelToken, tunnelHostname, settingsPath } = await import('../lib/settings.mjs');
     mkdirSync(join(home, 'dsh-pocket'), { recursive: true });
     const legacy = { tunnelMode: mode, tunnelToken: 'fake-cloudflared-token-for-tests', tunnelHostname: 'pocket.example.com' };
     writeFileSync(settingsPath(), JSON.stringify(legacy));
     const before = readFileSync(settingsPath(), 'utf8');
     assert.equal(tunnelMode(), mode === 'named' ? 'named' : 'quick', '只有显式 named 才是固定域名模式');
-    assert.equal(tunnelAutoRestoreEnabled(), mode === 'named', '恢复资格取决于原存盘模式');
+    assert.equal(tunnelAutoRestoreEnabled(), true, '旧存盘模式不影响默认恢复资格');
     assert.equal(tunnelToken(), legacy.tunnelToken, '读取保留旧 Token');
     assert.equal(tunnelHostname(), legacy.tunnelHostname, '读取保留旧域名');
     assert.equal(readFileSync(settingsPath(), 'utf8'), before, '读取不会悄悄改写旧配置');
   }));
 }
+
+test('隧道模式：settings.json 的 autoRestore:false 可显式关闭自动恢复', () => withHome(async (home) => {
+  const { tunnelAutoRestoreEnabled, settingsPath } = await import('../lib/settings.mjs');
+  mkdirSync(join(home, 'dsh-pocket'), { recursive: true });
+  writeFileSync(settingsPath(), JSON.stringify({ autoRestore: false }));
+  assert.equal(tunnelAutoRestoreEnabled(), false);
+}));
 
 test('Tunnel Token（issue #66）：设置/清除持久化；过短/非法字符拒绝', () => withHome(async () => {
   const { tunnelToken, setTunnelToken, settingsPath } = await import('../lib/settings.mjs');
@@ -224,7 +231,7 @@ test('Named 配置：首次保存缺 Token 或域名时拒绝，且不创建半�
     assert.equal(existsSync(settingsPath()), false, '失败时不创建配置文件');
     assert.equal(tunnelToken(), '', '不保留半份 Token');
     assert.equal(tunnelHostname(), '', '不保留半份域名');
-    assert.equal(tunnelAutoRestoreEnabled(), false, '失败时不会开启旧标记恢复');
+    assert.equal(tunnelAutoRestoreEnabled(), true, '恢复默认开启；失败配置不会写盘');
   }
 }));
 
@@ -301,7 +308,7 @@ test('恢复出厂设置：清空全部设置 + 重设随机密码（开关回�
   assert.equal(settings.mobileRightbarEnabled(), true, '手机端右边栏恢复默认开');
   assert.equal(settings.lanIpOverride(), '', '局域网地址恢复自动');
   assert.equal(settings.tunnelMode(), 'quick', '重置后回到随机域名模式');
-  assert.equal(settings.tunnelAutoRestoreEnabled(), false, '重置后不能沿用旧自动恢复标记');
+  assert.equal(settings.tunnelAutoRestoreEnabled(), true, '重置后恢复默认开启；旧标记由 stop 清除');
   assert.equal(settings.tunnelToken(), '', 'Tunnel Token 已清空');
   assert.equal(settings.tunnelHostname(), '', '固定域名已清空');
   assert.equal(settings.pinCustom('public'), false, '公网自定义标记已清除');

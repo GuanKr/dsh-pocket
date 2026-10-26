@@ -121,7 +121,7 @@ cp "$DSH_HOME/profiles/web/pnpm-lock.yaml" "$DSH_HOME/profiles/web/pnpm-lock.yam
 ## 四、测试
 
 ```sh
-npm test          # 277 个用例（273 pass / 4 skip）
+npm test          # 280 个用例（276 pass / 4 skip）
 ```
 
 - `test/tunnel-args.test.js` 有 3 条在 Windows 上 **skip**（依赖 POSIX shebang 的隧道参数
@@ -241,7 +241,7 @@ git commit -m "chore(sync): 同步 origin/main 至 <短 sha>（<上游版本>）
 **足迹里已有生产代码**（2026-10-25 起，Quick Tunnel 恢复）。冲突面比过去大：sync 时要特别
 检查 `lib/service.mjs`、`lib/settings.mjs`、`client/index.jsx`，解完冲突必须跑全量测试。
 
-### 本地功能补丁：Quick Tunnel（3.0.2-local.1 起；.3 含两轮审查修复）
+### 本地功能补丁：Quick Tunnel（3.0.2-local.1 起；.4 恢复 Quick 自动恢复）
 
 origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保留用户自配的固定域名。
 本 fork 恢复它，因为 Quick Tunnel **不需要 Cloudflare 账号/域名**，是「没有 CF 账号」场景
@@ -250,8 +250,8 @@ origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保
 - 模式：`settings.tunnelMode()` 默认 `'quick'`；显式保存 `'named'` 才用固定域名。
 - 启动：`lib/service.mjs` 的 `startTunnel` 按 mode 分派 `startQuickTunnel` / `startNamedTunnel`。
 - 安全语义：Quick 每次开启轮换公网 PIN（自定义 PIN 除外）；Quick 的 `tunnel-auto.json`
-  标记为 `mode:'quick'`，**重启后不自动恢复**（域名已变，自动拉起等于替用户重新暴露公网）；
-  只有完整配置的 Named 会恢复。
+  标记为 `mode:'quick'`；DSH 重启后按上次模式自动恢复（Quick 重新分配地址并轮换 PIN，Named 需完整配置、地址不变）；
+  手动关闭后不恢复，`settings.json` 的 `autoRestore:false` 可关闭自动恢复。
 - CLI：`dsh-pocket --public` 默认走 Quick（免账号）；设置里切到 named 且配置完整才走固定域名。
 - UI：设置页公网卡有「随机域名（免账号） / 固定域名」切换；Quick 不显示配置表单。
 - 守护测试：`test/service.test.js`（quick 启动/标记/恢复）、`test/settings.test.js`、

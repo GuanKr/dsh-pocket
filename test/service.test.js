@@ -224,7 +224,7 @@ test('service：quick 模式零配置启动随机隧道（无需 Token/域名）
     assert.equal(status.tunnelRunning, true);
     assert.equal(status.tunnelUrl, 'https://quick-test.trycloudflare.com');
     assert.equal(status.tunnelConfig.mode, 'quick');
-    // marker 记录 quick，供重启时识别为「不自动恢复」
+    // marker 记录 quick，重启后按 quick 模式自动恢复（地址会重新分配）
     let marker;
     for (let i = 0; i < 50; i++) {
       try { marker = JSON.parse(readFileSync(join(home, 'dsh-pocket', 'tunnel-auto.json'), 'utf8')); } catch { marker = null; }
@@ -498,7 +498,7 @@ test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；rese
     assert.equal(reset.ok, true);
     assert.equal(reset.value.tunnelRunning, false, 'reset 先停止隧道');
     assert.deepEqual(reset.value.tunnelConfig, { mode: 'quick', hostname: '', tokenSet: false }, 'reset 回到默认 quick');
-    assert.equal(settings.tunnelAutoRestoreEnabled(), false, 'reset 关闭旧标记恢复资格');
+    assert.equal(settings.tunnelAutoRestoreEnabled(), true, 'reset 后默认开启，但旧标记已由 stop 清除');
     const afterReset = await conn.handler(POCKET_ENDPOINTS.tunnelStart, { disclaimer: true });
     assert.equal(afterReset.ok, true, 'reset 后仍可用免账号 Quick 模式');
     assert.equal(afterReset.value.tunnelUrl, 'https://quick-test.trycloudflare.com');
@@ -1167,22 +1167,24 @@ test('startProxy：端口被占（EADDRINUSE）时自动尝试下一个端口', 
   await service.dispose();
 });
 
-for (const [label, mode, cfg, shouldRestore] of [
-  ['旧无 mode 标记 + 无配置', undefined, undefined, false],
-  ['旧无 mode 标记 + 旧 quick 配置', undefined, namedTunnelConfig({ mode: 'quick' }), false],
-  ['旧无 mode 标记 + Named 缺 Token', undefined, namedTunnelConfig({ token: '' }), false],
-  ['旧无 mode 标记 + Named 缺域名', undefined, namedTunnelConfig({ hostname: '' }), false],
-  ['旧无 mode 标记 + 禁止沿用恢复', undefined, namedTunnelConfig({ autoRestore: false }), false],
-  ['旧无 mode 标记 + 完整 Named 配置', undefined, namedTunnelConfig(), true],
-  ['旧无 mode 标记 + 显式允许 Named 恢复', undefined, namedTunnelConfig({ autoRestore: true }), true],
-  ['显式 quick 标记 + 完整 Named 配置', 'quick', namedTunnelConfig(), false],
-  ['显式 quick 标记 + 旧 quick 配置', 'quick', namedTunnelConfig({ mode: 'quick' }), false],
-  ['显式未知模式标记 + 完整 Named 配置', 'other', namedTunnelConfig(), false],
-  ['显式 Named 标记 + 无配置', 'named', undefined, false],
-  ['显式 Named 标记 + 缺 Token', 'named', namedTunnelConfig({ token: '' }), false],
-  ['显式 Named 标记 + 缺域名', 'named', namedTunnelConfig({ hostname: '' }), false],
-  ['显式 Named 标记 + 完整配置', 'named', namedTunnelConfig(), true],
-  ['显式 Named 标记不依赖旧模式恢复资格', 'named', namedTunnelConfig({ autoRestore: false }), true],
+for (const [label, mode, cfg, expected] of [
+  ['旧无 mode 标记 + 无配置（默认 Quick）', undefined, undefined, 'quick'],
+  ['旧无 mode 标记 + 旧 Quick 配置', undefined, namedTunnelConfig({ mode: 'quick' }), 'quick'],
+  ['旧无 mode 标记 + Named 缺 Token', undefined, namedTunnelConfig({ token: '' }), null],
+  ['旧无 mode 标记 + Named 缺域名', undefined, namedTunnelConfig({ hostname: '' }), null],
+  ['旧无 mode 标记 + autoRestore:false', undefined, namedTunnelConfig({ autoRestore: false }), null],
+  ['旧无 mode 标记 + 完整 Named 配置', undefined, namedTunnelConfig(), 'named'],
+  ['显式 Quick 标记 + Quick 配置', 'quick', namedTunnelConfig({ mode: 'quick' }), 'quick'],
+  ['显式 Quick 标记 + 无配置（默认 Quick）', 'quick', undefined, 'quick'],
+  ['显式 Quick 标记 + autoRestore:false', 'quick', namedTunnelConfig({ mode: 'quick', autoRestore: false }), null],
+  ['显式 Quick 标记 + 完整 Named 配置（模式已切换）', 'quick', namedTunnelConfig(), null],
+  ['显式未知模式标记 + 完整 Named 配置', 'other', namedTunnelConfig(), null],
+  ['显式 Named 标记 + 无配置（默认 Quick，模式不一致）', 'named', undefined, null],
+  ['显式 Named 标记 + 缺 Token', 'named', namedTunnelConfig({ token: '' }), null],
+  ['显式 Named 标记 + 缺域名', 'named', namedTunnelConfig({ hostname: '' }), null],
+  ['显式 Named 标记 + 完整配置', 'named', namedTunnelConfig(), 'named'],
+  ['显式 Named 标记 + autoRestore:false', 'named', namedTunnelConfig({ autoRestore: false }), null],
+  ['显式 Named 标记 + Quick 配置（模式已切换）', 'named', namedTunnelConfig({ mode: 'quick' }), null],
 ]) {
   test(`公网隧道自动恢复：${label}`, () => withHome(async (home) => {
     const statePath = join(home, 'dsh-pocket', 'tunnel-auto.json');
@@ -1194,24 +1196,26 @@ for (const [label, mode, cfg, shouldRestore] of [
       ...(cfg === undefined ? {} : { getTunnelConfig: () => cfg }),
       log: { info() {}, warn() {} },
     });
+    const expectedUrl = expected === 'named' ? 'https://pocket.example.com' : 'https://quick-test.trycloudflare.com';
+    const expectedStarted = expected === 'named' ? [`named:${FAKE_TUNNEL_TOKEN}`] : ['quick:3081'];
     try {
       await service.restoreTunnelIfNeeded();
       const status = await service.status();
-      assert.equal(status.tunnelRunning, shouldRestore);
-      assert.equal(status.tunnelUrl, shouldRestore ? 'https://pocket.example.com' : null);
-      assert.deepEqual(internals.started, shouldRestore ? [`named:${FAKE_TUNNEL_TOKEN}`] : [], '仅合格的 Named 配置允许下载和启动');
-      if (shouldRestore) {
+      assert.equal(status.tunnelRunning, Boolean(expected));
+      assert.equal(status.tunnelUrl, expected ? expectedUrl : null);
+      assert.deepEqual(internals.started, expected ? expectedStarted : [], '只有模式匹配且配置合格的隧道才启动');
+      if (expected) {
         let marker;
         for (let i = 0; i < 50; i++) {
           try { marker = JSON.parse(readFileSync(statePath, 'utf8')); } catch { marker = null; }
-          if (marker?.mode === 'named' && marker.at > 1) break;
+          if (marker?.mode === expected && marker.at > 1) break;
           await new Promise((resolve) => setTimeout(resolve, 20));
         }
-        assert.equal(marker?.mode, 'named', '恢复后标记升级为显式 named');
+        assert.equal(marker?.mode, expected, `恢复后标记写为 ${expected}`);
         assert.ok(marker.at > 1, '恢复后重新写入当前开始时间');
         assert.equal(marker.token, undefined, '恢复标记不记录 Token');
       } else {
-        assert.equal(existsSync(statePath), false, '不合格或 quick 恢复标记必须清除');
+        assert.equal(existsSync(statePath), false, '不合格或模式不匹配的恢复标记必须清除');
         assert.equal(existsSync(join(home, 'dsh-pocket', 'bin')), false, '拒绝恢复不创建下载缓存');
         assert.equal(status.proxyRunning, false, '拒绝恢复不启动代理');
         await service.restoreTunnelIfNeeded();
@@ -1256,15 +1260,9 @@ test('公网隧道自动恢复：开启时持久化标记，重启后 restoreTun
   assert.equal(startCount, 2, '重启后自动拉起隧道');
 
   // 手动关闭 → 标记清除 → 下次不自动恢复
-  service2.stopTunnel();
-  // Windows 上 rm 可能与实时扫描竞态偶发失败（clearAutoTunnel 内部吞错），轮询等待落盘
-  let afterClose = null;
-  for (let i = 0; i < 50; i++) {
-    afterClose = await fsp.readFile(statePath, 'utf8').catch(() => null);
-    if (afterClose === null) break;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  assert.equal(afterClose, null, '关闭后删除标记');
+  await service2.stopTunnel();
+  const afterClose = await fsp.readFile(statePath, 'utf8').catch(() => null);
+  assert.equal(afterClose, null, '关闭返回时标记已删除');
   const service3 = createPocketService({ dshPort: 3080, port: 3081, home, internals, getTunnelConfig: namedTunnelConfig });
   await service3.startProxy();
   await service3.restoreTunnelIfNeeded();

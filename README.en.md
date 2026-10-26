@@ -55,7 +55,7 @@ What it looks like — the phone shows the exact same UI as your computer, live:
 | 📏 Mobile font size          | Defaults to "Follow desktop", so desktop font changes also affect the phone. Choose a **specific size (12–22px)** for independent mobile text sizing without changing the desktop setting |
 | 📁 File browser              | The mobile "Files" entries need a host-side explorer panel (a dsh-web-ui component); on stock DSH without it the entries are auto-hidden instead of doing nothing                                                                                                                 |
 | 🗜️ Transfer compression      | Large JSON responses are gzip/brotli'd on the fly (17MB session history → ~1MB; brotli quality 6: fast and bandwidth-friendly) — faster loads, less mobile data                                                                                                                   |
-| 🔁 Tunnel auto-restore       | Only previously enabled, fully configured **named** tunnels are restored. Quick URLs change on every restart, so they are never auto-restored (that would re-expose your computer without consent) |
+| 🔁 Tunnel auto-restore       | Restores public access after a restart using the last mode: Named keeps the fixed hostname; Quick gets a new URL and a rotated PIN (custom PINs excluded). Manual stop disables restore |
 | 🧩 Single-package install    | One npm package, one settings tab — no core/adapter split. LAN and Quick public access need no account; only a fixed hostname needs your own Cloudflare account/domain |
 
 ## 🚀 Usage
@@ -122,7 +122,7 @@ To keep the address stable across restarts, switch the card to **Fixed domain**:
 
 In fixed-domain mode the public PIN defaults to a random **8-character PIN** and does **not** rotate on stop/start or restart; you can customize it to **8–64 letters and digits**. Use a strong PIN and change it yourself if it leaks. The Tunnel Token is stored locally only (`$DSH_HOME/dsh-pocket/settings.json`, readable by your user only) and is never echoed back in the UI.
 
-**Auto-restore:** only a previously enabled, fully configured fixed-hostname tunnel auto-restores after a DSH restart. Quick URLs are not restored (the address has changed, and auto-starting would re-expose your computer without consent). A factory reset stops public access and clears the hostname, Token and restore marker.
+**Auto-restore:** after a DSH restart, public access is restored using the last mode. A fixed-hostname tunnel needs a complete configuration and keeps its address; a Quick tunnel gets a new random address and a rotated public PIN (custom PINs excluded), so the old link stops working. Manually stopping public access deletes the restore marker. Set `autoRestore:false` in the settings file to disable auto-restore. A factory reset stops public access and clears the hostname, Token and restore marker.
 
 > Upgrading: bump `package.json`, run `npm install --package-lock-only`, run `npm pack`, then re-run `add` with the new tarball. Do not update via a GitHub tag (origin lacks the local Quick Tunnel patch). Always bump the version: reusing the same version can leave the profile lockfile pointing at the old tarball.
 
@@ -135,7 +135,7 @@ The Cloudflare hostname route's **Service must target the CLI's actual listening
 ## ⚠️ Security (read first)
 
 - **DSH can execute code on your computer.** **LAN** QR/URL plus its own **8-character PIN** is the key (PIN **on by default**, switchable off — then LAN scans connect directly, same-network devices only) — **never share the LAN QR, URL or PIN**.
-- **Read and accept the security disclaimer every time you manually enable public access in Settings** (the server enforces acceptance for start requests): public access exposes a code-executing DSH to the internet — use a strong PIN, turn it off when done, never use it on classified networks. Named tunnels may auto-restore after a restart; turn access off manually if you do not want it restored.
+- **Read and accept the security disclaimer every time you manually enable public access in Settings** (the server enforces acceptance for start requests): public access exposes a code-executing DSH to the internet — use a strong PIN, turn it off when done, never use it on classified networks. Public tunnels (Quick or Named) may auto-restore after a restart; turn access off manually if you do not want it restored.
 - **Plugin public access** uses a random **8-character PIN** by default, customizable to **8–64 letters and digits**. Quick mode rotates the generated PIN on every enable (custom PINs do not rotate); fixed-domain mode does not rotate it. If the address and PIN leak, turn public access off immediately and change the PIN yourself.
 - Phone login state is tied to the computer's dsh web process: **no re-entry while dsh web stays up; one re-entry after a restart/update**.
 - **Login rate limiting** (anti brute-force): **5** consecutive wrong PINs from the same IP lock it for **60s**; a global failure threshold briefly locks everyone (blocks distributed IP-rotation scans); a successful login resets the counter.
@@ -210,7 +210,7 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lib/index.js`       | Plugin entry: auto-start proxy + register RPC + PIN management (public 8 characters: rotated on every Quick enable, not rotated for Named; LAN: separate 8 characters, manually refreshable / switchable) + LAN access switch + DSH Desktop detection |
 | `lib/settings.mjs`   | Settings persistence: LAN access switch (on by default) + LAN-PIN switch (on by default) stored in `$DSH_HOME/dsh-pocket/settings.json`                                                                                      |
-| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), Quick/Named dual-mode tunnels (only a fully configured Named tunnel auto-restores), status snapshot (with QR data URLs) |
+| `lib/service.mjs`    | Service: proxy lifecycle (port auto-fallback), Quick/Named dual-mode tunnels (auto-restores the last mode; Named requires complete configuration), status snapshot (with QR data URLs) |
 | `lib/proxy.mjs`      | Header-rewriting reverse proxy: Host/Origin → loopback, HTTP + WebSocket passthrough + polyfill injection + gzip/brotli compression + per-host token auth (public always; LAN per switch) + blocks LAN Hosts when LAN is off |
 | `lib/tunnel.mjs`     | cloudflared: multi-mirror download (Tsinghua first) / adaptive parallel / Quick (random URL, --protocol auto) and Named (Token + fixed hostname, --protocol auto) |
 | `lib/web-rpc.js`     | Loopback RPC: `status` / `tunnel.start` / `tunnel.stop` / `lan.setEnabled` / `version` / `update` / `restart`                                                                                                                |
@@ -222,7 +222,7 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 ```sh
 npm install
 node client/build.mjs   # rebuild after editing client/
-npm test                # proxy / auth / compression / tunnel / service / RPC / settings (277 tests)
+npm test                # proxy / auth / compression / tunnel / service / RPC / settings (280 tests)
 ```
 
 **Want to try your changes locally without publishing?** Point the installed plugin at your local checkout with a symlink and restart dsh web. Full steps (including switching back to the npm release) are in [LOCAL-DEV.md](./LOCAL-DEV.md).

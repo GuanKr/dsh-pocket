@@ -370,7 +370,7 @@ origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保
 - `service.startTunnel()` 按模式分派 `startQuickTunnel` / `startNamedTunnel`；quick 用代理端口，
   named 用已保存的 Token/域名。
 - Quick 每次开启轮换公网 PIN（自定义 PIN 除外）；`tunnel-auto.json` 记录 `mode:'quick'`，
-  DSH 重启后**不自动恢复**；只有完整配置的 named 会恢复。
+  DSH 重启后按上次模式恢复（Quick 换新地址，Named 需完整配置、地址不变）；手动关闭后不恢复。
 - CLI `--public` 默认 quick；设置里存了 named 且配置完整才走固定域名。
 - 设置页公网卡提供「随机域名（免账号）/ 固定域名」切换，quick 不显示配置表单。
 
