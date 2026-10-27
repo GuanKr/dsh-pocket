@@ -78,7 +78,7 @@ npm install -g @deepseek-ai/dsh     # global install; verify: dsh --version
 npm install
 npm pack
 
-# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.2-local.<n>.tgz)
+# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.3-local.<n>.tgz)
 dsh plugin --profile web add "file:<repo path>/dsh-pocket-<version>.tgz" -w
 
 # 3. Restart dsh web
@@ -222,7 +222,7 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 ```sh
 npm install
 node client/build.mjs   # rebuild after editing client/
-npm test                # proxy / auth / compression / tunnel / service / RPC / settings (280 tests)
+npm test                # proxy / auth / compression / tunnel / service / RPC / settings (299 tests)
 ```
 
 **Want to try your changes locally without publishing?** Point the installed plugin at your local checkout with a symlink and restart dsh web. Full steps (including switching back to the npm release) are in [LOCAL-DEV.md](./LOCAL-DEV.md).

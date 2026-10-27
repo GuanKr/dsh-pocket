@@ -78,7 +78,7 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 npm install
 npm pack
 
-# 2. 装进 DSH profile（把 <仓库绝对路径> 换成实际路径；tarball 名形如 dsh-pocket-3.0.2-local.<序号>.tgz）
+# 2. 装进 DSH profile（把 <仓库绝对路径> 换成实际路径；tarball 名形如 dsh-pocket-3.0.3-local.<序号>.tgz）
 dsh plugin --profile web add "file:<仓库绝对路径>/dsh-pocket-<版本>.tgz" -w
 
 # 3. 重启 dsh web

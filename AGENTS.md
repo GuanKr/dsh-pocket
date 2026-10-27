@@ -121,7 +121,7 @@ cp "$DSH_HOME/profiles/web/pnpm-lock.yaml" "$DSH_HOME/profiles/web/pnpm-lock.yam
 ## 四、测试
 
 ```sh
-npm test          # 280 个用例（276 pass / 4 skip）
+npm test          # 299 个用例（295 pass / 4 skip）
 ```
 
 - `test/tunnel-args.test.js` 有 3 条在 Windows 上 **skip**（依赖 POSIX shebang 的隧道参数
@@ -241,7 +241,7 @@ git commit -m "chore(sync): 同步 origin/main 至 <短 sha>（<上游版本>）
 **足迹里已有生产代码**（2026-10-25 起，Quick Tunnel 恢复）。冲突面比过去大：sync 时要特别
 检查 `lib/service.mjs`、`lib/settings.mjs`、`client/index.jsx`，解完冲突必须跑全量测试。
 
-### 本地功能补丁：Quick Tunnel（3.0.2-local.1 起；.4 恢复 Quick 自动恢复）
+### 本地功能补丁：Quick Tunnel（当前 3.0.3-local.1）
 
 origin/main 在 `8828e14`（v3.0.0）删除了随机域名 Quick Tunnel，只保留用户自配的固定域名。
 本 fork 恢复它，因为 Quick Tunnel **不需要 Cloudflare 账号/域名**，是「没有 CF 账号」场景
