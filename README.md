@@ -85,7 +85,7 @@ dsh plugin --profile web add "file:<仓库绝对路径>/dsh-pocket-<版本>.tgz"
 npx @deepseek-ai/dsh web
 ```
 
-> **装的是哪个包**：本仓库是 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 的 fork。npm 上同名的 `dsh-pocket` 是上游作者的包（当前 2.12.0），**不是**这里的 3.x。GitHub 上的 `github:daha1216/dsh-pocket` 目前是 origin 的 3.0.2（仅固定域名），**不含本 fork 恢复的 Quick Tunnel**；要用随机域名请按上面的本地打包安装。把 local 推到远端并打 tag 后，才可以改回 GitHub 安装。
+> **装的是哪个包**：本仓库是 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 的 fork。npm 上同名的 `dsh-pocket` 是上游作者的包（当前 2.12.0），**不是**这里的 3.x。GitHub 上的 `github:daha1216/dsh-pocket` 目前是 origin 的 3.0.3（仅固定域名），**不含本 fork 恢复的 Quick Tunnel**；要用随机域名请按上面的本地打包安装。把 local 推到远端并打 tag 后，才可以改回 GitHub 安装。
 >
 > **兼容性**：`engines.dsh` 声明 `^0.2.0-rc.1`，即 **DSH 0.2.0-rc.1 及以上、0.3.0 之前**。装到不匹配的版本时，插件管理器会以 `incompatible-version` 明确拒绝；确实要在别的版本上试，可用 `dsh plugin allow-version` 加一次性豁免。DSH 升到 0.3.x 后需要本插件发新版放开范围。
 
@@ -228,7 +228,7 @@ npx @deepseek-ai/dsh web
 ```sh
 npm install
 node client/build.mjs   # 改 client/ 后重新打包
-npm test                # 代理 / 认证 / 压缩 / 隧道 / 服务 / RPC / 设置（109 测试）
+npm test                # 代理 / 认证 / 压缩 / 隧道 / 服务 / RPC / 设置（299 测试）
 ```
 
 **改完想在本机先试？** 不用发版：把插件换成指向本地仓库的软链，重启 dsh web 就是本地代码。完整步骤（含怎么换回 npm 官方版本）见 [LOCAL-DEV.md](./LOCAL-DEV.md)。

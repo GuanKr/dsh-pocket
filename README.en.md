@@ -85,7 +85,7 @@ dsh plugin --profile web add "file:<repo path>/dsh-pocket-<version>.tgz" -w
 npx @deepseek-ai/dsh web
 ```
 
-> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. The GitHub address `github:daha1216/dsh-pocket` currently points at origin 3.0.2 (fixed-domain only) and **does not include this fork's Quick Tunnel restoration**; use the local pack/install steps above for random URLs. Only switch back to a GitHub install after pushing the local branch and tagging a release.
+> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. The GitHub address `github:daha1216/dsh-pocket` currently points at origin 3.0.3 (fixed-domain only) and **does not include this fork's Quick Tunnel restoration**; use the local pack/install steps above for random URLs. Only switch back to a GitHub install after pushing the local branch and tagging a release.
 >
 > **Compatibility**: `engines.dsh` declares `^0.2.0-rc.1`, i.e. **DSH 0.2.0-rc.1 up to (but not including) 0.3.0**. On an unsupported runtime the plugin manager refuses with `incompatible-version`; add a one-off exemption with `dsh plugin allow-version` if you really need to try it elsewhere. Once DSH reaches 0.3.x this plugin needs a new release to widen the range.
 
