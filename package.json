@@ -78,7 +78,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.0.3-local.1",
+  "version": "3.0.3-local.2",
   "allowScripts": {
     "esbuild@0.25.12": true
   }

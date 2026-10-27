@@ -412,3 +412,12 @@ test('恢复出厂：设置文件删不掉时 resetPocketState 报 settingsClear
   assert.ok(out.warnings.some((w) => w.includes('settings.json')), '告警里要说明是设置文件没删掉');
   assert.ok(out.accessToken.length >= 8, 'PIN 仍然换成新的（内存可用）');
 }));
+
+test('settings.json 损坏时回退 .bak 并恢复主文件', () => withHome(async (home) => {
+  const { lanEnabled, settingsPath } = await import('../lib/settings.mjs');
+  mkdirSync(join(home, 'dsh-pocket'), { recursive: true });
+  writeFileSync(settingsPath(), '{broken');
+  writeFileSync(`${settingsPath()}.bak`, JSON.stringify({ lanEnabled: false }));
+  assert.equal(lanEnabled(), false, '从 .bak 读取旧配置');
+  assert.equal(JSON.parse(readFileSync(settingsPath(), 'utf8')).lanEnabled, false, '主文件已恢复');
+}));

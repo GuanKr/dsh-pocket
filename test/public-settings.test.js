@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { Script, createContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
-import { POCKET_ENDPOINTS } from '../client/api.js';
+import { POCKET_ENDPOINTS, redactStatus } from '../client/api.js';
 import { zh, en } from '../client/pocket-locales.js';
 
 const QUICK_URL = 'https://quick-test.trycloudflare.com';
@@ -302,4 +302,9 @@ test('源码与构建产物都带回了 Quick Tunnel（免账号随机域名）'
   for (const relative of ['../lib/settings.mjs', '../lib/service.mjs', '../lib/index.js', '../lib/web-rpc.js']) {
     assert.doesNotMatch(readFileSync(new URL(relative, import.meta.url), 'utf8'), /随机隧道已移除|不再支持随机/, relative);
   }
+});
+
+test('redactStatus：缺少 tunnelConfig 时默认 quick（防止合并回退本地默认）', () => {
+  assert.equal(redactStatus({}).tunnelConfig.mode, 'quick');
+  assert.equal(redactStatus({ tunnelConfig: { mode: 'named' } }).tunnelConfig.mode, 'named');
 });

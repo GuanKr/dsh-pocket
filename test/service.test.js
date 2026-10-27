@@ -426,6 +426,34 @@ test('RPC：marker 删除失败时停止仍成功，但返回 stopWarning', () =
   }
 }));
 
+test('RPC：reset 时 marker 删除失败 → 整体失败且不清设置（安全失败）', () => withHome(async (home) => {
+  const statePath = join(home, 'dsh-pocket', 'tunnel-auto.json');
+  mkdirSync(statePath, { recursive: true }); // 目录让 rm 失败，模拟文件锁/实时扫描
+  const internals = stubInternals();
+  const service = createPocketService({
+    dshPort: 3080, port: 3081, home, internals,
+    getTunnelConfig: () => ({ mode: 'quick' }),
+  });
+  const conn = fakeCtxConnection();
+  let resetCalls = 0;
+  installPocketRpc({ connection: conn }, {
+    service,
+    getTunnelConfig: () => ({ mode: 'quick', hostname: '', tokenSet: false }),
+    resetPocket: () => { resetCalls += 1; return {}; },
+    log: { error() {}, warn() {} },
+  });
+  try {
+    await service.startProxy();
+    await service.startTunnel();
+    const reset = await conn.handler(POCKET_ENDPOINTS.pocketReset, { confirm: true });
+    assert.equal(reset.ok, false, 'marker 删不掉时 reset 必须失败');
+    assert.equal(resetCalls, 0, '失败时不得清空设置');
+    assert.equal((await service.status()).tunnelRunning, false, '隧道已停止，不会继续暴露');
+  } finally {
+    await service.dispose();
+  }
+}));
+
 test('RPC：默认 quick 可零配置启动；Named 配置保存不启动；reset 回到 quick', () => withHome(async () => {
   const settings = await import('../lib/settings.mjs');
   const { resetPocketState } = await import('../lib/index.js');
