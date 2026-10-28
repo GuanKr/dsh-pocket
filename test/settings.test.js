@@ -553,4 +553,3 @@ test('profile 推断：pnpm 的 .pnpm 布局仍能找到真实 profile', async (
   assert.equal(profileFromPath('C:/app/node_modules/dsh-pocket/lib/index.js'), 'web', '非 profiles 布局退回 web');
   assert.equal(profileFromPath('C:/x/profiles/../node_modules/dsh-pocket/'), 'web', '非法 profile 名退回 web');
 });
-
