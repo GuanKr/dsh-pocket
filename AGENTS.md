@@ -121,7 +121,7 @@ cp "$DSH_HOME/profiles/web/pnpm-lock.yaml" "$DSH_HOME/profiles/web/pnpm-lock.yam
 ## 四、测试
 
 ```sh
-npm test          # 355 个用例（351 pass / 4 skip）
+npm test          # 356 个用例（352 pass / 4 skip）
 ```
 
 - `test/tunnel-args.test.js` 有 3 条在 Windows 上 **skip**（依赖 POSIX shebang 的隧道参数

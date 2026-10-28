@@ -311,7 +311,7 @@ async function main() {
         publicUrl = publicConfig.url;
       } else {
         // cloudflared 必须连代理实际监听地址；0.0.0.0/:: 这类通配地址用 loopback。
-        const host = ['0.0.0.0', '::', '[::]', ''].includes(String(args.host).trim()) ? '127.0.0.1' : args.host;
+        const host = ['0.0.0.0', '::', '::0', '[::]', '[::0]', ''].includes(String(args.host).trim()) ? '127.0.0.1' : args.host;
         tunnel = await startQuickTunnel({ port, host, signal: controller.signal });
         publicUrl = tunnel.url;
       }

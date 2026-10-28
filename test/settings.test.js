@@ -171,6 +171,20 @@ test('隧道模式：settings.json 的 autoRestore:false 可显式关闭自动�
   assert.equal(tunnelAutoRestoreEnabled(), false);
 }));
 
+test('隧道模式：quick 空写捷径也必须刷新进程缓存（跨实例竞态回归）', () => withHome(async (home) => {
+  // 复现：本进程缓存先读到 named，另一个实例把磁盘改成「无 tunnelMode」（quick）。
+  // 旧修复只把空写判断改成读磁盘，提前 return 时没刷新缓存，紧接着的 tunnelMode()
+  // 仍返回 named，startTunnel 会按 named 启动。
+  const { tunnelMode, setTunnelMode, settingsPath } = await import('../lib/settings.mjs');
+  mkdirSync(join(home, 'dsh-pocket'), { recursive: true });
+  const named = { tunnelMode: 'named', tunnelToken: 'fake-cloudflared-token-for-tests', tunnelHostname: 'pocket.example.com' };
+  writeFileSync(settingsPath(), JSON.stringify(named));
+  assert.equal(tunnelMode(), 'named', '先把进程缓存读成 named');
+  writeFileSync(settingsPath(), JSON.stringify({ tunnelToken: named.tunnelToken, tunnelHostname: named.tunnelHostname }));
+  assert.equal(setTunnelMode('quick'), 'quick');
+  assert.equal(tunnelMode(), 'quick', '提前 return 后缓存必须与磁盘一致，不能残留 named');
+}));
+
 test('Tunnel Token（issue #66）：设置/清除持久化；过短/非法字符拒绝', () => withHome(async () => {
   const { tunnelToken, setTunnelToken, settingsPath } = await import('../lib/settings.mjs');
   const tok = 'fake-cloudflared-token-for-tests';
@@ -413,13 +427,17 @@ test('恢复出厂：设置文件删不掉时 resetPocketState 报 settingsClear
   assert.ok(out.accessToken.length >= 8, 'PIN 仍然换成新的（内存可用）');
 }));
 
-test('settings.json 损坏时回退 .bak 并恢复主文件', () => withHome(async (home) => {
-  const { lanEnabled, settingsPath } = await import('../lib/settings.mjs');
+test('settings.json 损坏时回退 .bak（读路径不改写主文件，下一次写盘修复）', () => withHome(async (home) => {
+  const { lanEnabled, setMobileFontSize, settingsPath } = await import('../lib/settings.mjs');
   mkdirSync(join(home, 'dsh-pocket'), { recursive: true });
   writeFileSync(settingsPath(), '{broken');
   writeFileSync(`${settingsPath()}.bak`, JSON.stringify({ lanEnabled: false }));
   assert.equal(lanEnabled(), false, '从 .bak 读取旧配置');
-  assert.equal(JSON.parse(readFileSync(settingsPath(), 'utf8')).lanEnabled, false, '主文件已恢复');
+  assert.equal(readFileSync(settingsPath(), 'utf8'), '{broken', '读路径不得抢改写主文件（会与写者 stash/rollback 竞态）');
+  setMobileFontSize(16);
+  const repaired = JSON.parse(readFileSync(settingsPath(), 'utf8'));
+  assert.equal(repaired.lanEnabled, false, '下一次写盘修复主文件并保留旧配置');
+  assert.equal(repaired.mobileFontSize, 16, '本次写入生效');
 }));
 
 test('跨进程写入：以磁盘最新内容为基准合并，不用过期缓存覆盖别人刚写的键', () => withHome(async (home) => {
