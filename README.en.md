@@ -78,14 +78,14 @@ npm install -g @deepseek-ai/dsh     # global install; verify: dsh --version
 npm install
 npm pack
 
-# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.3-local.<n>.tgz)
+# 2. Install into the DSH profile (replace <repo path>; the tarball looks like dsh-pocket-3.0.8-local.<n>.tgz)
 dsh plugin --profile web add "file:<repo path>/dsh-pocket-<version>.tgz" -w
 
 # 3. Restart dsh web
 npx @deepseek-ai/dsh web
 ```
 
-> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. The GitHub address `github:daha1216/dsh-pocket` currently points at origin 3.0.3 (fixed-domain only) and **does not include this fork's Quick Tunnel restoration**; use the local pack/install steps above for random URLs. Only switch back to a GitHub install after pushing the local branch and tagging a release.
+> **Which package is this**: this repository is a fork of [dsh-pocket](https://github.com/shaobeichen/dsh-pocket). The `dsh-pocket` package on npm belongs to the upstream author (currently 2.12.0) and is **not** this 3.x line. The GitHub address `github:daha1216/dsh-pocket` currently points at origin 3.0.8 (fixed-domain only) and **does not include this fork's Quick Tunnel restoration**; use the local pack/install steps above for random URLs. Only switch back to a GitHub install after pushing the local branch and tagging a release.
 >
 > **Compatibility**: `engines.dsh` declares `^0.2.0-rc.1`, i.e. **DSH 0.2.0-rc.1 up to (but not including) 0.3.0**. On an unsupported runtime the plugin manager refuses with `incompatible-version`; add a one-off exemption with `dsh plugin allow-version` if you really need to try it elsewhere. Once DSH reaches 0.3.x this plugin needs a new release to widen the range.
 
@@ -138,9 +138,16 @@ The Cloudflare hostname route's **Service must target the CLI's actual listening
 - **Read and accept the security disclaimer every time you manually enable public access in Settings** (the server enforces acceptance for start requests): public access exposes a code-executing DSH to the internet — use a strong PIN, turn it off when done, never use it on classified networks. Public tunnels (Quick or Named) may auto-restore after a restart; turn access off manually if you do not want it restored.
 - **Plugin public access** uses a random **8-character PIN** by default, customizable to **8–64 letters and digits**. Quick mode rotates the generated PIN on every enable (custom PINs do not rotate); fixed-domain mode does not rotate it. If the address and PIN leak, turn public access off immediately and change the PIN yourself.
 - Phone login state is tied to the computer's dsh web process: **no re-entry while dsh web stays up; one re-entry after a restart/update**.
-- **Login rate limiting** (anti brute-force): **5** consecutive wrong PINs from the same IP lock it for **60s**; a global failure threshold briefly locks everyone (blocks distributed IP-rotation scans); a successful login resets the counter.
+- **Login rate limiting** (anti brute-force): **5** consecutive wrong PINs from the same IP lock it for **60s**; a global failure threshold briefly locks everyone (blocks distributed IP-rotation scans), and PIN comparison is separately rate-limited during a global lock (burst 10, refill 1 per 100ms — about 10 attempts/s); **the correct PIN still gets through during a global lock**, so retrying once or twice works for the owner.
+- **Tunnel visitors can only manage their own PIN**: over public access the settings page hides the LAN PIN and cannot toggle/rebind LAN access, start/stop or reconfigure the tunnel, or factory-reset — these are local-only actions and the server rejects them, not just the UI.
+- **LAN is plain HTTP** (`http://192.168.x.x:3081`), so the login cookie cannot be marked `Secure` on that origin (browsers would stop sending it and login would break); anyone able to passively read traffic on the same Wi-Fi can already see the login form. **Use the HTTPS tunnel on untrusted/corporate Wi-Fi**, and never type the PIN on public Wi-Fi.
+- **Windows ignores Unix permission bits `0600`**: the real visibility of `settings.json` / `token*` depends on the NTFS ACL of `$DSH_HOME`; make sure only your account can read that directory (the default user profile satisfies this).
+- **Delete `.bak` before deleting config by hand**: when a write fails, `settings.json.bak` is kept as a fallback and is read when the main file is missing/corrupt (otherwise one failed write would lose everything, including the Tunnel Token). Deleting only `settings.json` lets the old backup "come back" on the next start; use **Reset to factory defaults** in Settings instead — it clears the main file and all derived files atomically and reports failure honestly if anything cannot be removed.
+- **The `?token=` in shared links does not stay in logs**: after authentication the proxy strips the PIN from the upstream request line / Referer / access log and clears the address-bar query with `history.replaceState` on the first HTML response (shared links still work, but the PIN does not end up in bookmarks or history).
 - Quick URLs are temporary and recycled by Cloudflare: **do not bookmark/share them**, and turn access off when done. Your own Cloudflare hostname and named-tunnel route determine the fixed address; **restarts do not change it**, and a fixed hostname is a persistent scanning target — protect the Tunnel Token and access PIN.
 - **Public detection is fail-closed** (issue #66): everything except loopback and private LAN addresses is treated as **public and PIN-gated** — including any self-hosted tunnel / reverse proxy pointing at the local port with its own hostname. There is no "change the domain to bypass the PIN" hole.
+- **Avoid setting an HTTP Host Header on a named tunnel's Public Hostname**: rewriting it to `127.0.0.1:3081` makes cloudflared disguise public traffic as loopback. The proxy now forces requests with a loopback source plus `cf-ray`/`cf-connecting-ip` to be treated as public, so this alone no longer bypasses the PIN; but if you put another local reverse proxy in front (`ssh -R`, `socat`, `netsh portproxy`, etc.) that forwards no headers and does no authentication, the proxy cannot tell the source apart — require authentication at that layer.
+- **Self-hosted reverse proxies (nginx/traefik/Caddy) pointing at 3081**: keep at least one of `X-Forwarded-For` / `X-Real-IP` / `Forwarded`. Seeing a loopback source plus a forwarding header makes the proxy require the public PIN; headerless port forwarders such as `ssh -R`/`socat` look purely local, so use them only on trusted networks or add authentication in the forwarder.
 - LAN mode exposes nothing publicly; only devices on the same network can reach it.
 - Built for personal use; the plugin's public PIN lives in `$DSH_HOME/dsh-pocket/token` (rotated on enable in Quick mode, not in fixed-domain mode), the LAN PIN in `$DSH_HOME/dsh-pocket/token-lan` (refreshed manually in Settings), and switches, custom flags and public configuration in `$DSH_HOME/dsh-pocket/settings.json`.
 - **CLI mode (`dsh-pocket`) also requires a PIN by default**: a random 8-digit PIN is printed in the terminal and embedded in the QR code; manual address entry requires the PIN, while loopback access is exempt. Use `--pin <value>` or `DSH_POCKET_PIN=<value>` to set it yourself (at least 8 characters). `--no-auth` disables protection and is **not recommended** (and cannot be combined with `--public`): anyone who can reach the port could operate a code-executing DSH.
@@ -222,7 +229,7 @@ Such tools take over all traffic and often cut cloudflared's tunnel-edge connect
 ```sh
 npm install
 node client/build.mjs   # rebuild after editing client/
-npm test                # proxy / auth / compression / tunnel / service / RPC / settings (302 tests)
+npm test                # proxy / auth / compression / tunnel / service / RPC / settings (355 tests)
 ```
 
 **Want to try your changes locally without publishing?** Point the installed plugin at your local checkout with a symlink and restart dsh web. Full steps (including switching back to the npm release) are in [LOCAL-DEV.md](./LOCAL-DEV.md).

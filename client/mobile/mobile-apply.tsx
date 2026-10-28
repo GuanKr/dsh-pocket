@@ -14,6 +14,7 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { apply as upstreamApply } from './upstream/index.tsx'
 import { startFileGuard } from './fileGuard.ts'
 import { resolveLayout, persistLayoutFromUrl } from './layout-mode.mjs'
+import { createSettlingGuard, createFreezeDetector, resolveLinkVerdict, SETTLING_STALE_MS } from './settling-watchdog.mjs'
 import { POCKET_RPC_CHANNEL, POCKET_ENDPOINTS, MOBILE_RIGHTBAR_ATTRIBUTE, MOBILE_RIGHTBAR_EVENT, MOBILE_PINCH_ZOOM_ATTRIBUTE, MOBILE_PINCH_ZOOM_EVENT, MOBILE_FONT_ATTRIBUTE, MOBILE_FONT_EVENT, MOBILE_FONT_SIZE_VAR, MOBILE_FONT_MIN, MOBILE_FONT_MAX } from '../api.js'
 // H4：fileGuard 的用户可见文案迁入词典（client/pocket-locales.js，NS='pocket'）。
 // 这里只导入命名空间 id；词典本体由 client/index.jsx 统一注册（bind 是惰性取词，
@@ -304,6 +305,30 @@ const POCKET_EXTRA_CSS = `/* pocket 控件/门控样式：刻意不加媒体查�
       position: sticky !important;
       bottom: var(--dshp-kb, 0px) !important;
       transform: none !important;
+    }
+
+    /* ---------- settling 卡死兜底（2026-10-28 反馈：宿主重连后输入框会消失） ----------
+       宿主把输入栏可见性绑在 data-phase 上：ConversationMainPanel 的
+         settling = sessionId !== undefined && (shellPhase === "blank" &&
+                    openState === "loading" && summaryBlank !== true ||
+                    parentAvailabilityPending)
+       命中时 [data-phase=settling] [class*=_composerSeat] { visibility: hidden }——
+       座位仍在文档流里占位，只是不可见。
+       而 openState 只由 Session.doOpen 的 try/catch 推进：events.open() 在重连期
+       挂在 RemoteStreamMuxClient.waitForSocket 上就永远停在 "loading"；抛非
+       RemoteFailure 的异常时 catch 直接 rethrow，openState 同样停在 "loading"
+       （只有 isRemoteFailure 才置 "error"）。重连后 manager.handleConnected()
+       只清 projectionStores、重拉 list/projections，不碰任何 Session 的
+       openState——这个 "loading" 再没人接手。于是座位永久不可见，只有离开再进
+       会话（重新 retain → open()）才恢复。
+       本文件下方的 settling 看门狗在「连接正常 + settling 持续超过阈值」时给同一
+       根节点打 data-dshp-settling-stale，此处按标记还原可见性：即使用户侧修复
+       （resync）因宿主形状变化没能生效，用户也绝不会被锁在「没有输入框」的死局。
+       特异性：上游是 .root[data-phase=settling] .composerSeat = (0,3,0) 且无
+       !important；本条同档但带 html 前缀并加 !important，稳赢，不赌标签顺序。 */
+    html [data-phase="settling"][data-dshp-settling-stale] [class*="_composerSeat"],
+    html [data-content-phase="settling"][data-dshp-settling-stale] [class*="_composerSeat"] {
+      visibility: visible !important;
     }
 
     /* ---------- iOS standalone 布局视口偏矮兜底（2026-09-28 真机反馈：A2HS 底部留白） ----------
@@ -609,6 +634,15 @@ export function mobileApply(ctx: ClientContext): void {
     const focusables = (node: Element): HTMLElement[] =>
       Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE))
         .filter((el) => el.getClientRects().length > 0)
+    // 只看「真的可见且在栈顶」的弹层：上游可能用 aria-hidden/inert/display:none 隐藏
+    // 旧弹层而不卸载，直接取第一个会把焦点陷阱迁到隐藏节点上（Tab 完全失效）。
+    const isShown = (el: Element): boolean =>
+      !el.closest('[aria-hidden="true"], [inert]') && el.getClientRects().length > 0
+    const topDialog = (): HTMLElement | null => {
+      const list = Array.from(document.querySelectorAll<HTMLElement>(DIALOG))
+        .filter((el) => isOurs(el) && isShown(el))
+      return list.length > 0 ? list[list.length - 1] : null
+    }
     let active: HTMLElement | null = null
 
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -637,8 +671,23 @@ export function mobileApply(ctx: ClientContext): void {
     // 弹层出现/消失都从 DOM 突变看：上游用 innerHTML + append 建卡片，没有可挂的
     // 生命周期回调。只在真正换了弹层对象时才动焦点，避免每次突变都抢焦点。
     const sync = (): void => {
-      const dialog = Array.from(document.querySelectorAll<HTMLElement>(DIALOG)).find(isOurs) ?? null
+      const dialog = topDialog()
       if (dialog === active) return
+      if (active !== null && dialog !== null) {
+        // 弹层被**替换**（菜单 → 删除确认 / 错误卡）：这不是关闭，不能把焦点
+        // 还给背后的触发按钮——直接把陷阱移到新弹层。
+        // 旧实现走 close 分支后 active=null 且 return，新弹层要等下一次 DOM
+        // 突变才会重新拿到焦点；上游用 innerHTML 重建卡片时可能很久没有下一次
+        // 突变，期间 Tab 可以穿回背景列表，"模态"短暂失效（审计 F1）。
+        // 保留 triggerStack：替换后的弹层关闭时仍要回到最初的触发按钮（close 分支有
+        // isConnected 守卫，opener 被卸载时不会乱聚焦）。审计反向验证：在这里 pop 会
+        // 让关闭弹层后焦点落回 body，对键盘/读屏用户是倒退。
+        active = dialog
+        if (!dialog.hasAttribute('tabindex')) dialog.setAttribute('tabindex', '-1')
+        const list = focusables(dialog)
+        ;(list[0] ?? dialog).focus({ preventScroll: true })
+        return
+      }
       if (active !== null) {
         // 弹层关闭：焦点还给触发它的那个按钮（它可能也已经被卸载）。
         const back = triggerStack.pop()
@@ -722,6 +771,286 @@ export function mobileApply(ctx: ClientContext): void {
       tag.remove()
     }
   }, 'dsh-pocket: mobile extra styles (issue #17/#48)')
+
+  // ---- settling 看门狗（2026-10-28 反馈：宿主重连后输入框会消失）----
+  // 完整根因与判据推导见 settling-watchdog.mjs 的文件头：宿主在 [data-phase=settling]
+  // 时用 visibility:hidden 藏起 composer 座位，而该 phase 依赖 openState === "loading"；
+  // 断线会把在途 open 挂在等 socket 上，Manager.handleConnected() 不碰任何 Session 的
+  // openState，于是重连后没人把它推回 open，座位永久不可见。
+  // 用户实际跑在 iOS 主屏 PWA 上，那条路径连「断线」都察觉不到（详见模块头），所以
+  // 判据不依赖断线事件，而是：页面恢复（visibilitychange/pageshow/心跳迟到）+ openState
+  // 仍是 loading + 超时；此外 openState=loading 但 openPromise 已消失是结构性矛盾，直接可判。
+  // 本段只做 DOM 接线与两个具体动作，判定（何时算卡死、何时允许 resync）全部委托给
+  // 纯模块，那部分才有单测：
+  //   - stale：给根节点打 data-dshp-settling-stale，POCKET_EXTRA_CSS 据此还原可见性。
+  //   - repair：先 connection.reconnect() 换掉可能已死的 socket，再调宿主自带的
+  //     Session.resync()（作废在途 open 并重建），让 openState 真正走回 open。
+  //     typeof 守卫，宿主形状变化就跳过，退回纯 CSS 兜底。
+  // 与 fileGuard / explorer 同走 armOnNarrow：这是手机壳层的补偿，宽屏桌面布局
+  // 下不掺和宿主自身的会话加载节奏。
+  armOnNarrow('dsh-pocket: settling watchdog (host reconnect leaves composer hidden)', () => {
+    const STALE_ATTR = 'data-dshp-settling-stale';
+    const guard = createSettlingGuard();
+    const freeze = createFreezeDetector();
+    const timers = new Map<HTMLElement, number>();
+    let raf = 0;
+    let heartbeat = 0;
+    let disposed = false;
+
+    const now = (): number => performance.now();
+
+    // 读链路快照交给纯模块判定：generation 在断连时变 undefined、重连后换新 id，
+    // 是比 state 更精确的「断过线」证据。形状不符时代际差异统一按「没断过」处理。
+    const linkVerdict = () => {
+      const conn = ctx.connection as unknown as {
+        generation?: { getSnapshot?: () => unknown };
+        state?: { getSnapshot?: () => unknown };
+      };
+      const hasGeneration = typeof conn?.generation?.getSnapshot === 'function';
+      return resolveLinkVerdict({
+        hasGeneration,
+        generation: hasGeneration ? conn.generation?.getSnapshot?.() : undefined,
+        state: hasGeneration ? undefined : conn?.state?.getSnapshot?.(),
+      });
+    };
+
+    // 当前前台会话 id：与 fileGuard 的取法一致（list.current 优先，否则取被
+    // mainView 持有的那一条）。resync 只对已 open 过的会话有意义，而 open 必然
+    // 伴随 retain，所以这里拿到的就是用户正看着的那条。
+    // 能拿到具体 root 时优先用 root 自带的会话标识（见 sessionIdFor），这条只是兜底。
+    const activeSessionId = (): string | undefined => {
+      try {
+        const snapshot = (ctx as unknown as {
+          sessions?: { list?: { getSnapshot?: () => unknown } };
+        }).sessions?.list?.getSnapshot?.() as {
+          current?: unknown;
+          byId?: Record<string, { id?: unknown; retainedBy?: { mainView?: unknown } }>;
+        } | undefined;
+        if (snapshot === null || typeof snapshot !== 'object') return undefined;
+        if (typeof snapshot.current === 'string') return snapshot.current;
+        for (const key in snapshot.byId) {
+          const row = snapshot.byId[key];
+          if (row === undefined) continue;
+          const mainView = row.retainedBy?.mainView;
+          if (typeof mainView === 'number' && mainView > 0 && typeof row.id === 'string') return row.id;
+        }
+      } catch { /* 宿主形状不同 → 无法定位会话，退回纯 CSS 兜底 */ }
+      return undefined;
+    };
+
+    /** 读会话快照里的 openState。宿主 openState 只有 'cold'|'loading'|'open'|'error'
+     *  四态，'loading' 是 settling 的唯一来源，所以它是判定「结构性命中」的关键输入。 */
+    const readHints = (id: string | undefined): { openState?: string, openPromise?: 'live' | 'gone' | 'unknown' } => {
+      if (id === undefined) return {};
+      try {
+        const session = (ctx as unknown as {
+          sessions?: { manager?: { get?: (id: string) => unknown } };
+        }).sessions?.manager?.get?.(id) as {
+          getSnapshot?: () => { openState?: unknown };
+          openPromise?: unknown;
+        } | undefined;
+        if (session === undefined) return {};
+        const openState = session.getSnapshot?.()?.openState;
+        if (typeof openState !== 'string') return {};
+        // openPromise 是私有字段，读不到就报 unknown（不臆测）。
+        const openPromise = 'openPromise' in session
+          ? (session.openPromise === null || session.openPromise === undefined ? 'gone' : 'live')
+          : 'unknown';
+        return { openState, openPromise };
+      } catch { return {}; }
+    };
+
+    /** 让传输层真正重连。iOS PWA 上 socket 常处于「已死但 readyState 仍为 1」的状态：
+     *  RemoteStreamMuxClient.waitForSocket 看 readyState===1 就把这个死 socket 交回去，
+     *  main() 里的 maintain() 同样因此提前返回——不主动 reconnect 就永远换不掉它。
+     *  connection.reconnect() 会 abort 当前 generation，走 onReconnectRequested →
+     *  mux.reconnect()，关掉死 socket 并 reject 掉挂在 waitForSocket 上的 waiter。 */
+    const tryReconnect = (): void => {
+      try {
+        const conn = ctx.connection as unknown as { reconnect?: () => unknown };
+        if (typeof conn?.reconnect === 'function') void conn.reconnect();
+      } catch { /* 连接层不可用：只留 CSS 兜底 */ }
+    };
+
+    /** 这个 root 归属哪个会话。宿主把 id 直接写在会话体上
+     *  （[data-conversation-session]），比从 retainedBy.mainView 反推更准，也不会
+     *  在父子会话同时挂着时认错人。root 自己就是会话体时直接读，否则在子树里找。 */
+    const sessionIdFor = (root: HTMLElement): string | undefined => {
+      const own = root.getAttribute('data-conversation-session');
+      if (typeof own === 'string' && own !== '') return own;
+      const inner = root.querySelector('[data-conversation-session]');
+      const id = inner?.getAttribute('data-conversation-session');
+      return typeof id === 'string' && id !== '' ? id : undefined;
+    };
+
+    const tryRepair = (reconnectFirst: boolean, root?: HTMLElement): void => {
+      if (reconnectFirst) tryReconnect();
+      try {
+        const id = (root === undefined ? undefined : sessionIdFor(root)) ?? activeSessionId();
+        if (id === undefined) return;
+        const session = (ctx as unknown as {
+          sessions?: { manager?: { get?: (id: string) => unknown } };
+        }).sessions?.manager?.get?.(id) as { resync?: () => unknown } | undefined;
+        if (typeof session?.resync !== 'function') return;
+        void session.resync();
+      } catch { /* 修复失败不影响 CSS 兜底 */ }
+    };
+
+    const clearTimer = (root: HTMLElement): void => {
+      const timer = timers.get(root);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+        timers.delete(root);
+      }
+    };
+
+    /** settling 有两个载体：会话根节点 data-phase，以及内嵌会话体 data-content-phase
+     *  （子会话/并行分支在根节点里以内嵌方式渲染，它自己才是 settling 的那一层，
+     *  隐藏规则对两者都成立）。任一命中都算这个节点在卡。 */
+    const settlingPhaseOf = (el: Element): string | null => {
+      const rootPhase = el.getAttribute('data-phase');
+      if (rootPhase === 'settling') return 'data-phase';
+      const bodyPhase = el.getAttribute('data-content-phase');
+      if (bodyPhase === 'settling') return 'data-content-phase';
+      return null;
+    };
+
+    const markStale = (root: HTMLElement): void => {
+      if (disposed || !root.isConnected) return;
+      if (settlingPhaseOf(root) === null) return;
+      const id = sessionIdFor(root) ?? activeSessionId();
+      const verdict = guard.decide(root, now(), readHints(id));
+      if (verdict.repair) tryRepair(verdict.reconnect, root);
+      if (!verdict.stale) {
+        // 宽限期未满：这一刻不动手，但必须按剩余时间重新挂上计时器——否则这个节点
+        // 会永远停在「等下一次扫描」上，而扫描只由突变/链路事件触发，settling 稳定
+        // 时不再发生（重连后重新计时的分支正好落在这里）。
+        if (verdict.waiting) arm(root, verdict.remainingMs ?? SETTLING_STALE_MS);
+        return;
+      }
+      if (root.getAttribute(STALE_ATTR) === null) root.setAttribute(STALE_ATTR, '');
+    };
+
+    const arm = (root: HTMLElement, delayMs = SETTLING_STALE_MS): void => {
+      if (timers.has(root)) return;
+      timers.set(root, window.setTimeout(() => {
+        timers.delete(root);
+        markStale(root);
+      }, Math.max(0, delayMs)));
+    };
+
+    const SETTLING_SELECTOR = '[data-phase="settling"],[data-content-phase="settling"]';
+
+    const scan = (): void => {
+      raf = 0;
+      if (disposed) return;
+      const at = now();
+      const settling = document.querySelectorAll<HTMLElement>(SETTLING_SELECTOR);
+      // 已恢复的根节点立刻摘标记：settling 结束（宿主自己推进到 hero/active）时
+      // 不得留 pocket 专属残留——CSS 只认标记与 data-phase 的交集，摘掉即可。
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>(`[${STALE_ATTR}]`))) {
+        if (settlingPhaseOf(el) === null) {
+          el.removeAttribute(STALE_ATTR);
+          guard.release(el);
+        }
+      }
+      // 首帧也要登记起始时刻，否则「进入 settling 的时刻」会被误当作「第一次扫描的
+      // 时刻」，宽限期在慢帧下被无端延长。
+      for (const root of Array.from(settling)) {
+        guard.observe(root, at);
+        arm(root);
+      }
+      // 反向清理：已脱离文档或不再生效的计时器与判定状态
+      for (const root of Array.from(timers.keys())) {
+        if (!root.isConnected || settlingPhaseOf(root) === null) {
+          clearTimer(root);
+          guard.release(root);
+        }
+      }
+    };
+
+    const schedule = (): void => {
+      if (raf === 0 && !disposed) raf = requestAnimationFrame(scan);
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      // 流式输出期间每个 token 都是文本节点增删。settling 只由属性与结构变化
+      // 触发，纯文本突变直接跳过，避免每帧对全文档跑 querySelectorAll。
+      for (const m of mutations) {
+        if (m.type === 'attributes') { schedule(); return; }
+        for (const n of m.addedNodes) { if (n.nodeType !== 3) { schedule(); return; } }
+        for (const n of m.removedNodes) { if (n.nodeType !== 3) { schedule(); return; } }
+      }
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-phase', 'data-content-phase'],
+    });
+
+    // 链路状态订阅：断线 → 重连的跳变要开新一轮（重连本身常常不产生 DOM 突变，
+    // 没有这条订阅，计时器会一直停在断线前那一轮）。generation 在断连瞬间变
+    // undefined、重连后换成新 id，两次回调各来一发；state 兜住 generation 缺失的代际。
+    const onLinkChange = (): void => {
+      guard.noteLink(linkVerdict(), now());
+      for (const root of Array.from(timers.keys())) clearTimer(root);
+      schedule();
+    };
+    const unsubscribers: Array<() => void> = [];
+    for (const key of ['generation', 'state'] as const) {
+      try {
+        const source = (ctx.connection as unknown as Record<string, {
+          subscribe?: (listener: () => void) => () => void;
+        } | undefined>)[key];
+        if (typeof source?.subscribe === 'function') {
+          unsubscribers.push(source.subscribe(onLinkChange));
+        }
+      } catch { /* 单个源不可用不影响另一个 */ }
+    }
+
+    // 页面恢复登记（iOS 主屏 PWA 的核心证据链）
+    // 主屏 PWA 进后台时 WebKit 冻结整个 JS 上下文，socket 被系统拆掉但 close 回调根本不
+    // 执行，于是 generation 从不经过 undefined、online/offline 也不触发。三条互相兜底的
+    // 恢复信号里任意一条命中，都说明「现在这个 settling 是跨过一次冻结的」：
+    //   - visibilitychange → visible：最常见，切回主屏图标/多任务返回都走它。
+    //   - pageshow：bfcache 恢复（Safari 前进后退），persisted=true 表示从缓存复活。
+    //   - 心跳迟到：偶尔两种事件都没派发（进程被直接挂起又唤醒），只能靠计时器迟到发现。
+    const onResume = (): void => {
+      guard.noteResume(now());
+      for (const root of Array.from(timers.keys())) clearTimer(root);
+      schedule();
+    };
+    const onVisibility = (): void => {
+      if (document.visibilityState === 'visible') onResume();
+    };
+    const onPageShow = (event: PageTransitionEvent): void => {
+      if (event.persisted) onResume();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pageshow', onPageShow);
+    heartbeat = window.setInterval(() => {
+      if (freeze.tick(now())) onResume();
+    }, freeze.intervalMs);
+
+    scan();
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      for (const off of unsubscribers) off();
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pageshow', onPageShow);
+      if (heartbeat !== 0) window.clearInterval(heartbeat);
+      freeze.reset();
+      if (raf !== 0) cancelAnimationFrame(raf);
+      for (const timer of timers.values()) window.clearTimeout(timer);
+      timers.clear();
+      guard.reset();
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>(`[${STALE_ATTR}]`))) {
+        el.removeAttribute(STALE_ATTR);
+      }
+    };
+  }, 'dsh-pocket: settling watchdog (host reconnect leaves composer hidden)')
 
   // M3：键盘高度 CSS 变量。iOS 软键盘弹起只收缩 visual viewport（layout viewport
   // 不动），底部锚定的 fixed 弹层（fileGuard 的 toast/长按 fallback 面板、上游

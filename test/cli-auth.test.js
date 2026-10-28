@@ -8,9 +8,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +20,8 @@ import {
   buildAuth,
   entryUrl,
   resolvePublicConfig,
-  MIN_PIN_LENGTH, assertSafeArgs,
+  cliArgError,
+  MIN_PIN_LENGTH,
 } from '../bin/dsh-pocket.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -60,14 +60,32 @@ test(`issue #90：自定义密码短于 ${MIN_PIN_LENGTH} 位必须被拒，不�
     assert.ok(r.error, `${weak} 应给出错误说明`);
     assert.match(r.error, new RegExp(String(MIN_PIN_LENGTH)));
   }
-  // 刚好达到下限则接受（与插件默认/登录页 minlength=8 对齐）
+  // 刚好达到下限则接受
   assert.equal(resolvePin(parseArgs(['--pin', '12345678']), {}).pin, '12345678');
+  // 前后空白不该被当作密码的一部分（否则用户永远敲不进去）
+  assert.equal(resolvePin(parseArgs(['--pin', '  12345678  ']), {}).pin, '12345678');
+  // 纯空白不是密码
+  assert.ok(resolvePin(parseArgs(['--pin', '        ']), {}).error);
 });
 
-test('CLI --public 不能与 --no-auth 同时使用（公网必须认证）', () => {
-  assert.throws(() => assertSafeArgs(parseArgs(['--public', '--no-auth'])), /--no-auth/);
-  assert.doesNotThrow(() => assertSafeArgs(parseArgs(['--public'])));
-  assert.doesNotThrow(() => assertSafeArgs(parseArgs(['--no-auth'])));
+test('issue #90 回归：--pin 缺值时必须报错，不能把下一个 flag 当成密码', () => {
+  // 旧实现 `--pin --public` 会把字面量 "--public"（8 字符）当密码，同时吞掉 --public，
+  // 用户以为开了公网、实际没开。
+  const swallowed = parseArgs(['--pin', '--public']);
+  assert.equal(swallowed.pin, '');
+  assert.equal(swallowed.pinMissing, true);
+  assert.equal(swallowed.public, true, '--public 仍要被解析（不能被当作 --pin 的值吞掉）');
+  const r = resolvePin(swallowed, {});
+  assert.equal(r.pin, null);
+  assert.match(String(r.error), /--pin/);
+});
+
+test('CLI：--public 与 --no-auth 同时出现必须拒绝启动（公网 + 无鉴权 = 裸奔）', () => {
+  assert.match(String(cliArgError(parseArgs(['--public', '--no-auth']))), /--no-auth/);
+  // 单独用任何一个都不该被这条规则拦下
+  assert.equal(cliArgError(parseArgs(['--public'])), null);
+  assert.equal(cliArgError(parseArgs(['--no-auth'])), null);
+  assert.equal(cliArgError(parseArgs([])), null);
 });
 
 test('issue #90：--no-auth 是显式 opt-out —— 只有它能让 auth 为空', () => {
@@ -183,4 +201,33 @@ test('issue #90：为可测性加的 isDirectRun 守卫不能把 CLI 变成哑�
 
   // 而 import 本文件（测试就是这么做的）不能顺带把服务跑起来 —— 上面几条测试
   // 能跑到这里本身就是证据：如果 import 触发了 main()，进程会挂在 await 上不退出。
+});
+
+test('CLI 参数：取值型 flag 不吞下一个 flag、端口范围校验、launch-token 透传', async () => {
+  // `--host --public` 曾把字面量 "--public" 当主机名（ENOTFOUND），且静默吞掉 --public
+  const hostMissing = parseArgs(['--host', '--public']);
+  assert.match(hostMissing.argError, /--host/);
+  // `--port 0` / 非数字曾静默回落 3081，用户以为换了端口
+  assert.match(parseArgs(['--port', '0']).argError, /--port/);
+  assert.match(parseArgs(['--port', 'abc']).argError, /--port/);
+  assert.equal(parseArgs(['--port', '3099']).port, 3099);
+  assert.equal(parseArgs(['--launch-token', 'tok-123']).launchToken, 'tok-123');
+  assert.match(parseArgs(['--launch-token', '--public']).argError, /--launch-token/);
+});
+
+test('CLI 参数：--no-auth 不能静默压过已提供的密码', async () => {
+  // 旧行为：--no-auth 直接返回 pin:null，用户以为设了 --pin，实际入口是裸的
+  assert.match(cliArgError({ noAuth: true, pin: 'hunter2!' }), /冲突|conflict/);
+  assert.match(cliArgError({ noAuth: true }, { DSH_POCKET_PIN: 'hunter2!' }), /冲突|conflict/);
+  assert.equal(cliArgError({ noAuth: true }, {}), null);
+});
+
+test('isValidIpv4：0.0.0.0/广播/组播/前导零都不可作为展示地址', async () => {
+  const { isValidIpv4 } = await import('../lib/ip.mjs');
+  for (const bad of ['0.0.0.0', '255.255.255.255', '224.0.0.1', '010.0.0.1', '1.2.3.256', '1.2.3', '::1']) {
+    assert.equal(isValidIpv4(bad), false, bad);
+  }
+  for (const good of ['192.168.1.20', '10.0.0.2', '100.119.24.44', '8.8.8.8']) {
+    assert.equal(isValidIpv4(good), true, good);
+  }
 });
